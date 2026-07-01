@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  ADMIN
+  COORDENADOR
+  CANDIDATO
+}
+
+enum TipoEleicao {
+  MUNICIPAL
+  ESTADUAL
+}
+
+enum TipoApuracao {
+  MAJORITARIO
+  PROPORCIONAL
+}
+
+model User {
+  id           String   @id @default(cuid())
+  nome         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(COORDENADOR)
+  regiaoId     String?
+  regiao       Regiao?  @relation(fields: [regiaoId], references: [id])
+  candidatoId  String?
+  candidato    Candidato? @relation(fields: [candidatoId], references: [id])
+  createdAt    DateTime @default(now())
+}
+
+model Eleicao {
+  id        String      @id @default(cuid())
+  ano       Int
+  uf        String
+  tipo      TipoEleicao
+  cargos    Cargo[]
+  createdAt DateTime    @default(now())
+}
+
+// Para cargos municipais (Prefeito/Vereador), municipioId identifica a
+// qual município a disputa pertence. Para cargos estaduais (Governador/
+// Deputado), municipioId fica nulo pois a disputa é em todo o estado.
+model Cargo {
+  id           String       @id @default(cuid())
+  nome         String
+  tipoApuracao TipoApuracao
+  vagas        Int          @default(1)
+  eleicaoId    String
+  eleicao      Eleicao      @relation(fields: [eleicaoId], references: [id])
+  municipioId  String?
+  municipio    Municipio?   @relation(fields: [municipioId], references: [id])
+  candidatos   Candidato[]
+}
+
+model Partido {
+  id         String      @id @default(cuid())
+  sigla      String      @unique
+  nome       String
+  numero     Int
+  candidatos Candidato[]
+}
+
+model Candidato {
+  id         String      @id @default(cuid())
+  nome       String
+  numero     Int
+  cargoId    String
+  cargo      Cargo       @relation(fields: [cargoId], references: [id])
+  partidoId  String
+  partido    Partido     @relation(fields: [partidoId], references: [id])
+  resultados Resultado[]
+  users      User[]
+}
+
+model Regiao {
+  id         String      @id @default(cuid())
+  nome       String      @unique
+  municipios Municipio[]
+  users      User[]
+}
+
+model Municipio {
+  id         String      @id @default(cuid())
+  nome       String
+  codigoTse  String?     @unique
+  regiaoId   String
+  regiao     Regiao      @relation(fields: [regiaoId], references: [id])
+  resultados Resultado[]
+  cargos     Cargo[]
+
+  @@unique([nome, regiaoId])
+}
+
+model Resultado {
+  id           String    @id @default(cuid())
+  candidatoId  String
+  candidato    Candidato @relation(fields: [candidatoId], references: [id])
+  municipioId  String
+  municipio    Municipio @relation(fields: [municipioId], references: [id])
+  votos        Int       @default(0)
+  atualizadoEm DateTime  @updatedAt
+
+  @@unique([candidatoId, municipioId])
+}

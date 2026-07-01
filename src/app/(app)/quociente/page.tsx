@@ -1,0 +1,37 @@
+import Link from "next/link";
+import { getCargos } from "@/lib/data";
+
+export default async function QuocientePage() {
+  const cargos = await getCargos();
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <h1 className="text-lg font-semibold">Quociente eleitoral</h1>
+        <p className="text-sm text-neutral-500">
+          Selecione uma disputa para ver o cálculo detalhado.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        {cargos.map((cargo) => (
+          <Link
+            key={cargo.id}
+            href={`/quociente/${cargo.id}`}
+            className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3"
+          >
+            <div>
+              <p className="font-medium">{cargo.nome}</p>
+              <p className="text-xs text-neutral-500">
+                {cargo.municipio ? cargo.municipio.nome : "PA"} · {cargo.eleicao.ano}
+              </p>
+            </div>
+            <span className="rounded-full bg-neutral-800 px-2 py-1 text-xs text-neutral-300">
+              {cargo.tipoApuracao === "PROPORCIONAL" ? "Proporcional" : "Majoritário"}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
