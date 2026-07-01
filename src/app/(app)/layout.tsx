@@ -2,7 +2,7 @@ import { verifySession } from "@/lib/dal";
 import { logout } from "@/app/actions/auth";
 import { TabBar } from "@/components/TabBar";
 import { PageTransition } from "@/components/PageTransition";
-import { Settings } from "lucide-react";
+import { Settings, Search } from "lucide-react";
 import Link from "next/link";
 
 const ROLE_LABEL: Record<string, string> = {
@@ -25,6 +25,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <Link href="/busca" className="text-neutral-400 hover:text-neutral-200">
+              <Search size={20} />
+            </Link>
             <Link href="/configuracoes" className="text-neutral-400 hover:text-neutral-200">
               <Settings size={20} />
             </Link>

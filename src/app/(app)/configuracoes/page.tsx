@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Upload, ChevronRight } from "lucide-react";
+import { Upload, ChevronRight, Users } from "lucide-react";
 import { verifySession } from "@/lib/dal";
 import { logout } from "@/app/actions/auth";
 
@@ -33,6 +33,19 @@ export default async function ConfiguracoesPage() {
         </span>
         <ChevronRight size={18} className="text-neutral-600" />
       </Link>
+
+      {session.role === "ADMIN" && (
+        <Link
+          href="/configuracoes/usuarios"
+          className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3"
+        >
+          <span className="flex items-center gap-3">
+            <Users size={18} className="text-neutral-400" />
+            <span className="text-sm font-medium">Usuários e logins temporários</span>
+          </span>
+          <ChevronRight size={18} className="text-neutral-600" />
+        </Link>
+      )}
 
       <form action={logout}>
         <button

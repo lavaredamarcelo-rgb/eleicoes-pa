@@ -25,6 +25,13 @@ export async function login(_prevState: LoginState, formData: FormData): Promise
     return { error: "E-mail ou senha inválidos." };
   }
 
+  if (!user.ativo) {
+    return { error: "Este acesso foi desativado. Fale com o administrador." };
+  }
+  if (user.expiresAt && user.expiresAt.getTime() < Date.now()) {
+    return { error: "Este acesso temporário expirou. Fale com o administrador." };
+  }
+
   await createSession({
     userId: user.id,
     nome: user.nome,

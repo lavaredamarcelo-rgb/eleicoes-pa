@@ -33,6 +33,11 @@ model User {
   regiao       Regiao?    @relation(fields: [regiaoId], references: [id])
   candidatoId  String?
   candidato    Candidato? @relation(fields: [candidatoId], references: [id])
+  ativo        Boolean    @default(true)
+  expiresAt    DateTime?
+  criadoPorId  String?
+  criadoPor    User?      @relation("UsuariosCriados", fields: [criadoPorId], references: [id])
+  criados      User[]     @relation("UsuariosCriados")
   createdAt    DateTime   @default(now())
 }
 

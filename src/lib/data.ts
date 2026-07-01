@@ -54,6 +54,19 @@ export async function getPartidos() {
   return prisma.partido.findMany({ orderBy: { sigla: "asc" } });
 }
 
+export async function getUsuarios() {
+  const usuarios = await prisma.user.findMany({
+    include: { regiao: true, candidato: true, criadoPor: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const agora = Date.now();
+  return usuarios.map((u) => ({
+    ...u,
+    expirado: !!u.expiresAt && u.expiresAt.getTime() < agora,
+  }));
+}
+
 export async function getMunicipios(regiaoId?: string) {
   const municipios = await prisma.municipio.findMany({
     where: regiaoId ? { regiaoId } : undefined,
@@ -127,6 +140,56 @@ export async function getMapaDados(cargoId?: string) {
       lider: lider ? { nome: lider.nome, partido: lider.partido.sigla } : null,
     };
   });
+}
+
+// Remove acentos para permitir busca sem acentuação (ex: "Belem" encontra
+// "Belém"). SQLite não faz esse tipo de comparação nativamente, então
+// filtramos em JS — os volumes aqui (dezenas de candidatos, ~150
+// municípios/regiões) são pequenos o suficiente para isso ser barato.
+function normalizar(texto: string) {
+  return texto
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+export async function buscarTudo(query: string) {
+  const termo = query.trim();
+  if (!termo) return { candidatos: [], municipios: [], regioes: [] };
+
+  const termoNormalizado = normalizar(termo);
+  const numero = /^\d+$/.test(termo) ? Number(termo) : undefined;
+
+  const [todosCandidatos, todosMunicipios, todasRegioes] = await Promise.all([
+    prisma.candidato.findMany({
+      include: {
+        partido: true,
+        cargo: { include: { municipio: true } },
+        resultados: true,
+      },
+    }),
+    prisma.municipio.findMany({ include: { regiao: true } }),
+    prisma.regiao.findMany(),
+  ]);
+
+  const candidatos = todosCandidatos
+    .filter((c) => normalizar(c.nome).includes(termoNormalizado) || c.numero === numero)
+    .map((c) => ({
+      ...c,
+      totalVotos: c.resultados.reduce((sum, r) => sum + r.votos, 0),
+    }))
+    .sort((a, b) => b.totalVotos - a.totalVotos)
+    .slice(0, 20);
+
+  const municipios = todosMunicipios
+    .filter((m) => normalizar(m.nome).includes(termoNormalizado))
+    .slice(0, 10);
+
+  const regioes = todasRegioes
+    .filter((r) => normalizar(r.nome).includes(termoNormalizado))
+    .slice(0, 10);
+
+  return { candidatos, municipios, regioes };
 }
 
 export async function getRegiao(id: string) {
