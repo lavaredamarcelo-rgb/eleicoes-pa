@@ -61,23 +61,43 @@ model Cargo {
 }
 
 model Partido {
-  id         String      @id @default(cuid())
-  sigla      String      @unique
-  nome       String
-  numero     Int
-  candidatos Candidato[]
+  id                String         @id @default(cuid())
+  sigla             String         @unique
+  nome              String
+  numero            Int
+  candidatos        Candidato[]
+  trocasComoOrigem  TrocaPartido[] @relation("TrocaPartidoOrigem")
+  trocasComoDestino TrocaPartido[] @relation("TrocaPartidoDestino")
 }
 
 model Candidato {
-  id         String      @id @default(cuid())
-  nome       String
-  numero     Int
-  cargoId    String
-  cargo      Cargo       @relation(fields: [cargoId], references: [id])
-  partidoId  String
-  partido    Partido     @relation(fields: [partidoId], references: [id])
-  resultados Resultado[]
-  users      User[]
+  id            String         @id @default(cuid())
+  nome          String
+  numero        Int
+  cargoId       String
+  cargo         Cargo          @relation(fields: [cargoId], references: [id])
+  partidoId     String
+  partido       Partido        @relation(fields: [partidoId], references: [id])
+  resultados    Resultado[]
+  users         User[]
+  trocasPartido TrocaPartido[]
+}
+
+// Registro histórico real de mudança de partido de um candidato (data
+// efetiva + motivo opcional). Ao registrar uma troca, o partido atual do
+// candidato (Candidato.partidoId) é atualizado para refletir a nova
+// filiação nos cálculos de quociente; este log preserva o histórico.
+model TrocaPartido {
+  id               String    @id @default(cuid())
+  candidatoId      String
+  candidato        Candidato @relation(fields: [candidatoId], references: [id])
+  partidoOrigemId  String
+  partidoOrigem    Partido   @relation("TrocaPartidoOrigem", fields: [partidoOrigemId], references: [id])
+  partidoDestinoId String
+  partidoDestino   Partido   @relation("TrocaPartidoDestino", fields: [partidoDestinoId], references: [id])
+  data             DateTime
+  motivo           String?
+  createdAt        DateTime  @default(now())
 }
 
 model Regiao {

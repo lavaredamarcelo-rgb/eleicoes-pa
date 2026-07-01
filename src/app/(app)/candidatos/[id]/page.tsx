@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import { CardLink } from "@/components/CardLink";
-import { getCandidato } from "@/lib/data";
+import { TrocaPartidoForm } from "@/components/TrocaPartidoForm";
+import { PdfDownloadLink } from "@/components/PdfDownloadLink";
+import { getCandidato, getPartidos } from "@/lib/data";
+import { verifySession } from "@/lib/dal";
 
 export default async function CandidatoDetailPage({
   params,
@@ -8,7 +11,7 @@ export default async function CandidatoDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const candidato = await getCandidato(id);
+  const [candidato, session] = await Promise.all([getCandidato(id), verifySession()]);
   if (!candidato) notFound();
 
   const totalVotos = candidato.resultados.reduce((sum, r) => sum + r.votos, 0);
@@ -33,15 +36,27 @@ export default async function CandidatoDetailPage({
   return (
     <div className="flex flex-col gap-6">
       <section>
-        <h1 className="text-lg font-semibold">{candidato.nome}</h1>
-        <p className="text-sm text-neutral-500">
-          {candidato.numero} · {candidato.partido.sigla} · {candidato.cargo.nome}
-          {candidato.cargo.municipio ? ` (${candidato.cargo.municipio.nome})` : " (PA)"}
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-lg font-semibold">{candidato.nome}</h1>
+            <p className="text-sm text-neutral-500">
+              {candidato.numero} · {candidato.partido.sigla} · {candidato.cargo.nome}
+              {candidato.cargo.municipio ? ` (${candidato.cargo.municipio.nome})` : " (PA)"}
+            </p>
+          </div>
+          <PdfDownloadLink href={`/api/pdf/candidato/${candidato.id}`} />
+        </div>
         <p className="mt-2 text-2xl font-bold text-blue-400">
           {totalVotos.toLocaleString("pt-BR")} votos
         </p>
       </section>
+
+      <CardLink href={`/candidatos/${candidato.id}/projecao`}>
+        <div>
+          <p className="font-medium">Projeção de votação</p>
+          <p className="text-xs text-neutral-500">Simular crescimento futuro e gerar PDF</p>
+        </div>
+      </CardLink>
 
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-medium text-neutral-400">Votos por região</h2>
@@ -79,6 +94,52 @@ export default async function CandidatoDetailPage({
           </details>
         ))}
       </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-sm font-medium text-neutral-400">Histórico partidário</h2>
+        {candidato.trocasPartido.length > 0 ? (
+          candidato.trocasPartido.map((t) => (
+            <div
+              key={t.id}
+              className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3"
+            >
+              <p className="text-sm">
+                {t.partidoOrigem.sigla} → {t.partidoDestino.sigla}
+              </p>
+              <p className="text-xs text-neutral-500">
+                {new Date(t.data).toLocaleDateString("pt-BR")}
+                {t.motivo ? ` · ${t.motivo}` : ""}
+              </p>
+            </div>
+          ))
+        ) : (
+          <p className="rounded-xl border border-dashed border-neutral-700 bg-neutral-900/50 px-4 py-4 text-center text-sm text-neutral-500">
+            Nenhuma troca de partido registrada. Filiado desde o cadastro em{" "}
+            {candidato.partido.sigla}.
+          </p>
+        )}
+      </section>
+
+      {session.role === "ADMIN" && (
+        <TrocaPartidoFormSection candidatoId={candidato.id} partidoAtualId={candidato.partidoId} />
+      )}
     </div>
+  );
+}
+
+async function TrocaPartidoFormSection({
+  candidatoId,
+  partidoAtualId,
+}: {
+  candidatoId: string;
+  partidoAtualId: string;
+}) {
+  const partidos = await getPartidos();
+  return (
+    <TrocaPartidoForm
+      candidatoId={candidatoId}
+      partidoAtualId={partidoAtualId}
+      partidos={partidos}
+    />
   );
 }

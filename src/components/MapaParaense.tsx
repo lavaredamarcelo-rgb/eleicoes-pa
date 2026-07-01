@@ -16,11 +16,28 @@ type MunicipioMapa = {
 
 const pathByCodigo = new Map(mapaData.municipios.map((m) => [m.codigoIbge, m.path]));
 
-function corPorIntensidade(valor: number, max: number) {
-  if (max <= 0) return "#1e293b";
+// Uma cor (matiz HSL) fixa por mesorregião, para identificação visual
+// consistente independente do volume de votos.
+const REGIAO_HUE: Record<string, number> = {
+  "Metropolitana de Belém": 217, // azul
+  "Baixo Amazonas": 189, // ciano
+  Marajó: 271, // roxo
+  "Nordeste Paraense": 38, // âmbar
+  "Sudeste Paraense": 0, // vermelho
+  "Sudoeste Paraense": 142, // verde
+};
+
+function corMunicipio(hue: number, valor: number, max: number) {
+  if (max <= 0) return `hsl(${hue} 15% 20%)`;
   const t = Math.sqrt(valor / max);
-  const l = 20 + t * 45;
-  return `hsl(217 85% ${l}%)`;
+  const l = 22 + t * 42;
+  return `hsl(${hue} 70% ${l}%)`;
+}
+
+function corRegiao(hue: number, valor: number, max: number) {
+  const t = max > 0 ? valor / max : 0;
+  const l = 32 + t * 26;
+  return `hsl(${hue} 65% ${l}%)`;
 }
 
 export function MapaParaense({ municipios }: { municipios: MunicipioMapa[] }) {
@@ -36,15 +53,27 @@ export function MapaParaense({ municipios }: { municipios: MunicipioMapa[] }) {
     return map;
   }, [municipios]);
 
-  const maxValor = useMemo(() => {
-    if (modo === "municipio") {
-      return Math.max(0, ...municipios.map((m) => m.totalVotos));
-    }
-    return Math.max(0, ...Array.from(totalPorRegiao.values()));
-  }, [municipios, modo, totalPorRegiao]);
+  const maxValorMunicipio = useMemo(
+    () => Math.max(0, ...municipios.map((m) => m.totalVotos)),
+    [municipios]
+  );
+  const maxValorRegiao = useMemo(
+    () => Math.max(0, ...Array.from(totalPorRegiao.values())),
+    [totalPorRegiao]
+  );
 
-  const valorDe = (m: MunicipioMapa) =>
-    modo === "municipio" ? m.totalVotos : (totalPorRegiao.get(m.regiaoId) ?? 0);
+  const corDe = (m: MunicipioMapa) => {
+    const hue = REGIAO_HUE[m.regiaoNome] ?? 217;
+    if (modo === "municipio") {
+      return corMunicipio(hue, m.totalVotos, maxValorMunicipio);
+    }
+    return corRegiao(hue, totalPorRegiao.get(m.regiaoId) ?? 0, maxValorRegiao);
+  };
+
+  const regioesLegenda = useMemo(() => {
+    const nomes = new Set(municipios.map((m) => m.regiaoNome));
+    return Array.from(nomes).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [municipios]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -77,8 +106,8 @@ export function MapaParaense({ municipios }: { municipios: MunicipioMapa[] }) {
               <path
                 key={m.id}
                 d={path}
-                fill={corPorIntensidade(valorDe(m), maxValor)}
-                stroke={isHover ? "#93c5fd" : "#0a0a0a"}
+                fill={corDe(m)}
+                stroke={isHover ? "#f8fafc" : "#0a0a0a"}
                 strokeWidth={isHover ? 2 : 0.5}
                 className="cursor-pointer transition-[fill,stroke] duration-150"
                 onMouseEnter={() => setHover(m)}
@@ -103,6 +132,18 @@ export function MapaParaense({ municipios }: { municipios: MunicipioMapa[] }) {
             )}
           </div>
         )}
+      </div>
+
+      <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5">
+        {regioesLegenda.map((nome) => (
+          <span key={nome} className="flex items-center gap-1.5 text-xs text-neutral-400">
+            <span
+              className="h-2.5 w-2.5 rounded-full"
+              style={{ backgroundColor: `hsl(${REGIAO_HUE[nome] ?? 217} 65% 55%)` }}
+            />
+            {nome}
+          </span>
+        ))}
       </div>
 
       <p className="text-center text-xs text-neutral-600">

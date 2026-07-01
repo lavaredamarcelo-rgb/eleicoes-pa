@@ -52,6 +52,27 @@ async function criarCandidatosComVotos(
   }
 }
 
+async function criarCandidatosComVotosFixos(
+  cargoId: string,
+  candidatosBase: { nome: string; numero: number; partido: string; votos: number }[],
+  partidosById: Map<string, string>,
+  municipioId: string
+) {
+  for (const c of candidatosBase) {
+    const candidato = await prisma.candidato.create({
+      data: {
+        nome: c.nome,
+        numero: c.numero,
+        cargoId,
+        partidoId: partidosById.get(c.partido)!,
+      },
+    });
+    await prisma.resultado.create({
+      data: { candidatoId: candidato.id, municipioId, votos: c.votos },
+    });
+  }
+}
+
 async function main() {
   // Limpa dados de execuções anteriores do seed (ordem respeita FKs)
   await prisma.resultado.deleteMany();
@@ -210,17 +231,61 @@ async function main() {
     [80000, 300000]
   );
 
-  // Candidatos - Vereador de Belém (proporcional)
-  await criarCandidatosComVotos(
+  // Candidatos - Vereador de Belém (proporcional). Cada partido tem 10
+  // candidatos com uma curva de votos decrescente (como numa eleição real:
+  // poucos "puxadores de voto" e uma cauda longa) para que a apuração
+  // gere eleitos E suplentes de verdade, não só eleitos.
+  const curvaVotos = [9000, 7000, 5500, 4200, 3200, 2400, 1800, 1300, 900, 600];
+  const partidosVereador: { partido: string; nomes: string[] }[] = [
+    {
+      partido: "PT",
+      nomes: [
+        "Tiago Pereira", "Cláudia Nascimento", "Fábio Andrade", "Renan Costa",
+        "Débora Lins", "Wagner Souza", "Aline Furtado", "Bruno Cardozo",
+        "Patrícia Melo", "Igor Nogueira",
+      ],
+    },
+    {
+      partido: "PL",
+      nomes: [
+        "Larissa Monteiro", "Diego Salgado", "Vanessa Coutinho", "Rodrigo Aguiar",
+        "Camila Brito", "Otávio Reis", "Juliana Prado", "Leandro Farias",
+        "Bianca Teixeira", "Hugo Martins",
+      ],
+    },
+    {
+      partido: "MDB",
+      nomes: [
+        "Marcelo Tavares", "Simone Ribeiro", "André Luz", "Fernanda Castro",
+        "Caio Ferreira", "Talita Barros", "Vinícius Moraes", "Sandra Pinheiro",
+        "Gustavo Rocha", "Elaine Duarte",
+      ],
+    },
+    {
+      partido: "PSD",
+      nomes: [
+        "Eduardo Farias", "Priscila Amaral", "Marcos Vieira", "Natália Correia",
+        "Felipe Guimarães", "Roberta Lacerda", "César Bittencourt", "Luíza Andrade",
+        "Thiago Nunes", "Ana Beatriz Lopes",
+      ],
+    },
+  ];
+
+  let numeroSequencial = 100;
+  const candidatosVereadorFixos = partidosVereador.flatMap(({ partido, nomes }) =>
+    nomes.map((nome, i) => ({
+      nome,
+      numero: numeroSequencial++,
+      partido,
+      votos: curvaVotos[i],
+    }))
+  );
+
+  await criarCandidatosComVotosFixos(
     cargoVereador.id,
-    [
-      { nome: "Tiago Pereira", numero: 1350, partido: "PT" },
-      { nome: "Larissa Monteiro", numero: 2255, partido: "PL" },
-      { nome: "Eduardo Farias", numero: 5510, partido: "PSD" },
-    ],
+    candidatosVereadorFixos,
     partidosById,
-    [belemId],
-    [3000, 25000]
+    belemId
   );
 
   // Usuário admin

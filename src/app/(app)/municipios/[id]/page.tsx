@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { School } from "lucide-react";
 import { CardLink } from "@/components/CardLink";
+import { PdfDownloadLink } from "@/components/PdfDownloadLink";
 import { getMunicipio } from "@/lib/data";
 
 export default async function MunicipioDetailPage({
@@ -27,8 +28,13 @@ export default async function MunicipioDetailPage({
   return (
     <div className="flex flex-col gap-6">
       <section>
-        <h1 className="text-lg font-semibold">{municipio.nome}</h1>
-        <p className="text-sm text-neutral-500">{municipio.regiao.nome}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-lg font-semibold">{municipio.nome}</h1>
+            <p className="text-sm text-neutral-500">{municipio.regiao.nome}</p>
+          </div>
+          <PdfDownloadLink href={`/api/pdf/municipio/${municipio.id}`} />
+        </div>
         <p className="mt-2 text-2xl font-bold text-blue-400">
           {totalVotos.toLocaleString("pt-BR")} votos
         </p>

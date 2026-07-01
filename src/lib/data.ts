@@ -42,8 +42,16 @@ export async function getCandidato(id: string) {
         include: { municipio: { include: { regiao: true } } },
         orderBy: { votos: "desc" },
       },
+      trocasPartido: {
+        include: { partidoOrigem: true, partidoDestino: true },
+        orderBy: { data: "desc" },
+      },
     },
   });
+}
+
+export async function getPartidos() {
+  return prisma.partido.findMany({ orderBy: { sigla: "asc" } });
 }
 
 export async function getMunicipios(regiaoId?: string) {

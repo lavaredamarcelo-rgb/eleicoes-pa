@@ -63,11 +63,38 @@ export async function calcularQuocienteEleitoral(cargoId: string) {
     }))
     .sort((a, b) => b.votos - a.votos);
 
+  const vagasPorPartido = new Map(partidos.map((p) => [p.partidoId, p.quocientePartidario]));
+
+  // Dentro de cada partido, os candidatos mais votados até o número de
+  // vagas do partido são eleitos (titulares); os demais viram suplentes,
+  // na ordem de votação. Simplificação: não trata "sobras" por médias.
+  const candidatosPorPartido = new Map<string, typeof candidatosComVotos>();
+  for (const c of candidatosComVotos) {
+    const lista = candidatosPorPartido.get(c.partido.id);
+    if (lista) lista.push(c);
+    else candidatosPorPartido.set(c.partido.id, [c]);
+  }
+
+  const candidatosComSituacao = Array.from(candidatosPorPartido.entries()).flatMap(
+    ([partidoId, lista]) => {
+      const vagas = vagasPorPartido.get(partidoId) ?? 0;
+      return lista
+        .sort((a, b) => b.votos - a.votos)
+        .map((c, i) => ({
+          ...c,
+          situacao: i < vagas ? ("eleito" as const) : ("suplente" as const),
+          posicaoNoPartido: i + 1,
+          ordemSuplencia: i < vagas ? null : i + 1 - vagas,
+        }));
+    }
+  );
+
   return {
     cargo,
     votosValidos,
     quocienteEleitoral,
     candidatos: candidatosComVotos.sort((a, b) => b.votos - a.votos),
+    candidatosComSituacao: candidatosComSituacao.sort((a, b) => b.votos - a.votos),
     partidos,
   };
 }

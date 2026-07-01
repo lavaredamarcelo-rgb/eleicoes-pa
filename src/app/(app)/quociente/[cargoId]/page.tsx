@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { calcularQuocienteEleitoral, calcularMajoritario } from "@/lib/eleitoral";
+import { getPartidos } from "@/lib/data";
+import { SimuladorPartido } from "@/components/SimuladorPartido";
+import { PdfDownloadLink } from "@/components/PdfDownloadLink";
 
 export default async function QuocienteDetailPage({
   params,
@@ -12,12 +15,15 @@ export default async function QuocienteDetailPage({
   if (!cargo) notFound();
 
   if (cargo.tipoApuracao === "PROPORCIONAL") {
-    const resultado = await calcularQuocienteEleitoral(cargoId);
+    const [resultado, partidos] = await Promise.all([
+      calcularQuocienteEleitoral(cargoId),
+      getPartidos(),
+    ]);
     if (!resultado) notFound();
 
     return (
       <div className="flex flex-col gap-6">
-        <Header cargoNome={resultado.cargo.nome} municipioNome={resultado.cargo.municipio?.nome} />
+        <Header cargoNome={resultado.cargo.nome} municipioNome={resultado.cargo.municipio?.nome} cargoId={cargoId} />
 
         <section className="grid grid-cols-2 gap-3">
           <StatCard label="Votos válidos" value={resultado.votosValidos.toLocaleString("pt-BR")} />
@@ -55,23 +61,52 @@ export default async function QuocienteDetailPage({
           ))}
         </section>
 
-        <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-medium text-neutral-400">Candidatos mais votados</h2>
-          {resultado.candidatos.map((c) => (
-            <div
-              key={c.id}
-              className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-2"
-            >
-              <div>
-                <p>{c.nome}</p>
-                <p className="text-xs text-neutral-500">
-                  {c.numero} · {c.partido.sigla}
-                </p>
-              </div>
-              <span className="text-sm font-medium">{c.votos.toLocaleString("pt-BR")}</span>
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-medium text-neutral-400">Eleitos e suplentes</h2>
+          {resultado.partidos.map((p) => (
+            <div key={p.partidoId} className="flex flex-col gap-2">
+              <p className="text-xs font-medium text-neutral-500">{p.sigla}</p>
+              {resultado.candidatosComSituacao
+                .filter((c) => c.partido.id === p.partidoId)
+                .map((c) => (
+                  <div
+                    key={c.id}
+                    className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-2"
+                  >
+                    <div>
+                      <p>{c.nome}</p>
+                      <p className="text-xs text-neutral-500">
+                        {c.numero} · {c.votos.toLocaleString("pt-BR")} votos
+                      </p>
+                    </div>
+                    {c.situacao === "eleito" ? (
+                      <span className="rounded-full bg-emerald-950 px-2 py-1 text-xs font-medium text-emerald-300">
+                        Eleito
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-neutral-800 px-2 py-1 text-xs text-neutral-400">
+                        {c.ordemSuplencia}º suplente
+                      </span>
+                    )}
+                  </div>
+                ))}
             </div>
           ))}
         </section>
+
+        <SimuladorPartido
+          candidatos={resultado.candidatosComSituacao.map((c) => ({
+            id: c.id,
+            nome: c.nome,
+            numero: c.numero,
+            votos: c.votos,
+            partidoId: c.partido.id,
+            partidoSigla: c.partido.sigla,
+            situacaoOriginal: c.situacao,
+          }))}
+          partidos={partidos}
+          quocienteEleitoral={resultado.quocienteEleitoral}
+        />
       </div>
     );
   }
@@ -81,7 +116,7 @@ export default async function QuocienteDetailPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <Header cargoNome={resultado.cargo.nome} municipioNome={resultado.cargo.municipio?.nome} />
+      <Header cargoNome={resultado.cargo.nome} municipioNome={resultado.cargo.municipio?.nome} cargoId={cargoId} />
 
       <section className="rounded-xl border border-blue-900 bg-blue-950/40 px-4 py-3">
         <p className="text-xs text-blue-300">Votos válidos</p>
@@ -121,11 +156,22 @@ export default async function QuocienteDetailPage({
   );
 }
 
-function Header({ cargoNome, municipioNome }: { cargoNome: string; municipioNome?: string }) {
+function Header({
+  cargoNome,
+  municipioNome,
+  cargoId,
+}: {
+  cargoNome: string;
+  municipioNome?: string;
+  cargoId: string;
+}) {
   return (
-    <div>
-      <h1 className="text-lg font-semibold">{cargoNome}</h1>
-      <p className="text-sm text-neutral-500">{municipioNome ?? "Pará (estadual)"}</p>
+    <div className="flex items-start justify-between gap-3">
+      <div>
+        <h1 className="text-lg font-semibold">{cargoNome}</h1>
+        <p className="text-sm text-neutral-500">{municipioNome ?? "Pará (estadual)"}</p>
+      </div>
+      <PdfDownloadLink href={`/api/pdf/quociente/${cargoId}`} />
     </div>
   );
 }
