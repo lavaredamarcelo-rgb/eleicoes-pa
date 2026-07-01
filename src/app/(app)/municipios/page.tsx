@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { CardLink } from "@/components/CardLink";
 import { getMunicipios } from "@/lib/data";
 
 export default async function MunicipiosPage() {
@@ -26,23 +26,19 @@ export default async function MunicipiosPage() {
 
       {regioesOrdenadas.map(([regiaoNome, lista]) => (
         <details key={regiaoNome} className="group" open={regioesOrdenadas.length <= 1}>
-          <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
+          <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 transition-colors duration-150 hover:border-neutral-700 hover:bg-neutral-800">
             <span className="font-medium">{regiaoNome}</span>
             <span className="text-xs text-neutral-500">{lista.length} municípios</span>
           </summary>
 
           <div className="mt-2 flex flex-col gap-2">
             {lista.map((m) => (
-              <Link
-                key={m.id}
-                href={`/municipios/${m.id}`}
-                className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3"
-              >
+              <CardLink key={m.id} href={`/municipios/${m.id}`}>
                 <p className="font-medium">{m.nome}</p>
                 <span className="text-sm font-semibold text-blue-400">
                   {m.totalVotos.toLocaleString("pt-BR")}
                 </span>
-              </Link>
+              </CardLink>
             ))}
           </div>
         </details>

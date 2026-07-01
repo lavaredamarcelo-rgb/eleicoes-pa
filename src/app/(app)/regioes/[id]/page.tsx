@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
+import { CardLink } from "@/components/CardLink";
 import { getRegiao } from "@/lib/data";
 
 export default async function RegiaoDetailPage({
@@ -26,14 +26,10 @@ export default async function RegiaoDetailPage({
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-medium text-neutral-400">Municípios</h2>
         {regiao.municipios.map((m) => (
-          <Link
-            key={m.id}
-            href={`/municipios/${m.id}`}
-            className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-2"
-          >
+          <CardLink key={m.id} href={`/municipios/${m.id}`}>
             <span>{m.nome}</span>
             <span className="text-sm font-medium">{m.totalVotos.toLocaleString("pt-BR")}</span>
-          </Link>
+          </CardLink>
         ))}
       </section>
     </div>

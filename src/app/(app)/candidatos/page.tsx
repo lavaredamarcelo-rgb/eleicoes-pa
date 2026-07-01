@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { CardLink } from "@/components/CardLink";
 import { getCargos, getCandidatosPorCargo } from "@/lib/data";
 
 export default async function CandidatosPage() {
@@ -24,11 +24,7 @@ export default async function CandidatosPage() {
 
           <div className="flex flex-col gap-2">
             {candidatos.map((c) => (
-              <Link
-                key={c.id}
-                href={`/candidatos/${c.id}`}
-                className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3"
-              >
+              <CardLink key={c.id} href={`/candidatos/${c.id}`}>
                 <div>
                   <p className="font-medium">{c.nome}</p>
                   <p className="text-xs text-neutral-500">
@@ -38,7 +34,7 @@ export default async function CandidatosPage() {
                 <span className="text-sm font-semibold text-blue-400">
                   {c.totalVotos.toLocaleString("pt-BR")}
                 </span>
-              </Link>
+              </CardLink>
             ))}
           </div>
         </section>

@@ -1,6 +1,7 @@
 import { verifySession } from "@/lib/dal";
 import { logout } from "@/app/actions/auth";
 import { TabBar } from "@/components/TabBar";
+import { PageTransition } from "@/components/PageTransition";
 import { Settings } from "lucide-react";
 import Link from "next/link";
 
@@ -36,7 +37,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-24 pt-4">{children}</main>
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-24 pt-4">
+        <PageTransition>{children}</PageTransition>
+      </main>
 
       <TabBar />
     </div>

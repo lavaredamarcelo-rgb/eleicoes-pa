@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { CardLink } from "@/components/CardLink";
 import { getCargos } from "@/lib/data";
 
 export default async function QuocientePage() {
@@ -15,11 +15,7 @@ export default async function QuocientePage() {
 
       <div className="flex flex-col gap-2">
         {cargos.map((cargo) => (
-          <Link
-            key={cargo.id}
-            href={`/quociente/${cargo.id}`}
-            className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3"
-          >
+          <CardLink key={cargo.id} href={`/quociente/${cargo.id}`}>
             <div>
               <p className="font-medium">{cargo.nome}</p>
               <p className="text-xs text-neutral-500">
@@ -29,7 +25,7 @@ export default async function QuocientePage() {
             <span className="rounded-full bg-neutral-800 px-2 py-1 text-xs text-neutral-300">
               {cargo.tipoApuracao === "PROPORCIONAL" ? "Proporcional" : "Majoritário"}
             </span>
-          </Link>
+          </CardLink>
         ))}
       </div>
     </div>

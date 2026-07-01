@@ -24,16 +24,16 @@ enum TipoApuracao {
 }
 
 model User {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   nome         String
-  email        String   @unique
+  email        String     @unique
   passwordHash String
-  role         Role     @default(COORDENADOR)
+  role         Role       @default(COORDENADOR)
   regiaoId     String?
-  regiao       Regiao?  @relation(fields: [regiaoId], references: [id])
+  regiao       Regiao?    @relation(fields: [regiaoId], references: [id])
   candidatoId  String?
   candidato    Candidato? @relation(fields: [candidatoId], references: [id])
-  createdAt    DateTime @default(now())
+  createdAt    DateTime   @default(now())
 }
 
 model Eleicao {
@@ -88,25 +88,41 @@ model Regiao {
 }
 
 model Municipio {
-  id         String      @id @default(cuid())
-  nome       String
-  codigoTse  String?     @unique
-  regiaoId   String
-  regiao     Regiao      @relation(fields: [regiaoId], references: [id])
-  resultados Resultado[]
-  cargos     Cargo[]
+  id                 String             @id @default(cuid())
+  nome               String
+  codigoIbge         String?            @unique
+  codigoTse          String?            @unique
+  regiaoId           String
+  regiao             Regiao             @relation(fields: [regiaoId], references: [id])
+  resultados         Resultado[]
+  cargos             Cargo[]
+  colegiosEleitorais ColegioEleitoral[]
 
   @@unique([nome, regiaoId])
 }
 
-model Resultado {
-  id           String    @id @default(cuid())
-  candidatoId  String
-  candidato    Candidato @relation(fields: [candidatoId], references: [id])
-  municipioId  String
-  municipio    Municipio @relation(fields: [municipioId], references: [id])
-  votos        Int       @default(0)
-  atualizadoEm DateTime  @updatedAt
+// Local de votação (ex: uma escola) dentro do município. Estrutura
+// preparada para a importação oficial do TSE; ainda não é populada com
+// dados fictícios, então a tabela fica vazia até essa importação existir.
+model ColegioEleitoral {
+  id          String      @id @default(cuid())
+  nome        String
+  codigoTse   String?     @unique
+  municipioId String
+  municipio   Municipio   @relation(fields: [municipioId], references: [id])
+  resultados  Resultado[]
+}
 
-  @@unique([candidatoId, municipioId])
+model Resultado {
+  id                 String            @id @default(cuid())
+  candidatoId        String
+  candidato          Candidato         @relation(fields: [candidatoId], references: [id])
+  municipioId        String
+  municipio          Municipio         @relation(fields: [municipioId], references: [id])
+  colegioEleitoralId String?
+  colegioEleitoral   ColegioEleitoral? @relation(fields: [colegioEleitoralId], references: [id])
+  votos              Int               @default(0)
+  atualizadoEm       DateTime          @updatedAt
+
+  @@unique([candidatoId, municipioId, colegioEleitoralId])
 }

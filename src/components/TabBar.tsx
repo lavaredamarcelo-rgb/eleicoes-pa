@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, MapPin, Layers, Calculator, Upload } from "lucide-react";
+import { Home, Users, MapPin, Layers, Calculator, Map } from "lucide-react";
 
 const TABS = [
   { href: "/inicio", label: "Início", icon: Home },
+  { href: "/mapa", label: "Mapa", icon: Map },
   { href: "/candidatos", label: "Candidatos", icon: Users },
   { href: "/municipios", label: "Municípios", icon: MapPin },
   { href: "/regioes", label: "Regiões", icon: Layers },
   { href: "/quociente", label: "Quociente", icon: Calculator },
-  { href: "/importacao", label: "Importar", icon: Upload },
 ];
 
 export function TabBar() {

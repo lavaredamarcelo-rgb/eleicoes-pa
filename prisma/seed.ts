@@ -2,61 +2,14 @@ import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import bcrypt from "bcryptjs";
+import municipiosIbge from "../src/data/pa-municipios.json";
 
 const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
-// As 6 mesorregiões e os 144 municípios são os oficiais do IBGE para o
-// Pará (servicodados.ibge.gov.br/api/v1/localidades/estados/PA/municipios).
-const REGIOES: Record<string, string[]> = {
-  "Metropolitana de Belém": [
-    "Ananindeua", "Barcarena", "Belém", "Benevides", "Bujaru", "Castanhal",
-    "Inhangapi", "Marituba", "Santa Bárbara do Pará", "Santa Izabel do Pará",
-    "Santo Antônio do Tauá",
-  ],
-  "Baixo Amazonas": [
-    "Alenquer", "Almeirim", "Belterra", "Curuá", "Faro", "Juruti",
-    "Mojuí dos Campos", "Monte Alegre", "Oriximiná", "Placas", "Porto de Moz",
-    "Prainha", "Santarém", "Terra Santa", "Óbidos",
-  ],
-  "Marajó": [
-    "Afuá", "Anajás", "Bagre", "Breves", "Cachoeira do Arari", "Chaves",
-    "Curralinho", "Gurupá", "Melgaço", "Muaná", "Ponta de Pedras", "Portel",
-    "Salvaterra", "Santa Cruz do Arari", "Soure", "São Sebastião da Boa Vista",
-  ],
-  "Nordeste Paraense": [
-    "Abaetetuba", "Acará", "Augusto Corrêa", "Aurora do Pará", "Baião",
-    "Bonito", "Bragança", "Cachoeira do Piriá", "Cametá", "Capanema",
-    "Capitão Poço", "Colares", "Concórdia do Pará", "Curuçá",
-    "Garrafão do Norte", "Igarapé-Açu", "Igarapé-Miri", "Ipixuna do Pará",
-    "Irituia", "Limoeiro do Ajuru", "Magalhães Barata", "Maracanã",
-    "Marapanim", "Mocajuba", "Moju", "Mãe do Rio", "Nova Esperança do Piriá",
-    "Nova Timboteua", "Oeiras do Pará", "Ourém", "Peixe-Boi", "Primavera",
-    "Quatipuru", "Salinópolis", "Santa Luzia do Pará", "Santa Maria do Pará",
-    "Santarém Novo", "São Caetano de Odivelas", "São Domingos do Capim",
-    "São Francisco do Pará", "São João da Ponta", "São João de Pirabas",
-    "São Miguel do Guamá", "Tailândia", "Terra Alta", "Tomé-Açu",
-    "Tracuateua", "Vigia", "Viseu",
-  ],
-  "Sudeste Paraense": [
-    "Abel Figueiredo", "Bannach", "Bom Jesus do Tocantins",
-    "Brejo Grande do Araguaia", "Breu Branco", "Canaã dos Carajás",
-    "Conceição do Araguaia", "Cumaru do Norte", "Curionópolis", "Dom Eliseu",
-    "Eldorado do Carajás", "Floresta do Araguaia", "Goianésia do Pará",
-    "Itupiranga", "Jacundá", "Marabá", "Nova Ipixuna", "Novo Repartimento",
-    "Ourilândia do Norte", "Palestina do Pará", "Paragominas", "Parauapebas",
-    "Pau D'Arco", "Piçarra", "Redenção", "Rio Maria", "Rondon do Pará",
-    "Santa Maria das Barreiras", "Santana do Araguaia", "Sapucaia",
-    "São Domingos do Araguaia", "São Félix do Xingu",
-    "São Geraldo do Araguaia", "São João do Araguaia", "Tucumã", "Tucuruí",
-    "Ulianópolis", "Xinguara", "Água Azul do Norte",
-  ],
-  "Sudoeste Paraense": [
-    "Altamira", "Anapu", "Aveiro", "Brasil Novo", "Itaituba", "Jacareacanga",
-    "Medicilândia", "Novo Progresso", "Pacajá", "Rurópolis",
-    "Senador José Porfírio", "Trairão", "Uruará", "Vitória do Xingu",
-  ],
-};
+// Os 144 municípios e as 6 mesorregiões oficiais do Pará, gerados por
+// scripts/generate-municipios-data.mjs a partir da API do IBGE.
+const MUNICIPIOS: { nome: string; codigoIbge: string; regiao: string }[] = municipiosIbge;
 
 const PARTIDOS = [
   { sigla: "PT", nome: "Partido dos Trabalhadores", numero: 13 },
@@ -102,6 +55,7 @@ async function criarCandidatosComVotos(
 async function main() {
   // Limpa dados de execuções anteriores do seed (ordem respeita FKs)
   await prisma.resultado.deleteMany();
+  await prisma.colegioEleitoral.deleteMany();
   await prisma.candidato.deleteMany();
   await prisma.cargo.deleteMany();
   await prisma.eleicao.deleteMany();
@@ -111,21 +65,26 @@ async function main() {
   await prisma.partido.deleteMany();
 
   // Regiões e municípios
+  const regiaoIdByNome = new Map<string, string>();
   const municipiosByNome = new Map<string, string>();
-  for (const [regiaoNome, cidades] of Object.entries(REGIOES)) {
-    const regiao = await prisma.regiao.upsert({
-      where: { nome: regiaoNome },
-      update: {},
-      create: { nome: regiaoNome },
-    });
-    for (const cidade of cidades) {
-      const municipio = await prisma.municipio.upsert({
-        where: { nome_regiaoId: { nome: cidade, regiaoId: regiao.id } },
+  for (const m of MUNICIPIOS) {
+    let regiaoId = regiaoIdByNome.get(m.regiao);
+    if (!regiaoId) {
+      const regiao = await prisma.regiao.upsert({
+        where: { nome: m.regiao },
         update: {},
-        create: { nome: cidade, regiaoId: regiao.id },
+        create: { nome: m.regiao },
       });
-      municipiosByNome.set(cidade, municipio.id);
+      regiaoId = regiao.id;
+      regiaoIdByNome.set(m.regiao, regiaoId);
     }
+
+    const municipio = await prisma.municipio.upsert({
+      where: { nome_regiaoId: { nome: m.nome, regiaoId } },
+      update: { codigoIbge: m.codigoIbge },
+      create: { nome: m.nome, regiaoId, codigoIbge: m.codigoIbge },
+    });
+    municipiosByNome.set(m.nome, municipio.id);
   }
 
   // Partidos

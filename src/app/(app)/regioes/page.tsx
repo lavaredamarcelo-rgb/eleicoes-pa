@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { CardLink } from "@/components/CardLink";
 import { getRegioes } from "@/lib/data";
 
 export default async function RegioesPage() {
@@ -10,11 +10,7 @@ export default async function RegioesPage() {
 
       <div className="flex flex-col gap-2">
         {regioes.map((r) => (
-          <Link
-            key={r.id}
-            href={`/regioes/${r.id}`}
-            className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3"
-          >
+          <CardLink key={r.id} href={`/regioes/${r.id}`}>
             <div>
               <p className="font-medium">{r.nome}</p>
               <p className="text-xs text-neutral-500">{r.totalMunicipios} municípios</p>
@@ -22,7 +18,7 @@ export default async function RegioesPage() {
             <span className="text-sm font-semibold text-blue-400">
               {r.totalVotos.toLocaleString("pt-BR")}
             </span>
-          </Link>
+          </CardLink>
         ))}
       </div>
     </div>

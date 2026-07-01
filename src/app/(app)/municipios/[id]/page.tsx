@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
+import { School } from "lucide-react";
+import { CardLink } from "@/components/CardLink";
 import { getMunicipio } from "@/lib/data";
 
 export default async function MunicipioDetailPage({
@@ -37,11 +38,7 @@ export default async function MunicipioDetailPage({
         <section key={grupo.nome} className="flex flex-col gap-2">
           <h2 className="text-sm font-medium text-neutral-400">{grupo.nome}</h2>
           {grupo.resultados.map((r) => (
-            <Link
-              key={r.id}
-              href={`/candidatos/${r.candidato.id}`}
-              className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-2"
-            >
+            <CardLink key={r.id} href={`/candidatos/${r.candidato.id}`}>
               <div>
                 <p>{r.candidato.nome}</p>
                 <p className="text-xs text-neutral-500">
@@ -49,10 +46,34 @@ export default async function MunicipioDetailPage({
                 </p>
               </div>
               <span className="text-sm font-medium">{r.votos.toLocaleString("pt-BR")}</span>
-            </Link>
+            </CardLink>
           ))}
         </section>
       ))}
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-sm font-medium text-neutral-400">Distribuição por colégio eleitoral</h2>
+        {municipio.colegiosEleitorais.length > 0 ? (
+          municipio.colegiosEleitorais.map((c) => (
+            <div
+              key={c.id}
+              className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3"
+            >
+              {c.nome}
+            </div>
+          ))
+        ) : (
+          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-neutral-700 bg-neutral-900/50 px-6 py-8 text-center">
+            <School className="text-neutral-600" size={22} />
+            <p className="text-sm text-neutral-400">
+              Ainda não há dados por colégio eleitoral neste município.
+            </p>
+            <p className="text-xs text-neutral-600">
+              Essa granularidade chega com a importação oficial do TSE.
+            </p>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

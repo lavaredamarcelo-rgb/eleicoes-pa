@@ -71,6 +71,7 @@ export async function getMunicipio(id: string) {
         include: { candidato: { include: { partido: true, cargo: true } } },
         orderBy: { votos: "desc" },
       },
+      colegiosEleitorais: { orderBy: { nome: "asc" } },
     },
   });
   return municipio;
@@ -90,6 +91,33 @@ export async function getRegioes() {
       0
     );
     return { ...r, totalVotos, totalMunicipios: r.municipios.length };
+  });
+}
+
+export async function getMapaDados(cargoId?: string) {
+  const municipios = await prisma.municipio.findMany({
+    include: {
+      regiao: true,
+      resultados: {
+        where: cargoId ? { candidato: { cargoId } } : undefined,
+        include: { candidato: { include: { partido: true } } },
+        orderBy: { votos: "desc" },
+      },
+    },
+  });
+
+  return municipios.map((m) => {
+    const totalVotos = m.resultados.reduce((sum, r) => sum + r.votos, 0);
+    const lider = m.resultados[0]?.candidato;
+    return {
+      id: m.id,
+      nome: m.nome,
+      codigoIbge: m.codigoIbge,
+      regiaoId: m.regiaoId,
+      regiaoNome: m.regiao.nome,
+      totalVotos,
+      lider: lider ? { nome: lider.nome, partido: lider.partido.sigla } : null,
+    };
   });
 }
 

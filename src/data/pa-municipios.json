@@ -1,0 +1,722 @@
+[
+  {
+    "nome": "Abaetetuba",
+    "codigoIbge": "1500107",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Abel Figueiredo",
+    "codigoIbge": "1500131",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Acará",
+    "codigoIbge": "1500206",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Afuá",
+    "codigoIbge": "1500305",
+    "regiao": "Marajó"
+  },
+  {
+    "nome": "Água Azul do Norte",
+    "codigoIbge": "1500347",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Alenquer",
+    "codigoIbge": "1500404",
+    "regiao": "Baixo Amazonas"
+  },
+  {
+    "nome": "Almeirim",
+    "codigoIbge": "1500503",
+    "regiao": "Baixo Amazonas"
+  },
+  {
+    "nome": "Altamira",
+    "codigoIbge": "1500602",
+    "regiao": "Sudoeste Paraense"
+  },
+  {
+    "nome": "Anajás",
+    "codigoIbge": "1500701",
+    "regiao": "Marajó"
+  },
+  {
+    "nome": "Ananindeua",
+    "codigoIbge": "1500800",
+    "regiao": "Metropolitana de Belém"
+  },
+  {
+    "nome": "Anapu",
+    "codigoIbge": "1500859",
+    "regiao": "Sudoeste Paraense"
+  },
+  {
+    "nome": "Augusto Corrêa",
+    "codigoIbge": "1500909",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Aurora do Pará",
+    "codigoIbge": "1500958",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Aveiro",
+    "codigoIbge": "1501006",
+    "regiao": "Sudoeste Paraense"
+  },
+  {
+    "nome": "Bagre",
+    "codigoIbge": "1501105",
+    "regiao": "Marajó"
+  },
+  {
+    "nome": "Baião",
+    "codigoIbge": "1501204",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Bannach",
+    "codigoIbge": "1501253",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Barcarena",
+    "codigoIbge": "1501303",
+    "regiao": "Metropolitana de Belém"
+  },
+  {
+    "nome": "Belém",
+    "codigoIbge": "1501402",
+    "regiao": "Metropolitana de Belém"
+  },
+  {
+    "nome": "Belterra",
+    "codigoIbge": "1501451",
+    "regiao": "Baixo Amazonas"
+  },
+  {
+    "nome": "Benevides",
+    "codigoIbge": "1501501",
+    "regiao": "Metropolitana de Belém"
+  },
+  {
+    "nome": "Bom Jesus do Tocantins",
+    "codigoIbge": "1501576",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Bonito",
+    "codigoIbge": "1501600",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Bragança",
+    "codigoIbge": "1501709",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Brasil Novo",
+    "codigoIbge": "1501725",
+    "regiao": "Sudoeste Paraense"
+  },
+  {
+    "nome": "Brejo Grande do Araguaia",
+    "codigoIbge": "1501758",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Breu Branco",
+    "codigoIbge": "1501782",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Breves",
+    "codigoIbge": "1501808",
+    "regiao": "Marajó"
+  },
+  {
+    "nome": "Bujaru",
+    "codigoIbge": "1501907",
+    "regiao": "Metropolitana de Belém"
+  },
+  {
+    "nome": "Cachoeira do Arari",
+    "codigoIbge": "1502004",
+    "regiao": "Marajó"
+  },
+  {
+    "nome": "Cachoeira do Piriá",
+    "codigoIbge": "1501956",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Cametá",
+    "codigoIbge": "1502103",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Canaã dos Carajás",
+    "codigoIbge": "1502152",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Capanema",
+    "codigoIbge": "1502202",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Capitão Poço",
+    "codigoIbge": "1502301",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Castanhal",
+    "codigoIbge": "1502400",
+    "regiao": "Metropolitana de Belém"
+  },
+  {
+    "nome": "Chaves",
+    "codigoIbge": "1502509",
+    "regiao": "Marajó"
+  },
+  {
+    "nome": "Colares",
+    "codigoIbge": "1502608",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Conceição do Araguaia",
+    "codigoIbge": "1502707",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Concórdia do Pará",
+    "codigoIbge": "1502756",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Cumaru do Norte",
+    "codigoIbge": "1502764",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Curionópolis",
+    "codigoIbge": "1502772",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Curralinho",
+    "codigoIbge": "1502806",
+    "regiao": "Marajó"
+  },
+  {
+    "nome": "Curuá",
+    "codigoIbge": "1502855",
+    "regiao": "Baixo Amazonas"
+  },
+  {
+    "nome": "Curuçá",
+    "codigoIbge": "1502905",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Dom Eliseu",
+    "codigoIbge": "1502939",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Eldorado do Carajás",
+    "codigoIbge": "1502954",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Faro",
+    "codigoIbge": "1503002",
+    "regiao": "Baixo Amazonas"
+  },
+  {
+    "nome": "Floresta do Araguaia",
+    "codigoIbge": "1503044",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Garrafão do Norte",
+    "codigoIbge": "1503077",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Goianésia do Pará",
+    "codigoIbge": "1503093",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Gurupá",
+    "codigoIbge": "1503101",
+    "regiao": "Marajó"
+  },
+  {
+    "nome": "Igarapé-Açu",
+    "codigoIbge": "1503200",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Igarapé-Miri",
+    "codigoIbge": "1503309",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Inhangapi",
+    "codigoIbge": "1503408",
+    "regiao": "Metropolitana de Belém"
+  },
+  {
+    "nome": "Ipixuna do Pará",
+    "codigoIbge": "1503457",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Irituia",
+    "codigoIbge": "1503507",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Itaituba",
+    "codigoIbge": "1503606",
+    "regiao": "Sudoeste Paraense"
+  },
+  {
+    "nome": "Itupiranga",
+    "codigoIbge": "1503705",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Jacareacanga",
+    "codigoIbge": "1503754",
+    "regiao": "Sudoeste Paraense"
+  },
+  {
+    "nome": "Jacundá",
+    "codigoIbge": "1503804",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Juruti",
+    "codigoIbge": "1503903",
+    "regiao": "Baixo Amazonas"
+  },
+  {
+    "nome": "Limoeiro do Ajuru",
+    "codigoIbge": "1504000",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Mãe do Rio",
+    "codigoIbge": "1504059",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Magalhães Barata",
+    "codigoIbge": "1504109",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Marabá",
+    "codigoIbge": "1504208",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Maracanã",
+    "codigoIbge": "1504307",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Marapanim",
+    "codigoIbge": "1504406",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Marituba",
+    "codigoIbge": "1504422",
+    "regiao": "Metropolitana de Belém"
+  },
+  {
+    "nome": "Medicilândia",
+    "codigoIbge": "1504455",
+    "regiao": "Sudoeste Paraense"
+  },
+  {
+    "nome": "Melgaço",
+    "codigoIbge": "1504505",
+    "regiao": "Marajó"
+  },
+  {
+    "nome": "Mocajuba",
+    "codigoIbge": "1504604",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Moju",
+    "codigoIbge": "1504703",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Mojuí dos Campos",
+    "codigoIbge": "1504752",
+    "regiao": "Baixo Amazonas"
+  },
+  {
+    "nome": "Monte Alegre",
+    "codigoIbge": "1504802",
+    "regiao": "Baixo Amazonas"
+  },
+  {
+    "nome": "Muaná",
+    "codigoIbge": "1504901",
+    "regiao": "Marajó"
+  },
+  {
+    "nome": "Nova Esperança do Piriá",
+    "codigoIbge": "1504950",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Nova Ipixuna",
+    "codigoIbge": "1504976",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Nova Timboteua",
+    "codigoIbge": "1505007",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Novo Progresso",
+    "codigoIbge": "1505031",
+    "regiao": "Sudoeste Paraense"
+  },
+  {
+    "nome": "Novo Repartimento",
+    "codigoIbge": "1505064",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Óbidos",
+    "codigoIbge": "1505106",
+    "regiao": "Baixo Amazonas"
+  },
+  {
+    "nome": "Oeiras do Pará",
+    "codigoIbge": "1505205",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Oriximiná",
+    "codigoIbge": "1505304",
+    "regiao": "Baixo Amazonas"
+  },
+  {
+    "nome": "Ourém",
+    "codigoIbge": "1505403",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Ourilândia do Norte",
+    "codigoIbge": "1505437",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Pacajá",
+    "codigoIbge": "1505486",
+    "regiao": "Sudoeste Paraense"
+  },
+  {
+    "nome": "Palestina do Pará",
+    "codigoIbge": "1505494",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Paragominas",
+    "codigoIbge": "1505502",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Parauapebas",
+    "codigoIbge": "1505536",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Pau D'Arco",
+    "codigoIbge": "1505551",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Peixe-Boi",
+    "codigoIbge": "1505601",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Piçarra",
+    "codigoIbge": "1505635",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Placas",
+    "codigoIbge": "1505650",
+    "regiao": "Baixo Amazonas"
+  },
+  {
+    "nome": "Ponta de Pedras",
+    "codigoIbge": "1505700",
+    "regiao": "Marajó"
+  },
+  {
+    "nome": "Portel",
+    "codigoIbge": "1505809",
+    "regiao": "Marajó"
+  },
+  {
+    "nome": "Porto de Moz",
+    "codigoIbge": "1505908",
+    "regiao": "Baixo Amazonas"
+  },
+  {
+    "nome": "Prainha",
+    "codigoIbge": "1506005",
+    "regiao": "Baixo Amazonas"
+  },
+  {
+    "nome": "Primavera",
+    "codigoIbge": "1506104",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Quatipuru",
+    "codigoIbge": "1506112",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Redenção",
+    "codigoIbge": "1506138",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Rio Maria",
+    "codigoIbge": "1506161",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Rondon do Pará",
+    "codigoIbge": "1506187",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Rurópolis",
+    "codigoIbge": "1506195",
+    "regiao": "Sudoeste Paraense"
+  },
+  {
+    "nome": "Salinópolis",
+    "codigoIbge": "1506203",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Salvaterra",
+    "codigoIbge": "1506302",
+    "regiao": "Marajó"
+  },
+  {
+    "nome": "Santa Bárbara do Pará",
+    "codigoIbge": "1506351",
+    "regiao": "Metropolitana de Belém"
+  },
+  {
+    "nome": "Santa Cruz do Arari",
+    "codigoIbge": "1506401",
+    "regiao": "Marajó"
+  },
+  {
+    "nome": "Santa Izabel do Pará",
+    "codigoIbge": "1506500",
+    "regiao": "Metropolitana de Belém"
+  },
+  {
+    "nome": "Santa Luzia do Pará",
+    "codigoIbge": "1506559",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Santa Maria das Barreiras",
+    "codigoIbge": "1506583",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Santa Maria do Pará",
+    "codigoIbge": "1506609",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Santana do Araguaia",
+    "codigoIbge": "1506708",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Santarém",
+    "codigoIbge": "1506807",
+    "regiao": "Baixo Amazonas"
+  },
+  {
+    "nome": "Santarém Novo",
+    "codigoIbge": "1506906",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Santo Antônio do Tauá",
+    "codigoIbge": "1507003",
+    "regiao": "Metropolitana de Belém"
+  },
+  {
+    "nome": "São Caetano de Odivelas",
+    "codigoIbge": "1507102",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "São Domingos do Araguaia",
+    "codigoIbge": "1507151",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "São Domingos do Capim",
+    "codigoIbge": "1507201",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "São Félix do Xingu",
+    "codigoIbge": "1507300",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "São Francisco do Pará",
+    "codigoIbge": "1507409",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "São Geraldo do Araguaia",
+    "codigoIbge": "1507458",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "São João da Ponta",
+    "codigoIbge": "1507466",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "São João de Pirabas",
+    "codigoIbge": "1507474",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "São João do Araguaia",
+    "codigoIbge": "1507508",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "São Miguel do Guamá",
+    "codigoIbge": "1507607",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "São Sebastião da Boa Vista",
+    "codigoIbge": "1507706",
+    "regiao": "Marajó"
+  },
+  {
+    "nome": "Sapucaia",
+    "codigoIbge": "1507755",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Senador José Porfírio",
+    "codigoIbge": "1507805",
+    "regiao": "Sudoeste Paraense"
+  },
+  {
+    "nome": "Soure",
+    "codigoIbge": "1507904",
+    "regiao": "Marajó"
+  },
+  {
+    "nome": "Tailândia",
+    "codigoIbge": "1507953",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Terra Alta",
+    "codigoIbge": "1507961",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Terra Santa",
+    "codigoIbge": "1507979",
+    "regiao": "Baixo Amazonas"
+  },
+  {
+    "nome": "Tomé-Açu",
+    "codigoIbge": "1508001",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Tracuateua",
+    "codigoIbge": "1508035",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Trairão",
+    "codigoIbge": "1508050",
+    "regiao": "Sudoeste Paraense"
+  },
+  {
+    "nome": "Tucumã",
+    "codigoIbge": "1508084",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Tucuruí",
+    "codigoIbge": "1508100",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Ulianópolis",
+    "codigoIbge": "1508126",
+    "regiao": "Sudeste Paraense"
+  },
+  {
+    "nome": "Uruará",
+    "codigoIbge": "1508159",
+    "regiao": "Sudoeste Paraense"
+  },
+  {
+    "nome": "Vigia",
+    "codigoIbge": "1508209",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Viseu",
+    "codigoIbge": "1508308",
+    "regiao": "Nordeste Paraense"
+  },
+  {
+    "nome": "Vitória do Xingu",
+    "codigoIbge": "1508357",
+    "regiao": "Sudoeste Paraense"
+  },
+  {
+    "nome": "Xinguara",
+    "codigoIbge": "1508407",
+    "regiao": "Sudeste Paraense"
+  }
+]
