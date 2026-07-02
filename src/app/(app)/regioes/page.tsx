@@ -8,7 +8,7 @@ export default async function RegioesPage() {
     <div className="flex flex-col gap-4">
       <h1 className="text-lg font-semibold">Regiões</h1>
 
-      <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
         {regioes.map((r) => (
           <CardLink key={r.id} href={`/regioes/${r.id}`}>
             <div>

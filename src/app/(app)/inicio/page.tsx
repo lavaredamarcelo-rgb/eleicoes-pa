@@ -38,20 +38,22 @@ export default async function InicioPage() {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-medium text-neutral-400">Disputas cadastradas</h2>
-        {cargos.map((cargo) => (
-          <CardLink key={cargo.id} href={`/quociente/${cargo.id}`}>
-            <div>
-              <p className="font-medium">{cargo.nome}</p>
-              <p className="text-xs text-neutral-500">
-                {cargo.eleicao.tipo === "ESTADUAL" ? "Estadual" : "Municipal"} · {cargo.eleicao.ano}
-                {cargo.municipio ? ` · ${cargo.municipio.nome}` : " · PA"}
-              </p>
-            </div>
-            <span className="rounded-full bg-neutral-800 px-2 py-1 text-xs text-neutral-300">
-              {cargo.tipoApuracao === "PROPORCIONAL" ? `${cargo.vagas} vagas` : "Majoritário"}
-            </span>
-          </CardLink>
-        ))}
+        <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
+          {cargos.map((cargo) => (
+            <CardLink key={cargo.id} href={`/quociente/${cargo.id}`}>
+              <div>
+                <p className="font-medium">{cargo.nome}</p>
+                <p className="text-xs text-neutral-500">
+                  {cargo.eleicao.tipo === "ESTADUAL" ? "Estadual" : "Municipal"} · {cargo.eleicao.ano}
+                  {cargo.municipio ? ` · ${cargo.municipio.nome}` : " · PA"}
+                </p>
+              </div>
+              <span className="rounded-full bg-neutral-800 px-2 py-1 text-xs text-neutral-300">
+                {cargo.tipoApuracao === "PROPORCIONAL" ? `${cargo.vagas} vagas` : "Majoritário"}
+              </span>
+            </CardLink>
+          ))}
+        </div>
       </section>
     </div>
   );

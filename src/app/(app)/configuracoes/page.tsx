@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Upload, ChevronRight, Users } from "lucide-react";
 import { verifySession } from "@/lib/dal";
 import { logout } from "@/app/actions/auth";
+import { TrocarSenhaForm } from "@/components/TrocarSenhaForm";
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: "Administrador",
@@ -46,6 +47,8 @@ export default async function ConfiguracoesPage() {
           <ChevronRight size={18} className="text-neutral-600" />
         </Link>
       )}
+
+      <TrocarSenhaForm />
 
       <form action={logout}>
         <button

@@ -31,7 +31,7 @@ export default async function MunicipiosPage() {
             <span className="text-xs text-neutral-500">{lista.length} municípios</span>
           </summary>
 
-          <div className="mt-2 flex flex-col gap-2">
+          <div className="mt-2 grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
             {lista.map((m) => (
               <CardLink key={m.id} href={`/municipios/${m.id}`}>
                 <p className="font-medium">{m.nome}</p>
