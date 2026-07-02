@@ -99,6 +99,7 @@ export default async function QuocienteDetailPage({
 
         <div id="simulador">
           <SimuladorPartido
+            cargoId={cargoId}
             candidatos={resultado.candidatosComSituacao.map((c) => ({
               id: c.id,
               nome: c.nome,
@@ -109,6 +110,7 @@ export default async function QuocienteDetailPage({
               situacaoOriginal: c.situacao,
             }))}
             partidos={partidos}
+            vagas={resultado.cargo.vagas}
             quocienteEleitoral={resultado.quocienteEleitoral}
             candidatoInicialId={candidatoInicialId}
           />

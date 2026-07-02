@@ -64,9 +64,10 @@ export default async function CandidatoDetailPage({
           className="border-amber-900/50 bg-amber-950/10"
         >
           <div>
-            <p className="font-medium">Simular troca de partido</p>
+            <p className="font-medium">Simular cenário: troca de partido + crescimento</p>
             <p className="text-xs text-neutral-500">
-              Teste o efeito hipotético de uma troca de legenda no resultado
+              Veja se o candidato se elegeria em outro partido, com mais votos, ou os dois
+              combinados
             </p>
           </div>
         </CardLink>
