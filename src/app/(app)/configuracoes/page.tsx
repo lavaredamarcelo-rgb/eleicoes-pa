@@ -24,16 +24,18 @@ export default async function ConfiguracoesPage() {
         <p className="text-base font-medium">{ROLE_LABEL[session.role] ?? session.role}</p>
       </section>
 
-      <Link
-        href="/importacao"
-        className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3"
-      >
-        <span className="flex items-center gap-3">
-          <Upload size={18} className="text-neutral-400" />
-          <span className="text-sm font-medium">Importação de dados do TSE</span>
-        </span>
-        <ChevronRight size={18} className="text-neutral-600" />
-      </Link>
+      {session.role === "ADMIN" && (
+        <Link
+          href="/importacao"
+          className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3"
+        >
+          <span className="flex items-center gap-3">
+            <Upload size={18} className="text-neutral-400" />
+            <span className="text-sm font-medium">Importação de dados do TSE</span>
+          </span>
+          <ChevronRight size={18} className="text-neutral-600" />
+        </Link>
+      )}
 
       {session.role === "ADMIN" && (
         <Link
