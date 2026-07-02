@@ -7,10 +7,13 @@ import { PdfDownloadLink } from "@/components/PdfDownloadLink";
 
 export default async function QuocienteDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ cargoId: string }>;
+  searchParams: Promise<{ candidato?: string }>;
 }) {
   const { cargoId } = await params;
+  const { candidato: candidatoInicialId } = await searchParams;
   const cargo = await prisma.cargo.findUnique({ where: { id: cargoId } });
   if (!cargo) notFound();
 
@@ -94,19 +97,22 @@ export default async function QuocienteDetailPage({
           ))}
         </section>
 
-        <SimuladorPartido
-          candidatos={resultado.candidatosComSituacao.map((c) => ({
-            id: c.id,
-            nome: c.nome,
-            numero: c.numero,
-            votos: c.votos,
-            partidoId: c.partido.id,
-            partidoSigla: c.partido.sigla,
-            situacaoOriginal: c.situacao,
-          }))}
-          partidos={partidos}
-          quocienteEleitoral={resultado.quocienteEleitoral}
-        />
+        <div id="simulador">
+          <SimuladorPartido
+            candidatos={resultado.candidatosComSituacao.map((c) => ({
+              id: c.id,
+              nome: c.nome,
+              numero: c.numero,
+              votos: c.votos,
+              partidoId: c.partido.id,
+              partidoSigla: c.partido.sigla,
+              situacaoOriginal: c.situacao,
+            }))}
+            partidos={partidos}
+            quocienteEleitoral={resultado.quocienteEleitoral}
+            candidatoInicialId={candidatoInicialId}
+          />
+        </div>
       </div>
     );
   }

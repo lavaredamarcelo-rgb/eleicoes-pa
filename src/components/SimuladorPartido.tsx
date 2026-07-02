@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Candidato = {
   id: string;
@@ -18,17 +18,30 @@ export function SimuladorPartido({
   candidatos,
   partidos,
   quocienteEleitoral,
+  candidatoInicialId,
 }: {
   candidatos: Candidato[];
   partidos: Partido[];
   quocienteEleitoral: number;
+  candidatoInicialId?: string;
 }) {
   const [overrides, setOverrides] = useState<Map<string, string>>(new Map());
-  const [candidatoSelecionado, setCandidatoSelecionado] = useState("");
+  const [candidatoSelecionado, setCandidatoSelecionado] = useState(
+    candidatoInicialId && candidatos.some((c) => c.id === candidatoInicialId)
+      ? candidatoInicialId
+      : ""
+  );
   const [novoPartido, setNovoPartido] = useState("");
 
   const partidoById = useMemo(() => new Map(partidos.map((p) => [p.id, p])), [partidos]);
   const candidatoById = useMemo(() => new Map(candidatos.map((c) => [c.id, c])), [candidatos]);
+
+  useEffect(() => {
+    if (candidatoSelecionado) {
+      document.getElementById("simulador")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const resultado = useMemo(() => {
     const porPartido = new Map<

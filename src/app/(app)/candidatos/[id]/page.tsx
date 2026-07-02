@@ -58,6 +58,20 @@ export default async function CandidatoDetailPage({
         </div>
       </CardLink>
 
+      {candidato.cargo.tipoApuracao === "PROPORCIONAL" && (
+        <CardLink
+          href={`/quociente/${candidato.cargo.id}?candidato=${candidato.id}#simulador`}
+          className="border-amber-900/50 bg-amber-950/10"
+        >
+          <div>
+            <p className="font-medium">Simular troca de partido</p>
+            <p className="text-xs text-neutral-500">
+              Teste o efeito hipotético de uma troca de legenda no resultado
+            </p>
+          </div>
+        </CardLink>
+      )}
+
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-medium text-neutral-400">Votos por região</h2>
         {regioesOrdenadas.map(([regiaoId, r]) => (
