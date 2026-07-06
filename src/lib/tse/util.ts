@@ -5,9 +5,19 @@ export function normalizarTexto(texto: string) {
   return texto
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/['\u2019]/g, "")
     .trim()
     .toLowerCase();
 }
+
+// Alguns municipios tem grafia oficial divergente entre o IBGE (usado no
+// nosso cadastro) e o TSE. Mapeamos o nome normalizado do TSE para o nome
+// normalizado equivalente ja cadastrado.
+const ALIASES_MUNICIPIO: Record<string, string> = {
+  "eldorado dos carajas": "eldorado do carajas",
+  "santa isabel do para": "santa izabel do para",
+  "pau d arco": "pau darco",
+};
 
 // Mapeia o DS_CARGO do TSE (ex.: "VEREADOR", "DEPUTADO ESTADUAL") para o
 // nome de Cargo usado no sistema (ex.: "Vereador", "Deputado Estadual").
@@ -56,7 +66,7 @@ export async function encontrarMunicipio(codigoTse: string | undefined, nomeMuni
   }
 
   if (nomeMunicipio) {
-    const nomeNormalizado = normalizarTexto(nomeMunicipio);
+    const nomeNormalizado = ALIASES_MUNICIPIO[normalizarTexto(nomeMunicipio)] ?? normalizarTexto(nomeMunicipio);
     const porNome = municipios.find((m) => normalizarTexto(m.nome) === nomeNormalizado);
     if (porNome) return porNome;
   }

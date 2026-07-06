@@ -45,7 +45,10 @@ export async function importarCandidatos(
 
     let municipioId: string | null = null;
     if (cargoInfo.municipal) {
-      const codigoTse = row["CD_MUNICIPIO"]?.trim();
+      // O arquivo "consulta_cand" não traz CD_MUNICIPIO (esse campo só
+      // existe em "votacao_candidato_munzona"); para cargos municipais,
+      // SG_UE já é o código do município nesse arquivo.
+      const codigoTse = (row["CD_MUNICIPIO"] || row["SG_UE"])?.trim();
       const municipio = await encontrarMunicipio(codigoTse, row["NM_MUNICIPIO"] ?? row["NM_UE"]);
       if (!municipio) {
         resumo.avisos.push(

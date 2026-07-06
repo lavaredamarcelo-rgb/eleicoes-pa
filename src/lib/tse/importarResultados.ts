@@ -42,7 +42,11 @@ export async function importarResultados(
     }
 
     const numero = Number(row["NR_CANDIDATO"]);
-    const votos = Number(row["QT_VOTOS_NOMINAIS"]);
+    // QT_VOTOS_NOMINAIS_VALIDOS desconta votos posteriormente invalidados por
+    // decisão judicial (candidatura indeferida/cassada); preferimos esse
+    // campo quando presente. QT_VOTOS_NOMINAIS é o fallback para arquivos que
+    // não tragam a coluna validada.
+    const votos = Number(row["QT_VOTOS_NOMINAIS_VALIDOS"] ?? row["QT_VOTOS_NOMINAIS"]);
     if (!Number.isFinite(numero) || !Number.isFinite(votos)) {
       resumo.avisos.push(`Linha ${numeroLinha}: número de candidato ou votos inválido, ignorada.`);
       continue;
