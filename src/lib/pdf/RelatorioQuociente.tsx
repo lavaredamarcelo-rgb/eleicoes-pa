@@ -67,8 +67,8 @@ export function RelatorioQuociente({ resultado }: { resultado: Proporcional }) {
       })}
 
       <Text style={{ marginTop: 12, fontSize: 8, color: "#9ca3af" }}>
-        Cálculo simplificado (Lei 4.737/65, arts. 106-107), sem distribuição de sobras por
-        médias. Dados de demonstração.
+        Cálculo conforme Lei 4.737/65, arts. 106-109 (quociente eleitoral, quociente partidário e
+        distribuição das sobras pela maior média). Dados de demonstração.
       </Text>
     </ReportShell>
   );

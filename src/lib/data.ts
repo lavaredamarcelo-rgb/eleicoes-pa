@@ -191,23 +191,3 @@ export async function buscarTudo(query: string) {
 
   return { candidatos, municipios, regioes };
 }
-
-export async function getRegiao(id: string) {
-  const regiao = await prisma.regiao.findUnique({
-    where: { id },
-    include: {
-      municipios: {
-        include: { resultados: true },
-        orderBy: { nome: "asc" },
-      },
-    },
-  });
-  if (!regiao) return null;
-
-  const municipios = regiao.municipios.map((m) => ({
-    ...m,
-    totalVotos: m.resultados.reduce((sum, r) => sum + r.votos, 0),
-  }));
-
-  return { ...regiao, municipios };
-}

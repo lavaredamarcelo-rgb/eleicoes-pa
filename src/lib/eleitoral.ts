@@ -1,10 +1,12 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { distribuirVagas } from "@/lib/simulacaoPartido";
 
-// Referências: Código Eleitoral (Lei 4.737/65), art. 106 (quociente eleitoral)
-// e art. 107 (quociente partidário). Aplicável apenas a cargos proporcionais
-// (vereador, deputado estadual/federal) — cargos majoritários (prefeito,
-// governador) não usam quociente eleitoral.
+// Referências: Código Eleitoral (Lei 4.737/65), art. 106 (quociente eleitoral),
+// art. 107 (quociente partidário) e art. 109 (distribuição das sobras pela
+// maior média). Aplicável apenas a cargos proporcionais (vereador, deputado
+// estadual/federal) — cargos majoritários (prefeito, governador) não usam
+// quociente eleitoral.
 
 export async function calcularQuocienteEleitoral(cargoId: string) {
   const cargo = await prisma.cargo.findUnique({
@@ -15,7 +17,7 @@ export async function calcularQuocienteEleitoral(cargoId: string) {
       candidatos: {
         include: {
           partido: true,
-          resultados: true,
+          resultados: { include: { municipio: { include: { regiao: true } } } },
         },
       },
     },
@@ -55,19 +57,29 @@ export async function calcularQuocienteEleitoral(cargoId: string) {
     }
   }
 
+  const vagasFinais = distribuirVagas(
+    Array.from(votosPorPartido.values()).map((p) => ({ partidoId: p.partidoId, votos: p.votos })),
+    cargo.vagas,
+    quocienteEleitoral
+  );
+
   const partidos = Array.from(votosPorPartido.values())
     .map((p) => ({
       ...p,
-      quocientePartidario: quocienteEleitoral > 0 ? Math.floor(p.votos / quocienteEleitoral) : 0,
+      quocientePartidario: vagasFinais.get(p.partidoId) ?? 0,
       percentual: votosValidos > 0 ? (p.votos / votosValidos) * 100 : 0,
+      // Votos que faltam para completar mais um quociente partidário
+      // "direto" (sem contar possíveis sobras adicionais pela maior média).
+      votosFaltantesProximaVaga:
+        quocienteEleitoral > 0 ? quocienteEleitoral - (p.votos % quocienteEleitoral) : 0,
     }))
     .sort((a, b) => b.votos - a.votos);
 
   const vagasPorPartido = new Map(partidos.map((p) => [p.partidoId, p.quocientePartidario]));
 
   // Dentro de cada partido, os candidatos mais votados até o número de
-  // vagas do partido são eleitos (titulares); os demais viram suplentes,
-  // na ordem de votação. Simplificação: não trata "sobras" por médias.
+  // vagas do partido (já incluindo sobras) são eleitos (titulares); os
+  // demais viram suplentes, na ordem de votação.
   const candidatosPorPartido = new Map<string, typeof candidatosComVotos>();
   for (const c of candidatosComVotos) {
     const lista = candidatosPorPartido.get(c.partido.id);
@@ -89,6 +101,39 @@ export async function calcularQuocienteEleitoral(cargoId: string) {
     }
   );
 
+  // Detalhamento por município (útil sobretudo em cargos estaduais, onde o
+  // quociente é calculado pelo total do estado, mas cada partido quer saber
+  // de onde vieram os votos).
+  const votosPorMunicipio = new Map<
+    string,
+    { municipioId: string; municipioNome: string; regiaoNome: string; total: number; partidos: Map<string, number> }
+  >();
+  for (const c of cargo.candidatos) {
+    for (const r of c.resultados) {
+      let entry = votosPorMunicipio.get(r.municipioId);
+      if (!entry) {
+        entry = {
+          municipioId: r.municipioId,
+          municipioNome: r.municipio.nome,
+          regiaoNome: r.municipio.regiao.nome,
+          total: 0,
+          partidos: new Map(),
+        };
+        votosPorMunicipio.set(r.municipioId, entry);
+      }
+      entry.total += r.votos;
+      entry.partidos.set(c.partido.sigla, (entry.partidos.get(c.partido.sigla) ?? 0) + r.votos);
+    }
+  }
+  const municipiosComVotos = Array.from(votosPorMunicipio.values())
+    .map((m) => ({
+      ...m,
+      partidos: Array.from(m.partidos.entries())
+        .map(([sigla, votos]) => ({ sigla, votos }))
+        .sort((a, b) => b.votos - a.votos),
+    }))
+    .sort((a, b) => b.total - a.total);
+
   return {
     cargo,
     votosValidos,
@@ -96,6 +141,7 @@ export async function calcularQuocienteEleitoral(cargoId: string) {
     candidatos: candidatosComVotos.sort((a, b) => b.votos - a.votos),
     candidatosComSituacao: candidatosComSituacao.sort((a, b) => b.votos - a.votos),
     partidos,
+    municipiosComVotos,
   };
 }
 

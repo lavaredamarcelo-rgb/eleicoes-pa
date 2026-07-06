@@ -15,6 +15,55 @@ export function votosProjetados(votosAtuais: number, percentual: number) {
   return Math.max(0, Math.round(votosAtuais * (1 + percentual / 100)));
 }
 
+export type PartidoParaSobras = { partidoId: string; votos: number };
+
+// Distribuição das vagas restantes pela regra da maior média (Lei 4.737/65,
+// art. 109): após a divisão inicial pelo quociente partidário (votos do
+// partido ÷ QE), as vagas que sobrarem vão, uma a uma, para o partido cuja
+// média (votos ÷ (vagas atuais + 1)) for a maior a cada rodada. Só disputam
+// as sobras os partidos que atingiram o quociente eleitoral (art. 109, §2º);
+// se nenhum atingiu, todos disputam.
+export function distribuirVagas(
+  partidosComVotos: PartidoParaSobras[],
+  vagasTotais: number,
+  quocienteEleitoral: number
+): Map<string, number> {
+  const vagasPorPartido = new Map<string, number>();
+  for (const p of partidosComVotos) {
+    vagasPorPartido.set(
+      p.partidoId,
+      quocienteEleitoral > 0 ? Math.floor(p.votos / quocienteEleitoral) : 0
+    );
+  }
+
+  const vagasDistribuidas = Array.from(vagasPorPartido.values()).reduce((s, v) => s + v, 0);
+  let restantes = vagasTotais - vagasDistribuidas;
+
+  let elegiveis = partidosComVotos.filter((p) => quocienteEleitoral > 0 && p.votos >= quocienteEleitoral);
+  if (elegiveis.length === 0) {
+    elegiveis = partidosComVotos;
+  }
+
+  while (restantes > 0 && elegiveis.length > 0) {
+    let melhor: PartidoParaSobras | null = null;
+    let melhorMedia = -1;
+    for (const p of elegiveis) {
+      const vagasAtuais = vagasPorPartido.get(p.partidoId) ?? 0;
+      const media = p.votos / (vagasAtuais + 1);
+      // Em empate de média, prevalece o partido com mais votos.
+      if (media > melhorMedia || (media === melhorMedia && p.votos > (melhor?.votos ?? -1))) {
+        melhorMedia = media;
+        melhor = p;
+      }
+    }
+    if (!melhor) break;
+    vagasPorPartido.set(melhor.partidoId, (vagasPorPartido.get(melhor.partidoId) ?? 0) + 1);
+    restantes--;
+  }
+
+  return vagasPorPartido;
+}
+
 export function calcularSimulacao(
   candidatos: CandidatoSimulacao[],
   vagas: number,
@@ -51,10 +100,16 @@ export function calcularSimulacao(
     entry.candidatos.push(c);
   }
 
+  const vagasFinais = distribuirVagas(
+    Array.from(porPartido.values()).map((p) => ({ partidoId: p.partidoId, votos: p.votos })),
+    vagas,
+    quocienteEleitoral
+  );
+
   const partidos = Array.from(porPartido.values())
     .map((p) => ({
       ...p,
-      quocientePartidario: quocienteEleitoral > 0 ? Math.floor(p.votos / quocienteEleitoral) : 0,
+      quocientePartidario: vagasFinais.get(p.partidoId) ?? 0,
       percentual: votosValidos > 0 ? (p.votos / votosValidos) * 100 : 0,
     }))
     .sort((a, b) => b.votos - a.votos);

@@ -78,7 +78,7 @@ export default async function BuscaPage({
             Regiões ({resultado.regioes.length})
           </h2>
           {resultado.regioes.map((r) => (
-            <CardLink key={r.id} href={`/regioes/${r.id}`}>
+            <CardLink key={r.id} href={`/municipios#regiao-${r.id}`}>
               <p className="font-medium">{r.nome}</p>
             </CardLink>
           ))}

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { PdfDownloadLink } from "./PdfDownloadLink";
+import { CandidatoCombobox } from "./CandidatoCombobox";
 import {
   calcularSimulacao,
   votosProjetados,
@@ -37,6 +38,14 @@ export function SimuladorPartido({
 
   const partidoById = useMemo(() => new Map(partidos.map((p) => [p.id, p])), [partidos]);
   const candidatoById = useMemo(() => new Map(candidatos.map((c) => [c.id, c])), [candidatos]);
+  const candidatoOptions = useMemo(
+    () =>
+      candidatos.map((c) => ({
+        id: c.id,
+        label: `${c.nome} (${partidoById.get(overrides.get(c.id)?.partidoId ?? c.partidoId)?.sigla ?? c.partidoSigla})`,
+      })),
+    [candidatos, partidoById, overrides]
+  );
 
   useEffect(() => {
     if (candidatoSelecionado) {
@@ -97,18 +106,11 @@ export function SimuladorPartido({
       </div>
 
       <div className="flex flex-col gap-3">
-        <select
+        <CandidatoCombobox
+          candidatos={candidatoOptions}
           value={candidatoSelecionado}
-          onChange={(e) => setCandidatoSelecionado(e.target.value)}
-          className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100"
-        >
-          <option value="">Candidato...</option>
-          {candidatos.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nome} ({partidoById.get(overrides.get(c.id)?.partidoId ?? c.partidoId)?.sigla ?? c.partidoSigla})
-            </option>
-          ))}
-        </select>
+          onChange={setCandidatoSelecionado}
+        />
 
         <div className="flex flex-col gap-2 sm:flex-row">
           <select

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import mapaData from "@/data/pa-mapa.json";
 
@@ -44,6 +44,23 @@ export function MapaParaense({ municipios }: { municipios: MunicipioMapa[] }) {
   const router = useRouter();
   const [modo, setModo] = useState<"municipio" | "regiao">("municipio");
   const [hover, setHover] = useState<MunicipioMapa | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ left: number; top: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  function handleMouseMove(e: React.MouseEvent<SVGSVGElement>) {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const tooltipW = 190;
+    const tooltipH = 96;
+    const offset = 16;
+    let left = x + offset;
+    let top = y + offset;
+    if (left + tooltipW > rect.width) left = x - tooltipW - offset;
+    if (top + tooltipH > rect.height) top = y - tooltipH - offset;
+    setTooltipPos({ left: Math.max(4, left), top: Math.max(4, top) });
+  }
 
   const totalPorRegiao = useMemo(() => {
     const map = new Map<string, number>();
@@ -96,8 +113,15 @@ export function MapaParaense({ municipios }: { municipios: MunicipioMapa[] }) {
         </button>
       </div>
 
-      <div className="relative overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950">
-        <svg viewBox={mapaData.viewBox} className="w-full touch-manipulation">
+      <div
+        ref={containerRef}
+        className="relative overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950"
+      >
+        <svg
+          viewBox={mapaData.viewBox}
+          className="w-full touch-manipulation"
+          onMouseMove={handleMouseMove}
+        >
           {municipios.map((m) => {
             const path = m.codigoIbge ? pathByCodigo.get(m.codigoIbge) : undefined;
             if (!path) return null;
@@ -118,8 +142,11 @@ export function MapaParaense({ municipios }: { municipios: MunicipioMapa[] }) {
           })}
         </svg>
 
-        {hover && (
-          <div className="pointer-events-none absolute left-3 top-3 rounded-lg border border-neutral-700 bg-neutral-900/95 px-3 py-2 text-xs shadow-lg backdrop-blur">
+        {hover && tooltipPos && (
+          <div
+            className="pointer-events-none absolute rounded-lg border border-neutral-700 bg-neutral-900/95 px-3 py-2 text-xs shadow-lg backdrop-blur"
+            style={{ left: tooltipPos.left, top: tooltipPos.top }}
+          >
             <p className="font-semibold text-neutral-100">{hover.nome}</p>
             <p className="text-neutral-400">{hover.regiaoNome}</p>
             <p className="mt-1 font-medium text-blue-400">

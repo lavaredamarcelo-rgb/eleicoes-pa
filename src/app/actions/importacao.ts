@@ -59,7 +59,7 @@ export async function importarArquivoTse(
   revalidatePath("/candidatos");
   revalidatePath("/municipios");
   revalidatePath("/quociente");
-  revalidatePath("/regioes");
+  revalidatePath("/simulacoes");
   revalidatePath("/mapa");
   revalidatePath("/inicio");
 

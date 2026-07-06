@@ -7,7 +7,7 @@ export default async function QuocientePage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-lg font-semibold">Quociente eleitoral</h1>
+        <h1 className="text-lg font-semibold">Cálculo de quociente</h1>
         <p className="text-sm text-neutral-500">
           Selecione uma disputa para ver o cálculo detalhado.
         </p>
