@@ -19,7 +19,7 @@ export default async function CandidatosPage() {
         <section key={cargo.id} className="flex flex-col gap-2">
           <h2 className="text-sm font-medium text-neutral-400">
             {cargo.nome}
-            {cargo.municipio ? ` · ${cargo.municipio.nome}` : " · PA"}
+            {cargo.municipio ? ` · ${cargo.municipio.nome}` : " · PA"} · {cargo.eleicao.ano}
           </h2>
 
           <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">

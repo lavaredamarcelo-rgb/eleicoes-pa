@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Upload, ChevronRight, Users } from "lucide-react";
+import { Upload, ChevronRight, Users, CalendarRange } from "lucide-react";
 import { verifySession } from "@/lib/dal";
 import { logout } from "@/app/actions/auth";
 import { TrocarSenhaForm } from "@/components/TrocarSenhaForm";
@@ -23,6 +23,19 @@ export default async function ConfiguracoesPage() {
         <p className="mt-2 text-sm text-neutral-500">Perfil de acesso</p>
         <p className="text-base font-medium">{ROLE_LABEL[session.role] ?? session.role}</p>
       </section>
+
+      {session.role === "ADMIN" && (
+        <Link
+          href="/configuracoes/eleicoes"
+          className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3"
+        >
+          <span className="flex items-center gap-3">
+            <CalendarRange size={18} className="text-neutral-400" />
+            <span className="text-sm font-medium">Eleições cadastradas</span>
+          </span>
+          <ChevronRight size={18} className="text-neutral-600" />
+        </Link>
+      )}
 
       {session.role === "ADMIN" && (
         <Link
