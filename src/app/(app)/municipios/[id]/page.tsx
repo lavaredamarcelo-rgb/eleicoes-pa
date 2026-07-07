@@ -35,7 +35,7 @@ export default async function MunicipioDetailPage({
           </div>
           <PdfDownloadLink href={`/api/pdf/municipio/${municipio.id}`} />
         </div>
-        <p className="mt-2 text-2xl font-bold text-blue-400">
+        <p className="mt-2 text-2xl font-bold text-amber-400">
           {totalVotos.toLocaleString("pt-BR")} votos
         </p>
       </section>

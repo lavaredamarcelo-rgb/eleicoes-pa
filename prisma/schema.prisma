@@ -122,8 +122,22 @@ model Municipio {
   resultados         Resultado[]
   cargos             Cargo[]
   colegiosEleitorais ColegioEleitoral[]
+  eleitorado         Eleitorado[]
 
   @@unique([nome, regiaoId])
+}
+
+// Número de eleitores aptos por município/ano, conforme "perfil do
+// eleitorado" do TSE (dadosabertos.tse.jus.br). Independente de Eleicao
+// porque é um dado censitário do ano, não de um pleito específico.
+model Eleitorado {
+  id          String    @id @default(cuid())
+  municipioId String
+  municipio   Municipio @relation(fields: [municipioId], references: [id])
+  ano         Int
+  total       Int
+
+  @@unique([municipioId, ano])
 }
 
 // Local de votação (ex: uma escola) dentro do município. Estrutura

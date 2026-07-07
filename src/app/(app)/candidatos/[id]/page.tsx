@@ -46,7 +46,7 @@ export default async function CandidatoDetailPage({
           </div>
           <PdfDownloadLink href={`/api/pdf/candidato/${candidato.id}`} />
         </div>
-        <p className="mt-2 text-2xl font-bold text-blue-400">
+        <p className="mt-2 text-2xl font-bold text-amber-400">
           {totalVotos.toLocaleString("pt-BR")} votos
         </p>
       </section>
@@ -61,7 +61,7 @@ export default async function CandidatoDetailPage({
       {candidato.cargo.tipoApuracao === "PROPORCIONAL" && (
         <CardLink
           href={`/quociente/${candidato.cargo.id}?candidato=${candidato.id}#simulador`}
-          className="border-amber-900/50 bg-amber-950/10"
+          className="border-orange-900/50 bg-orange-950/10"
         >
           <div>
             <p className="font-medium">Simular cenário: troca de partido + crescimento</p>

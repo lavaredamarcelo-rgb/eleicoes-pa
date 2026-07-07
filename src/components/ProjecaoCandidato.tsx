@@ -75,7 +75,7 @@ export function ProjecaoCandidato({
         <button
           onClick={() => setMetodo("percentual")}
           className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-            metodo === "percentual" ? "bg-blue-600 text-white" : "bg-neutral-900 text-neutral-400"
+            metodo === "percentual" ? "bg-amber-400 text-neutral-950" : "bg-neutral-900 text-neutral-400"
           }`}
         >
           Crescimento %
@@ -83,7 +83,7 @@ export function ProjecaoCandidato({
         <button
           onClick={() => setMetodo("meta")}
           className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-            metodo === "meta" ? "bg-blue-600 text-white" : "bg-neutral-900 text-neutral-400"
+            metodo === "meta" ? "bg-amber-400 text-neutral-950" : "bg-neutral-900 text-neutral-400"
           }`}
         >
           Meta de votos
@@ -104,7 +104,7 @@ export function ProjecaoCandidato({
               onChange={(e) => setPercentual(Number(e.target.value))}
               className="flex-1"
             />
-            <span className="w-16 text-right text-sm font-semibold text-blue-400">
+            <span className="w-16 text-right text-sm font-semibold text-amber-400">
               {percentual > 0 ? "+" : ""}
               {percentual}%
             </span>
@@ -128,11 +128,11 @@ export function ProjecaoCandidato({
           <p className="text-lg font-semibold">{totalAtual.toLocaleString("pt-BR")}</p>
           <p className="text-[11px] text-neutral-500">Votos atuais</p>
         </div>
-        <div className="rounded-xl border border-blue-900 bg-blue-950/40 px-3 py-3 text-center">
-          <p className="text-lg font-semibold text-blue-300">
+        <div className="rounded-xl border border-amber-900 bg-amber-950/40 px-3 py-3 text-center">
+          <p className="text-lg font-semibold text-amber-300">
             {totalProjetado.toLocaleString("pt-BR")}
           </p>
-          <p className="text-[11px] text-blue-400/70">Votos projetados</p>
+          <p className="text-[11px] text-amber-400/70">Votos projetados</p>
         </div>
         <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-3 text-center">
           <p
@@ -158,7 +158,7 @@ export function ProjecaoCandidato({
             <span className="text-sm">
               <span className="text-neutral-500">{r.atual.toLocaleString("pt-BR")}</span>
               {" → "}
-              <span className="font-medium text-blue-400">
+              <span className="font-medium text-amber-400">
                 {r.projetado.toLocaleString("pt-BR")}
               </span>
             </span>

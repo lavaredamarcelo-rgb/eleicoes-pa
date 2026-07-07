@@ -96,9 +96,9 @@ export function SimuladorPartido({
     : null;
 
   return (
-    <section className="flex flex-col gap-3 rounded-xl border border-amber-900/50 bg-amber-950/10 p-4">
+    <section className="flex flex-col gap-3 rounded-xl border border-orange-900/50 bg-orange-950/10 p-4">
       <div>
-        <h2 className="text-sm font-medium text-amber-300">Simulador de cenários</h2>
+        <h2 className="text-sm font-medium text-orange-300">Simulador de cenários</h2>
         <p className="text-xs text-neutral-500">
           Teste hipóteses sem alterar os dados reais — troca de partido, crescimento de votos ou
           os dois combinados, para avaliar se um candidato se elegeria em um cenário futuro.
@@ -128,7 +128,7 @@ export function SimuladorPartido({
           <button
             onClick={aplicar}
             disabled={!candidatoSelecionado || (!novoPartido && percentual === 0)}
-            className="rounded-lg bg-amber-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-600 disabled:opacity-40"
+            className="rounded-lg bg-orange-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:opacity-40"
           >
             Simular
           </button>
@@ -140,7 +140,7 @@ export function SimuladorPartido({
             {candidatoAtual && (
               <span className="text-neutral-400">
                 {candidatoAtual.votos.toLocaleString("pt-BR")} →{" "}
-                <span className="font-medium text-blue-400">
+                <span className="font-medium text-amber-400">
                   {previaVotos.toLocaleString("pt-BR")}
                 </span>
               </span>
@@ -155,7 +155,7 @@ export function SimuladorPartido({
               onChange={(e) => setPercentual(Number(e.target.value))}
               className="flex-1"
             />
-            <span className="w-14 text-right text-sm font-semibold text-blue-400">
+            <span className="w-14 text-right text-sm font-semibold text-amber-400">
               {percentual > 0 ? "+" : ""}
               {percentual}%
             </span>
@@ -213,7 +213,7 @@ export function SimuladorPartido({
               <span className="text-neutral-500">Quociente eleitoral: </span>
               {quocienteEleitoral.toLocaleString("pt-BR")}
               {" → "}
-              <span className="font-medium text-blue-400">
+              <span className="font-medium text-amber-400">
                 {resultado.quocienteEleitoral.toLocaleString("pt-BR")}
               </span>
             </div>

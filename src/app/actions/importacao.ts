@@ -5,6 +5,7 @@ import { verifySession } from "@/lib/dal";
 import { parseCsvTse } from "@/lib/tse/parseCsv";
 import { importarCandidatos } from "@/lib/tse/importarCandidatos";
 import { importarResultados } from "@/lib/tse/importarResultados";
+import { importarEleitorado } from "@/lib/tse/importarEleitorado";
 import { limparCacheMunicipios } from "@/lib/tse/util";
 
 export type ImportarTseState =
@@ -27,12 +28,17 @@ export async function importarArquivoTse(
   await exigirAdmin();
 
   const eleicaoId = String(formData.get("eleicaoId") ?? "");
+  const ano = Number(formData.get("ano"));
   const tipo = String(formData.get("tipo") ?? "");
   const arquivo = formData.get("arquivo");
 
-  if (!eleicaoId) return { error: "Selecione a eleição." };
-  if (tipo !== "candidatos" && tipo !== "resultados") {
+  if (tipo !== "candidatos" && tipo !== "resultados" && tipo !== "eleitorado") {
     return { error: "Selecione o tipo de arquivo." };
+  }
+  if (tipo === "eleitorado") {
+    if (!Number.isFinite(ano) || ano < 1990) return { error: "Informe o ano do eleitorado." };
+  } else if (!eleicaoId) {
+    return { error: "Selecione a eleição." };
   }
   if (!(arquivo instanceof File) || arquivo.size === 0) {
     return { error: "Selecione um arquivo CSV." };
@@ -54,7 +60,9 @@ export async function importarArquivoTse(
   const resumo =
     tipo === "candidatos"
       ? await importarCandidatos(rows, eleicaoId)
-      : await importarResultados(rows, eleicaoId);
+      : tipo === "resultados"
+        ? await importarResultados(rows, eleicaoId)
+        : await importarEleitorado(rows, ano);
 
   revalidatePath("/candidatos");
   revalidatePath("/municipios");

@@ -54,9 +54,9 @@ export default async function QuocienteDetailPage({
           <StatCard label="Vagas" value={String(resultado.cargo.vagas)} />
         </section>
 
-        <section className="rounded-xl border border-blue-900 bg-blue-950/40 px-4 py-3">
-          <p className="text-xs text-blue-300">Quociente eleitoral (QE)</p>
-          <p className="text-2xl font-bold text-blue-300">
+        <section className="rounded-xl border border-amber-900 bg-amber-950/40 px-4 py-3">
+          <p className="text-xs text-amber-300">Quociente eleitoral (QE)</p>
+          <p className="text-2xl font-bold text-amber-300">
             {resultado.quocienteEleitoral.toLocaleString("pt-BR")}
           </p>
           <p className="mt-1 text-xs text-neutral-400">
@@ -168,9 +168,9 @@ export default async function QuocienteDetailPage({
         }
       />
 
-      <section className="rounded-xl border border-blue-900 bg-blue-950/40 px-4 py-3">
-        <p className="text-xs text-blue-300">Votos válidos</p>
-        <p className="text-2xl font-bold text-blue-300">
+      <section className="rounded-xl border border-amber-900 bg-amber-950/40 px-4 py-3">
+        <p className="text-xs text-amber-300">Votos válidos</p>
+        <p className="text-2xl font-bold text-amber-300">
           {resultado.votosValidos.toLocaleString("pt-BR")}
         </p>
         {resultado.segundoTurnoProvavel && (
@@ -196,7 +196,7 @@ export default async function QuocienteDetailPage({
                 {c.numero} · {c.partido.sigla}
               </p>
             </div>
-            <span className="text-sm font-semibold text-blue-400">
+            <span className="text-sm font-semibold text-amber-400">
               {c.votos.toLocaleString("pt-BR")}
             </span>
           </div>
@@ -280,7 +280,7 @@ function VotosPorMunicipio({
               >
                 <div className="flex items-center justify-between">
                   <p className="font-medium">{m.municipioNome}</p>
-                  <span className="text-sm font-semibold text-blue-400">
+                  <span className="text-sm font-semibold text-amber-400">
                     {m.total.toLocaleString("pt-BR")}
                   </span>
                 </div>

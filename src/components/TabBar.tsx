@@ -17,7 +17,7 @@ export function TabBar() {
               <Link
                 href={href}
                 className={`flex flex-col items-center gap-0.5 py-2 text-[11px] ${
-                  active ? "text-blue-400" : "text-neutral-500"
+                  active ? "text-amber-400" : "text-neutral-500"
                 }`}
               >
                 <Icon size={20} strokeWidth={active ? 2.5 : 2} />

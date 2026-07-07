@@ -25,7 +25,7 @@ export default function LoginPage() {
               type="email"
               required
               autoComplete="email"
-              className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-white outline-none focus:border-blue-500"
+              className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-white outline-none focus:border-amber-500"
             />
           </div>
 
@@ -39,7 +39,7 @@ export default function LoginPage() {
               type="password"
               required
               autoComplete="current-password"
-              className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-white outline-none focus:border-blue-500"
+              className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-white outline-none focus:border-amber-500"
             />
           </div>
 
@@ -52,7 +52,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={pending}
-            className="mt-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-500 disabled:opacity-60"
+            className="mt-2 rounded-lg bg-amber-400 px-4 py-2 font-medium text-neutral-950 transition hover:bg-amber-300 disabled:opacity-60"
           >
             {pending ? "Entrando..." : "Entrar"}
           </button>

@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { importarArquivoTse } from "@/app/actions/importacao";
 
 type Eleicao = { id: string; ano: number; uf: string; tipo: string };
 
 export function ImportacaoTseForm({ eleicoes }: { eleicoes: Eleicao[] }) {
   const [state, action, pending] = useActionState(importarArquivoTse, undefined);
+  const [tipo, setTipo] = useState("candidatos");
 
   return (
     <form action={action} className="flex flex-col gap-3 rounded-xl border border-neutral-800 bg-neutral-900 p-4">
@@ -14,38 +15,56 @@ export function ImportacaoTseForm({ eleicoes }: { eleicoes: Eleicao[] }) {
       <p className="text-xs text-neutral-500">
         Envie os arquivos oficiais em CSV, exportados de{" "}
         <span className="text-neutral-400">dadosabertos.tse.jus.br</span> — "consulta_cand" para
-        candidatos ou "votacao_candidato_munzona" para resultados de votação. Importe sempre os
+        candidatos, "votacao_candidato_munzona" para resultados de votação, ou o perfil do
+        eleitorado (já agregado por município) para o número de eleitores. Importe sempre os
         candidatos antes dos resultados.
       </p>
-
-      <div>
-        <label className="mb-1 block text-xs text-neutral-500">Eleição</label>
-        <select
-          name="eleicaoId"
-          required
-          className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100"
-        >
-          <option value="">Selecione...</option>
-          {eleicoes.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.tipo === "ESTADUAL" ? "Estadual" : "Municipal"} · {e.ano} · {e.uf}
-            </option>
-          ))}
-        </select>
-      </div>
 
       <div>
         <label className="mb-1 block text-xs text-neutral-500">Tipo de arquivo</label>
         <select
           name="tipo"
           required
-          defaultValue="candidatos"
+          value={tipo}
+          onChange={(e) => setTipo(e.target.value)}
           className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100"
         >
           <option value="candidatos">Candidatos (consulta_cand)</option>
           <option value="resultados">Resultados (votacao_candidato_munzona)</option>
+          <option value="eleitorado">Eleitorado (perfil_eleitor_secao, agregado)</option>
         </select>
       </div>
+
+      {tipo === "eleitorado" ? (
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">Ano do eleitorado</label>
+          <input
+            type="number"
+            name="ano"
+            required
+            min={1990}
+            max={2100}
+            placeholder="2024"
+            className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100"
+          />
+        </div>
+      ) : (
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">Eleição</label>
+          <select
+            name="eleicaoId"
+            required
+            className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100"
+          >
+            <option value="">Selecione...</option>
+            {eleicoes.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.tipo === "ESTADUAL" ? "Estadual" : "Municipal"} · {e.ano} · {e.uf}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div>
         <label className="mb-1 block text-xs text-neutral-500">Arquivo CSV</label>
@@ -81,7 +100,7 @@ export function ImportacaoTseForm({ eleicoes }: { eleicoes: Eleicao[] }) {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-500 disabled:opacity-60"
+        className="rounded-lg bg-amber-400 px-4 py-2 text-sm font-medium text-neutral-950 transition-colors hover:bg-amber-300 disabled:opacity-60"
       >
         {pending ? "Importando..." : "Importar arquivo"}
       </button>

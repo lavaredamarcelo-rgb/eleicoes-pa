@@ -24,7 +24,7 @@ export function Sidebar() {
               href={href}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 ${
                 active
-                  ? "bg-blue-600 text-white"
+                  ? "bg-amber-400 text-neutral-950"
                   : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
               }`}
             >
@@ -40,7 +40,7 @@ export function Sidebar() {
           href="/busca"
           className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 ${
             pathname === "/busca"
-              ? "bg-blue-600 text-white"
+              ? "bg-amber-400 text-neutral-950"
               : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
           }`}
         >
@@ -51,7 +51,7 @@ export function Sidebar() {
           href="/configuracoes"
           className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 ${
             pathname.startsWith("/configuracoes")
-              ? "bg-blue-600 text-white"
+              ? "bg-amber-400 text-neutral-950"
               : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100"
           }`}
         >

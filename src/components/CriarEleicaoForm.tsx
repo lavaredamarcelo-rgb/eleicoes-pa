@@ -59,7 +59,7 @@ export function CriarEleicaoForm() {
       <button
         type="submit"
         disabled={pending}
-        className="self-start rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-500 disabled:opacity-60"
+        className="self-start rounded-lg bg-amber-400 px-4 py-2 text-sm font-medium text-neutral-950 transition-colors hover:bg-amber-300 disabled:opacity-60"
       >
         {pending ? "Criando..." : "Cadastrar eleição"}
       </button>

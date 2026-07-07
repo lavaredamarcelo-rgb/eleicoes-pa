@@ -43,7 +43,7 @@ export default async function MunicipiosPage() {
               <span className="font-medium">{regiaoInfo?.nome}</span>
               <span className="flex items-center gap-2 text-xs text-neutral-500">
                 <span>{lista.length} municípios</span>
-                <span className="font-semibold text-blue-400">
+                <span className="font-semibold text-amber-400">
                   {(regiaoInfo?.totalVotos ?? 0).toLocaleString("pt-BR")} votos
                 </span>
               </span>
@@ -53,7 +53,7 @@ export default async function MunicipiosPage() {
               {lista.map((m) => (
                 <CardLink key={m.id} href={`/municipios/${m.id}`}>
                   <p className="font-medium">{m.nome}</p>
-                  <span className="text-sm font-semibold text-blue-400">
+                  <span className="text-sm font-semibold text-amber-400">
                     {m.totalVotos.toLocaleString("pt-BR")}
                   </span>
                 </CardLink>

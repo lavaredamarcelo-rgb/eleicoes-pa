@@ -26,9 +26,9 @@ export default async function InicioPage() {
         <StatCard label="Candidatos" value={String(totalCandidatos)} />
       </section>
 
-      <CardLink href="/mapa" className="bg-gradient-to-r from-blue-950/60 to-neutral-900">
+      <CardLink href="/mapa" className="bg-gradient-to-r from-amber-950/60 to-neutral-900">
         <div className="flex items-center gap-3">
-          <Map className="text-blue-400" size={20} />
+          <Map className="text-amber-400" size={20} />
           <div>
             <p className="font-medium">Ver mapa do Pará</p>
             <p className="text-xs text-neutral-500">Votos por município e por região</p>

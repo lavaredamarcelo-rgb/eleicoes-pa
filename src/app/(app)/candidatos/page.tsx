@@ -31,7 +31,7 @@ export default async function CandidatosPage() {
                     {c.numero} · {c.partido.sigla}
                   </p>
                 </div>
-                <span className="text-sm font-semibold text-blue-400">
+                <span className="text-sm font-semibold text-amber-400">
                   {c.totalVotos.toLocaleString("pt-BR")}
                 </span>
               </CardLink>

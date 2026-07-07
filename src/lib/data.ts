@@ -116,16 +116,19 @@ export async function getRegioes() {
 }
 
 export async function getMapaDados(cargoId?: string) {
-  const municipios = await prisma.municipio.findMany({
-    include: {
-      regiao: true,
-      resultados: {
-        where: cargoId ? { candidato: { cargoId } } : undefined,
-        include: { candidato: { include: { partido: true } } },
-        orderBy: { votos: "desc" },
+  const [municipios, projecaoPorMunicipio] = await Promise.all([
+    prisma.municipio.findMany({
+      include: {
+        regiao: true,
+        resultados: {
+          where: cargoId ? { candidato: { cargoId } } : undefined,
+          include: { candidato: { include: { partido: true } } },
+          orderBy: { votos: "desc" },
+        },
       },
-    },
-  });
+    }),
+    getEleitoradoProjecao(),
+  ]);
 
   return municipios.map((m) => {
     const totalVotos = m.resultados.reduce((sum, r) => sum + r.votos, 0);
@@ -138,8 +141,50 @@ export async function getMapaDados(cargoId?: string) {
       regiaoNome: m.regiao.nome,
       totalVotos,
       lider: lider ? { nome: lider.nome, partido: lider.partido.sigla } : null,
+      eleitorado: projecaoPorMunicipio.get(m.id) ?? null,
     };
   });
+}
+
+// Projeta o eleitorado de cada município para o próximo pleito (2028),
+// a partir da taxa de crescimento observada entre o primeiro e o último
+// ano de eleitorado importado (ex: 2018 → 2024). Estimativa simples de
+// planejamento — não é dado oficial do TSE, que só existe para anos já
+// fechados.
+const ANO_PROJECAO = 2028;
+
+export async function getEleitoradoProjecao() {
+  const registros = await prisma.eleitorado.findMany({ orderBy: { ano: "asc" } });
+
+  const porMunicipio = new Map<string, { ano: number; total: number }[]>();
+  for (const r of registros) {
+    const lista = porMunicipio.get(r.municipioId);
+    if (lista) lista.push({ ano: r.ano, total: r.total });
+    else porMunicipio.set(r.municipioId, [{ ano: r.ano, total: r.total }]);
+  }
+
+  const resultado = new Map<
+    string,
+    { ultimoAno: number; ultimoTotal: number; anoProjecao: number; projecao: number }
+  >();
+
+  for (const [municipioId, lista] of porMunicipio) {
+    const primeiro = lista[0];
+    const ultimo = lista[lista.length - 1];
+    const anos = ultimo.ano - primeiro.ano;
+    const taxaAnual =
+      anos > 0 && primeiro.total > 0 ? Math.pow(ultimo.total / primeiro.total, 1 / anos) - 1 : 0;
+    const anosAteProjecao = Math.max(0, ANO_PROJECAO - ultimo.ano);
+    const projecao = Math.round(ultimo.total * Math.pow(1 + taxaAnual, anosAteProjecao));
+    resultado.set(municipioId, {
+      ultimoAno: ultimo.ano,
+      ultimoTotal: ultimo.total,
+      anoProjecao: ANO_PROJECAO,
+      projecao,
+    });
+  }
+
+  return resultado;
 }
 
 // Remove acentos para permitir busca sem acentuação (ex: "Belem" encontra

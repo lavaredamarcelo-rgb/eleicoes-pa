@@ -98,7 +98,7 @@ export function MapaParaense({ municipios }: { municipios: MunicipioMapa[] }) {
         <button
           onClick={() => setModo("municipio")}
           className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-            modo === "municipio" ? "bg-blue-600 text-white" : "bg-neutral-900 text-neutral-400"
+            modo === "municipio" ? "bg-amber-400 text-neutral-950" : "bg-neutral-900 text-neutral-400"
           }`}
         >
           Por município
@@ -106,7 +106,7 @@ export function MapaParaense({ municipios }: { municipios: MunicipioMapa[] }) {
         <button
           onClick={() => setModo("regiao")}
           className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-            modo === "regiao" ? "bg-blue-600 text-white" : "bg-neutral-900 text-neutral-400"
+            modo === "regiao" ? "bg-amber-400 text-neutral-950" : "bg-neutral-900 text-neutral-400"
           }`}
         >
           Por região
@@ -149,7 +149,7 @@ export function MapaParaense({ municipios }: { municipios: MunicipioMapa[] }) {
           >
             <p className="font-semibold text-neutral-100">{hover.nome}</p>
             <p className="text-neutral-400">{hover.regiaoNome}</p>
-            <p className="mt-1 font-medium text-blue-400">
+            <p className="mt-1 font-medium text-amber-400">
               {hover.totalVotos.toLocaleString("pt-BR")} votos
             </p>
             {hover.lider && (

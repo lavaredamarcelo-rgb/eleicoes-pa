@@ -50,7 +50,7 @@ export default async function BuscaPage({
                   {c.cargo.municipio ? ` (${c.cargo.municipio.nome})` : ""}
                 </p>
               </div>
-              <span className="text-sm font-semibold text-blue-400">
+              <span className="text-sm font-semibold text-amber-400">
                 {c.totalVotos.toLocaleString("pt-BR")}
               </span>
             </CardLink>
