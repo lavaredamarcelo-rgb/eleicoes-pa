@@ -1,15 +1,21 @@
 import { Map } from "lucide-react";
 import { CardLink } from "@/components/CardLink";
-import { getCargos } from "@/lib/data";
+import { CountUp } from "@/components/CountUp";
+import { DisputasPorAno } from "@/components/DisputasPorAno";
+import { GraficoBarras } from "@/components/GraficoBarras";
+import { getHierarquiaDisputas, getVotosPorAnoEleicao, getEleitoradoEstadoPorAno } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 
 export default async function InicioPage() {
-  const [cargos, totalMunicipios, totalCandidatos, totalVotosRow] = await Promise.all([
-    getCargos(),
-    prisma.municipio.count(),
-    prisma.candidato.count(),
-    prisma.resultado.aggregate({ _sum: { votos: true } }),
-  ]);
+  const [hierarquia, votosPorAno, eleitoradoPorAno, totalMunicipios, totalCandidatos, totalVotosRow] =
+    await Promise.all([
+      getHierarquiaDisputas(),
+      getVotosPorAnoEleicao(),
+      getEleitoradoEstadoPorAno(),
+      prisma.municipio.count(),
+      prisma.candidato.count(),
+      prisma.resultado.aggregate({ _sum: { votos: true } }),
+    ]);
 
   const totalVotos = totalVotosRow._sum.votos ?? 0;
 
@@ -17,13 +23,13 @@ export default async function InicioPage() {
     <div className="flex flex-col gap-6">
       <section>
         <h1 className="text-lg font-semibold">Resumo geral</h1>
-        <p className="text-sm text-neutral-500">Pará · dados de demonstração</p>
+        <p className="text-sm text-neutral-500">Pará</p>
       </section>
 
       <section className="grid grid-cols-3 gap-3">
-        <StatCard label="Votos apurados" value={totalVotos.toLocaleString("pt-BR")} />
-        <StatCard label="Municípios" value={String(totalMunicipios)} />
-        <StatCard label="Candidatos" value={String(totalCandidatos)} />
+        <StatCard label="Votos apurados" value={<CountUp value={totalVotos} />} />
+        <StatCard label="Municípios" value={<CountUp value={totalMunicipios} />} />
+        <StatCard label="Candidatos" value={<CountUp value={totalCandidatos} />} />
       </section>
 
       <CardLink href="/mapa" className="bg-gradient-to-r from-amber-950/60 to-neutral-900">
@@ -38,28 +44,26 @@ export default async function InicioPage() {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-medium text-neutral-400">Disputas cadastradas</h2>
-        <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
-          {cargos.map((cargo) => (
-            <CardLink key={cargo.id} href={`/quociente/${cargo.id}`}>
-              <div>
-                <p className="font-medium">{cargo.nome}</p>
-                <p className="text-xs text-neutral-500">
-                  {cargo.eleicao.tipo === "ESTADUAL" ? "Estadual" : "Municipal"} · {cargo.eleicao.ano}
-                  {cargo.municipio ? ` · ${cargo.municipio.nome}` : " · PA"}
-                </p>
-              </div>
-              <span className="rounded-full bg-neutral-800 px-2 py-1 text-xs text-neutral-300">
-                {cargo.tipoApuracao === "PROPORCIONAL" ? `${cargo.vagas} vagas` : "Majoritário"}
-              </span>
-            </CardLink>
-          ))}
-        </div>
+        <DisputasPorAno anos={hierarquia} />
+      </section>
+
+      <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <GraficoBarras
+          titulo="Eleitorado do Pará"
+          subtitulo="Total de eleitores por ano, com projeção para 2028"
+          pontos={eleitoradoPorAno.map((p) => ({ rotulo: String(p.ano), valor: p.total, projetado: p.projetado }))}
+        />
+        <GraficoBarras
+          titulo="Votos apurados por eleição"
+          subtitulo="Soma de todos os cargos em disputa no ano"
+          pontos={votosPorAno.map((p) => ({ rotulo: String(p.ano), valor: p.total }))}
+        />
       </section>
     </div>
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-3 text-center transition-colors duration-150 hover:border-neutral-700">
       <p className="text-lg font-semibold">{value}</p>

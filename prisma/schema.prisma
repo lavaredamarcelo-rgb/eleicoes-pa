@@ -66,13 +66,22 @@ model Cargo {
 }
 
 model Partido {
-  id                String         @id @default(cuid())
-  sigla             String         @unique
-  nome              String
-  numero            Int
-  candidatos        Candidato[]
-  trocasComoOrigem  TrocaPartido[] @relation("TrocaPartidoOrigem")
-  trocasComoDestino TrocaPartido[] @relation("TrocaPartidoDestino")
+  id                   String         @id @default(cuid())
+  sigla                String         @unique
+  nome                 String
+  numero               Int
+  // Dados institucionais pesquisados (não vêm do TSE) — usados na aba
+  // "Partidos Políticos". Podem ficar nulos quando não encontrados.
+  presidenteNacional   String?
+  presidenteEstadualPA String?
+  federacao            String?
+  federacaoMembros     String?
+  espectro             String?
+  fundacao             Int?
+  figurasNotaveis      String?
+  candidatos           Candidato[]
+  trocasComoOrigem     TrocaPartido[] @relation("TrocaPartidoOrigem")
+  trocasComoDestino    TrocaPartido[] @relation("TrocaPartidoDestino")
 }
 
 model Candidato {
@@ -83,6 +92,11 @@ model Candidato {
   cargo         Cargo          @relation(fields: [cargoId], references: [id])
   partidoId     String
   partido       Partido        @relation(fields: [partidoId], references: [id])
+  // Vice (Prefeito/Governador): concorrem na mesma chapa e são eleitos ou
+  // não junto com o titular, sem votação própria — por isso ficam como
+  // campos simples aqui, não como um Candidato separado.
+  viceNome      String?
+  viceNumero    Int?
   resultados    Resultado[]
   users         User[]
   trocasPartido TrocaPartido[]

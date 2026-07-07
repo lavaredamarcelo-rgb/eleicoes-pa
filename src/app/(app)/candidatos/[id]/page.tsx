@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { CardLink } from "@/components/CardLink";
 import { TrocaPartidoForm } from "@/components/TrocaPartidoForm";
 import { PdfDownloadLink } from "@/components/PdfDownloadLink";
-import { getCandidato, getPartidos } from "@/lib/data";
+import { getCandidato, getCandidaturasAnteriores, getPartidos } from "@/lib/data";
 import { verifySession } from "@/lib/dal";
 
 export default async function CandidatoDetailPage({
@@ -13,6 +13,8 @@ export default async function CandidatoDetailPage({
   const { id } = await params;
   const [candidato, session] = await Promise.all([getCandidato(id), verifySession()]);
   if (!candidato) notFound();
+
+  const candidaturasAnteriores = await getCandidaturasAnteriores(candidato.nome, candidato.id);
 
   const totalVotos = candidato.resultados.reduce((sum, r) => sum + r.votos, 0);
 
@@ -41,7 +43,8 @@ export default async function CandidatoDetailPage({
             <h1 className="text-lg font-semibold">{candidato.nome}</h1>
             <p className="text-sm text-neutral-500">
               {candidato.numero} · {candidato.partido.sigla} · {candidato.cargo.nome}
-              {candidato.cargo.municipio ? ` (${candidato.cargo.municipio.nome})` : " (PA)"}
+              {candidato.cargo.municipio ? ` (${candidato.cargo.municipio.nome})` : " (PA)"} ·
+              eleição de {candidato.cargo.eleicao.ano}
             </p>
           </div>
           <PdfDownloadLink href={`/api/pdf/candidato/${candidato.id}`} />
@@ -49,6 +52,11 @@ export default async function CandidatoDetailPage({
         <p className="mt-2 text-2xl font-bold text-amber-400">
           {totalVotos.toLocaleString("pt-BR")} votos
         </p>
+        {candidato.viceNome && (
+          <p className="mt-2 rounded-lg border border-amber-900/40 bg-amber-950/10 px-3 py-2 text-sm text-amber-300">
+            Vice: {candidato.viceNome} ({candidato.viceNumero})
+          </p>
+        )}
       </section>
 
       <CardLink href={`/candidatos/${candidato.id}/projecao`}>
@@ -109,6 +117,27 @@ export default async function CandidatoDetailPage({
           </details>
         ))}
       </section>
+
+      {candidaturasAnteriores.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-neutral-400">Outras candidaturas</h2>
+          {candidaturasAnteriores.map((c) => (
+            <CardLink key={c.id} href={`/candidatos/${c.id}`}>
+              <div>
+                <p className="font-medium">
+                  {c.cargo.nome}
+                  {c.cargo.municipio ? ` (${c.cargo.municipio.nome})` : " (PA)"}
+                </p>
+                <p className="text-xs text-neutral-500">
+                  {c.cargo.eleicao.ano} · {c.numero} · {c.partido.sigla}
+                  {c.viceNome ? ` · vice: ${c.viceNome}` : ""}
+                </p>
+              </div>
+              <span className="text-sm font-medium">{c.totalVotos.toLocaleString("pt-BR")}</span>
+            </CardLink>
+          ))}
+        </section>
+      )}
 
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-medium text-neutral-400">Histórico partidário</h2>

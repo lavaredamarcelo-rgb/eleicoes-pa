@@ -12,6 +12,7 @@ type MunicipioMapa = {
   regiaoNome: string;
   totalVotos: number;
   lider: { nome: string; partido: string } | null;
+  eleitorado: { ultimoAno: number; ultimoTotal: number; anoProjecao: number; projecao: number } | null;
 };
 
 const pathByCodigo = new Map(mapaData.municipios.map((m) => [m.codigoIbge, m.path]));
@@ -149,9 +150,19 @@ export function MapaParaense({ municipios }: { municipios: MunicipioMapa[] }) {
           >
             <p className="font-semibold text-neutral-100">{hover.nome}</p>
             <p className="text-neutral-400">{hover.regiaoNome}</p>
-            <p className="mt-1 font-medium text-amber-400">
-              {hover.totalVotos.toLocaleString("pt-BR")} votos
-            </p>
+            {hover.eleitorado ? (
+              <>
+                <p className="mt-1 font-medium text-amber-400">
+                  {hover.eleitorado.projecao.toLocaleString("pt-BR")} eleitores (projeção{" "}
+                  {hover.eleitorado.anoProjecao})
+                </p>
+                <p className="text-neutral-500">
+                  {hover.eleitorado.ultimoTotal.toLocaleString("pt-BR")} em {hover.eleitorado.ultimoAno}
+                </p>
+              </>
+            ) : (
+              <p className="mt-1 text-neutral-500">Sem dado de eleitorado</p>
+            )}
             {hover.lider && (
               <p className="text-neutral-400">
                 Líder: {hover.lider.nome} ({hover.lider.partido})

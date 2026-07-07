@@ -33,6 +33,18 @@ export function resolverCargo(dsCargo: string) {
   return CARGOS_SUPORTADOS[normalizarTexto(dsCargo)];
 }
 
+// Vice-prefeito/vice-governador concorrem na mesma chapa do titular, sem
+// votação própria — mapeamos para o nome do Cargo do titular para poder
+// anexar o vice ao candidato certo durante a importação.
+const VICE_PARA_CARGO: Record<string, string> = {
+  "vice-prefeito": "Prefeito",
+  "vice-governador": "Governador",
+};
+
+export function resolverCargoDoVice(dsCargo: string) {
+  return VICE_PARA_CARGO[normalizarTexto(dsCargo)];
+}
+
 const SITUACOES_ELEITO = ["eleito", "eleito por qp", "eleito por media", "eleito por média"];
 
 export function situacaoIndicaEleito(dsSituacao: string | undefined) {

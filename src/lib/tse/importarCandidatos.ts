@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import {
   resolverCargo,
+  resolverCargoDoVice,
   encontrarMunicipio,
   situacaoIndicaEleito,
   novoResumo,
@@ -11,7 +12,9 @@ import {
 // Espera o formato "consulta_cand" do TSE (dadosabertos.tse.jus.br),
 // filtrado para o estado/eleição desejada. Colunas relevantes: DS_CARGO,
 // CD_MUNICIPIO, NM_MUNICIPIO (ou NM_UE), NR_CANDIDATO, NM_CANDIDATO,
-// NM_URNA_CANDIDATO, NR_PARTIDO, SG_PARTIDO, NM_PARTIDO, DS_SIT_TOT_TURNO.
+// NM_URNA_CANDIDATO, NR_PARTIDO, SG_PARTIDO, NM_PARTIDO, DS_SIT_TOT_TURNO,
+// SQ_COLIGACAO (usado para ligar vice-prefeito/vice-governador ao titular
+// da mesma chapa).
 export async function importarCandidatos(
   rows: Record<string, string>[],
   eleicaoId: string
@@ -29,30 +32,42 @@ export async function importarCandidatos(
     partidoNumero: number;
     partidoNome: string;
     eleito: boolean;
+    sqColigacao: string;
+  };
+
+  type LinhaVice = {
+    cargoNome: string;
+    municipioId: string | null;
+    nome: string;
+    numero: number;
+    sqColigacao: string;
   };
 
   const linhas: Linha[] = [];
+  const vices: LinhaVice[] = [];
 
   for (const [i, row] of rows.entries()) {
     const numeroLinha = i + 2; // +1 cabeçalho, +1 índice 0-based
 
     const dsCargo = row["DS_CARGO"];
     const cargoInfo = dsCargo ? resolverCargo(dsCargo) : undefined;
-    if (!cargoInfo) {
+    const cargoDoVice = !cargoInfo && dsCargo ? resolverCargoDoVice(dsCargo) : undefined;
+
+    if (!cargoInfo && !cargoDoVice) {
       resumo.avisos.push(`Linha ${numeroLinha}: cargo "${dsCargo ?? "?"}" não suportado, ignorada.`);
       continue;
     }
 
+    const codigoTse = (row["CD_MUNICIPIO"] || row["SG_UE"])?.trim();
+    const nomeMunicipioArquivo = row["NM_MUNICIPIO"] ?? row["NM_UE"];
+    const cargoMunicipal = cargoInfo ? cargoInfo.municipal : cargoDoVice === "Prefeito";
+
     let municipioId: string | null = null;
-    if (cargoInfo.municipal) {
-      // O arquivo "consulta_cand" não traz CD_MUNICIPIO (esse campo só
-      // existe em "votacao_candidato_munzona"); para cargos municipais,
-      // SG_UE já é o código do município nesse arquivo.
-      const codigoTse = (row["CD_MUNICIPIO"] || row["SG_UE"])?.trim();
-      const municipio = await encontrarMunicipio(codigoTse, row["NM_MUNICIPIO"] ?? row["NM_UE"]);
+    if (cargoMunicipal) {
+      const municipio = await encontrarMunicipio(codigoTse, nomeMunicipioArquivo);
       if (!municipio) {
         resumo.avisos.push(
-          `Linha ${numeroLinha}: município "${row["NM_MUNICIPIO"] ?? row["NM_UE"] ?? "?"}" não encontrado, ignorada.`
+          `Linha ${numeroLinha}: município "${nomeMunicipioArquivo ?? "?"}" não encontrado, ignorada.`
         );
         continue;
       }
@@ -64,6 +79,17 @@ export async function importarCandidatos(
 
     const numero = Number(row["NR_CANDIDATO"]);
     const nome = (row["NM_URNA_CANDIDATO"] || row["NM_CANDIDATO"] || "").trim();
+    const sqColigacao = (row["SQ_COLIGACAO"] || "").trim();
+
+    if (cargoDoVice) {
+      if (!Number.isFinite(numero) || !nome) {
+        resumo.avisos.push(`Linha ${numeroLinha}: dados de vice incompletos, ignorada.`);
+        continue;
+      }
+      vices.push({ cargoNome: cargoDoVice, municipioId, nome, numero, sqColigacao });
+      continue;
+    }
+
     const partidoSigla = (row["SG_PARTIDO"] || "").trim().toUpperCase();
     if (!Number.isFinite(numero) || !nome || !partidoSigla) {
       resumo.avisos.push(`Linha ${numeroLinha}: dados incompletos (número/nome/partido), ignorada.`);
@@ -71,9 +97,9 @@ export async function importarCandidatos(
     }
 
     linhas.push({
-      cargoNome: cargoInfo.nome,
-      municipal: cargoInfo.municipal,
-      tipoApuracao: cargoInfo.tipoApuracao,
+      cargoNome: cargoInfo!.nome,
+      municipal: cargoInfo!.municipal,
+      tipoApuracao: cargoInfo!.tipoApuracao,
       municipioId,
       numero,
       nome,
@@ -81,6 +107,7 @@ export async function importarCandidatos(
       partidoNumero: Number(row["NR_PARTIDO"]) || 0,
       partidoNome: (row["NM_PARTIDO"] || partidoSigla).trim(),
       eleito: situacaoIndicaEleito(row["DS_SIT_TOT_TURNO"]),
+      sqColigacao,
     });
   }
 
@@ -141,7 +168,10 @@ export async function importarCandidatos(
     partidosPorSigla.set(linha.partidoSigla, partido.id);
   }
 
-  // Candidatos
+  // Candidatos (titulares), guardando a chapa (SQ_COLIGACAO) de cada um
+  // para depois anexar o vice correspondente.
+  const chapaPorCandidato = new Map<string, { cargoId: string; sqColigacao: string }>();
+
   for (const linha of linhas) {
     const chave = `${linha.cargoNome}::${linha.municipioId ?? "ESTADUAL"}`;
     const cargoId = cargoIdPorChave.get(chave)!;
@@ -151,10 +181,12 @@ export async function importarCandidatos(
       where: { cargoId, numero: linha.numero },
     });
 
+    let candidatoId: string;
     if (!existente) {
-      await prisma.candidato.create({
+      const criado = await prisma.candidato.create({
         data: { nome: linha.nome, numero: linha.numero, cargoId, partidoId },
       });
+      candidatoId = criado.id;
       resumo.criados++;
     } else {
       if (existente.partidoId !== partidoId) {
@@ -166,8 +198,34 @@ export async function importarCandidatos(
         where: { id: existente.id },
         data: { nome: linha.nome, partidoId },
       });
+      candidatoId = existente.id;
       resumo.atualizados++;
     }
+
+    if (linha.tipoApuracao === "MAJORITARIO" && linha.sqColigacao) {
+      chapaPorCandidato.set(candidatoId, { cargoId, sqColigacao: linha.sqColigacao });
+    }
+  }
+
+  // Anexa cada vice ao titular da mesma chapa (mesmo cargo + SQ_COLIGACAO).
+  let vicesAnexados = 0;
+  for (const [candidatoId, { cargoId, sqColigacao }] of chapaPorCandidato) {
+    const vice = vices.find((v) => {
+      const chave = `${v.cargoNome}::${v.municipioId ?? "ESTADUAL"}`;
+      return cargoIdPorChave.get(chave) === cargoId && v.sqColigacao === sqColigacao;
+    });
+    if (vice) {
+      await prisma.candidato.update({
+        where: { id: candidatoId },
+        data: { viceNome: vice.nome, viceNumero: vice.numero },
+      });
+      vicesAnexados++;
+    }
+  }
+  if (vices.length > 0 && vicesAnexados < vices.length) {
+    resumo.avisos.push(
+      `${vices.length - vicesAnexados} de ${vices.length} vice(s) não puderam ser associados a um titular (chapa não encontrada).`
+    );
   }
 
   return resumo;

@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { calcularQuocienteEleitoral, calcularMajoritario } from "@/lib/eleitoral";
-import { getPartidos } from "@/lib/data";
+import { getPartidos, getEleitoresCargo } from "@/lib/data";
 import { SimuladorPartido } from "@/components/SimuladorPartido";
 import { PdfDownloadLink } from "@/components/PdfDownloadLink";
 import { MunicipioSwitcher } from "@/components/MunicipioSwitcher";
+import { CountUp } from "@/components/CountUp";
 
 export default async function QuocienteDetailPage({
   params,
@@ -15,8 +16,10 @@ export default async function QuocienteDetailPage({
 }) {
   const { cargoId } = await params;
   const { candidato: candidatoInicialId } = await searchParams;
-  const cargo = await prisma.cargo.findUnique({ where: { id: cargoId } });
+  const cargo = await prisma.cargo.findUnique({ where: { id: cargoId }, include: { eleicao: true } });
   if (!cargo) notFound();
+
+  const eleitores = await getEleitoresCargo(cargo.municipioId, cargo.eleicao.ano);
 
   const cargosIrmaos = cargo.municipioId
     ? await prisma.cargo.findMany({
@@ -51,13 +54,26 @@ export default async function QuocienteDetailPage({
 
         <section className="grid grid-cols-2 gap-3">
           <StatCard label="Votos válidos" value={resultado.votosValidos.toLocaleString("pt-BR")} />
-          <StatCard label="Vagas" value={String(resultado.cargo.vagas)} />
+          <StatCard label="Vagas (cadeiras)" value={String(resultado.cargo.vagas)} />
         </section>
+
+        {eleitores && (
+          <section className="grid grid-cols-2 gap-3">
+            <StatCard
+              label={`Eleitores aptos (${eleitores.ano})`}
+              value={eleitores.eleitores.toLocaleString("pt-BR")}
+            />
+            <StatCard
+              label="Eleitores por vaga"
+              value={Math.round(eleitores.eleitores / resultado.cargo.vagas).toLocaleString("pt-BR")}
+            />
+          </section>
+        )}
 
         <section className="rounded-xl border border-amber-900 bg-amber-950/40 px-4 py-3">
           <p className="text-xs text-amber-300">Quociente eleitoral (QE)</p>
           <p className="text-2xl font-bold text-amber-300">
-            {resultado.quocienteEleitoral.toLocaleString("pt-BR")}
+            <CountUp value={resultado.quocienteEleitoral} />
           </p>
           <p className="mt-1 text-xs text-neutral-400">
             QE = votos válidos ÷ vagas = {resultado.votosValidos.toLocaleString("pt-BR")} ÷{" "}
@@ -168,10 +184,23 @@ export default async function QuocienteDetailPage({
         }
       />
 
+      {eleitores && (
+        <section className="grid grid-cols-2 gap-3">
+          <StatCard
+            label={`Eleitores aptos (${eleitores.ano})`}
+            value={eleitores.eleitores.toLocaleString("pt-BR")}
+          />
+          <StatCard
+            label="Comparecimento estimado"
+            value={`${((resultado.votosValidos / eleitores.eleitores) * 100).toFixed(1)}%`}
+          />
+        </section>
+      )}
+
       <section className="rounded-xl border border-amber-900 bg-amber-950/40 px-4 py-3">
         <p className="text-xs text-amber-300">Votos válidos</p>
         <p className="text-2xl font-bold text-amber-300">
-          {resultado.votosValidos.toLocaleString("pt-BR")}
+          <CountUp value={resultado.votosValidos} />
         </p>
         {resultado.segundoTurnoProvavel && (
           <p className="mt-2 rounded-md bg-amber-950 px-2 py-1 text-xs text-amber-300">

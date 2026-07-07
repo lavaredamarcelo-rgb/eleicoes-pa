@@ -171,6 +171,8 @@ export async function calcularMajoritario(cargoId: string) {
       nome: c.nome,
       numero: c.numero,
       partido: c.partido,
+      viceNome: c.viceNome,
+      viceNumero: c.viceNumero,
       votos: c.resultados.reduce((sum, r) => sum + r.votos, 0),
     }))
     .sort((a, b) => b.votos - a.votos);

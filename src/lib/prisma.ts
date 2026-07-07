@@ -12,4 +12,3 @@ const adapter = new PrismaBetterSqlite3({
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter });
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
-// build-marker-1783441907
