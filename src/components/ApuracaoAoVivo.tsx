@@ -1,6 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Star } from "lucide-react";
+import { adicionarFavoritoApuracao } from "@/app/actions/apuracao";
+import { ApuracaoCardFavorito, type Favorito } from "@/components/ApuracaoCardFavorito";
 
 type Eleicao = { cd: string; nome: string; data: string };
 type Municipio = { codigoTse: string; nome: string };
@@ -25,7 +28,18 @@ const CARGOS = [
 
 const INTERVALO_MS = 60_000;
 
-export function ApuracaoAoVivo({ municipios }: { municipios: Municipio[] }) {
+export function ApuracaoAoVivo({
+  municipios,
+  favoritos,
+}: {
+  municipios: Municipio[];
+  favoritos: Favorito[];
+}) {
+  const atualizadores = useRef(new Map<string, () => void>());
+  const registrarAtualizador = useCallback((id: string, fn: () => void) => {
+    atualizadores.current.set(id, fn);
+  }, []);
+  const [salvandoFavorito, setSalvandoFavorito] = useState(false);
   const [eleicoes, setEleicoes] = useState<Eleicao[]>([]);
   const [eleicaoCd, setEleicaoCd] = useState("");
   const [cargoCd, setCargoCd] = useState("0011");
@@ -78,11 +92,61 @@ export function ApuracaoAoVivo({ municipios }: { municipios: Municipio[] }) {
     return () => clearInterval(id);
   }, [buscar]);
 
+  function abrirFavorito(f: Favorito) {
+    setEleicaoCd(f.eleicaoCd);
+    setCargoCd(f.cargoCd);
+    setMun(f.municipioTse ?? "estado");
+  }
+
+  async function acompanhar() {
+    if (!eleicaoCd || !ano) return;
+    setSalvandoFavorito(true);
+    const nomeMun =
+      cargoSel.municipal && mun !== "estado"
+        ? municipios.find((m) => m.codigoTse === mun)?.nome ?? ""
+        : "PA";
+    await adicionarFavoritoApuracao({
+      rotulo: `${cargoSel.nome} · ${nomeMun} · ${ano}`,
+      ano,
+      eleicaoCd,
+      cargoCd,
+      municipioTse: cargoSel.municipal && mun !== "estado" ? mun : null,
+    });
+    setSalvandoFavorito(false);
+  }
+
   const total = dados?.candidatos.reduce((s, c) => s + c.votos, 0) ?? 0;
   const maior = dados?.candidatos[0]?.votos ?? 0;
 
   return (
     <div className="flex flex-col gap-4">
+      {favoritos.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium text-neutral-400">
+              Acompanhando ({favoritos.length})
+            </h2>
+            <button
+              onClick={() => atualizadores.current.forEach((fn) => fn())}
+              className="rounded-full border border-neutral-700 px-3 py-1 text-xs text-neutral-300 transition-colors hover:border-neutral-500"
+            >
+              Atualizar todos
+            </button>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {favoritos.map((f, i) => (
+              <ApuracaoCardFavorito
+                key={f.id}
+                favorito={f}
+                indice={i}
+                aoAbrir={abrirFavorito}
+                registrarAtualizador={registrarAtualizador}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className="grid grid-cols-1 gap-3 rounded-xl border border-neutral-800 bg-neutral-900 p-4 sm:grid-cols-3">
         <div className={cargoSel.municipal ? "" : "sm:col-span-2"}>
           <label className="mb-1 block text-xs text-neutral-500">Eleição (índice oficial do TSE)</label>
@@ -144,6 +208,14 @@ export function ApuracaoAoVivo({ municipios }: { municipios: Municipio[] }) {
         </span>
         <span className="flex items-center gap-2">
           {atualizadoEm && `Atualizado ${atualizadoEm.toLocaleTimeString("pt-BR")}`}
+          <button
+            onClick={acompanhar}
+            disabled={salvandoFavorito || !dados}
+            className="flex items-center gap-1 rounded-full border border-amber-700 px-3 py-1 text-amber-300 transition-colors hover:border-amber-500 disabled:opacity-50"
+          >
+            <Star size={12} />
+            {salvandoFavorito ? "Salvando…" : "Acompanhar"}
+          </button>
           <button
             onClick={buscar}
             disabled={carregando}

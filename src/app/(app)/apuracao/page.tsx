@@ -1,7 +1,13 @@
 import { ApuracaoAoVivo } from "@/components/ApuracaoAoVivo";
 import { prisma } from "@/lib/prisma";
+import { verifySession } from "@/lib/dal";
 
 export default async function ApuracaoPage() {
+  const session = await verifySession();
+  const favoritos = await prisma.apuracaoFavorito.findMany({
+    where: { userId: session.userId },
+    orderBy: { ordem: "asc" },
+  });
   const municipios = await prisma.municipio.findMany({
     where: { codigoTse: { not: null } },
     orderBy: { nome: "asc" },
@@ -22,6 +28,7 @@ export default async function ApuracaoPage() {
 
       <ApuracaoAoVivo
         municipios={municipios.map((m) => ({ codigoTse: m.codigoTse!, nome: m.nome }))}
+        favoritos={favoritos}
       />
     </div>
   );
