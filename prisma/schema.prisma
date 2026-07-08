@@ -87,6 +87,11 @@ model Partido {
 model Candidato {
   id            String         @id @default(cuid())
   nome          String
+  // Identidade civil do TSE (NM_CANDIDATO/NR_CPF_CANDIDATO): o nome de
+  // urna se repete entre pessoas diferentes, então o vínculo de um mesmo
+  // político entre eleições é feito pelo CPF (ou nome completo).
+  nomeCompleto  String?
+  cpf           String?
   numero        Int
   cargoId       String
   cargo         Cargo          @relation(fields: [cargoId], references: [id])

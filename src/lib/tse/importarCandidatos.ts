@@ -28,6 +28,8 @@ export async function importarCandidatos(
     municipioId: string | null;
     numero: number;
     nome: string;
+    nomeCompleto: string | null;
+    cpf: string | null;
     partidoSigla: string;
     partidoNumero: number;
     partidoNome: string;
@@ -115,6 +117,8 @@ export async function importarCandidatos(
       municipioId,
       numero,
       nome,
+      nomeCompleto: (row["NM_CANDIDATO"] || "").trim() || null,
+      cpf: (row["NR_CPF_CANDIDATO"] || "").trim() || null,
       partidoSigla,
       partidoNumero: Number(row["NR_PARTIDO"]) || 0,
       partidoNome: (row["NM_PARTIDO"] || partidoSigla).trim(),
@@ -204,7 +208,15 @@ export async function importarCandidatos(
     let candidatoId: string;
     if (!existente) {
       const criado = await prisma.candidato.create({
-        data: { nome: linha.nome, numero: linha.numero, cargoId, partidoId, eleito: linha.eleito },
+        data: {
+          nome: linha.nome,
+          nomeCompleto: linha.nomeCompleto,
+          cpf: linha.cpf,
+          numero: linha.numero,
+          cargoId,
+          partidoId,
+          eleito: linha.eleito,
+        },
       });
       candidatoId = criado.id;
       resumo.criados++;
@@ -216,7 +228,13 @@ export async function importarCandidatos(
       }
       await prisma.candidato.update({
         where: { id: existente.id },
-        data: { nome: linha.nome, partidoId, eleito: linha.eleito },
+        data: {
+          nome: linha.nome,
+          nomeCompleto: linha.nomeCompleto,
+          cpf: linha.cpf,
+          partidoId,
+          eleito: linha.eleito,
+        },
       });
       candidatoId = existente.id;
       resumo.atualizados++;

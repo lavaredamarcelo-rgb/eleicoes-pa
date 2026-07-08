@@ -14,7 +14,7 @@ export default async function CandidatoDetailPage({
   const [candidato, session] = await Promise.all([getCandidato(id), verifySession()]);
   if (!candidato) notFound();
 
-  const candidaturasAnteriores = await getCandidaturasAnteriores(candidato.nome, candidato.id);
+  const candidaturasAnteriores = await getCandidaturasAnteriores(candidato);
 
   const totalVotos = candidato.resultados.reduce((sum, r) => sum + r.votos, 0);
 
@@ -48,6 +48,9 @@ export default async function CandidatoDetailPage({
                 </span>
               )}
             </h1>
+            {candidato.nomeCompleto && candidato.nomeCompleto !== candidato.nome && (
+              <p className="text-xs text-neutral-600">{candidato.nomeCompleto}</p>
+            )}
             <p className="text-sm text-neutral-500">
               {candidato.numero} · {candidato.partido.sigla} · {candidato.cargo.nome}
               {candidato.cargo.municipio ? ` (${candidato.cargo.municipio.nome})` : " (PA)"} ·

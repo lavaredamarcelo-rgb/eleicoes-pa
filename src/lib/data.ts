@@ -525,12 +525,22 @@ export async function getCandidato(id: string) {
   });
 }
 
-// Outras candidaturas do mesmo nome de urna em anos diferentes — permite ver
-// o histórico eleitoral de uma pessoa sem precisar ligar Candidato entre
-// eleições no schema (cada eleição gera um registro novo).
-export async function getCandidaturasAnteriores(nome: string, excluirId: string) {
+// Outras candidaturas da MESMA PESSOA em anos diferentes. O nome de urna se
+// repete entre pessoas distintas (ex.: vários "HELDER"), então o vínculo é
+// pelo CPF do TSE — com fallback para o nome civil completo. Sem nenhum dos
+// dois, não arriscamos associação.
+export async function getCandidaturasAnteriores(candidato: {
+  id: string;
+  cpf: string | null;
+  nomeCompleto: string | null;
+}) {
+  const filtros = [];
+  if (candidato.cpf) filtros.push({ cpf: candidato.cpf });
+  else if (candidato.nomeCompleto) filtros.push({ nomeCompleto: candidato.nomeCompleto });
+  if (filtros.length === 0) return [];
+
   const candidatos = await prisma.candidato.findMany({
-    where: { nome, id: { not: excluirId } },
+    where: { OR: filtros, id: { not: candidato.id } },
     include: {
       partido: true,
       cargo: { include: { eleicao: true, municipio: true } },
