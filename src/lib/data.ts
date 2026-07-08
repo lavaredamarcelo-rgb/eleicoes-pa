@@ -706,20 +706,29 @@ export async function getUsuarios() {
   }));
 }
 
+// Eleitores aptos do ano mais recente, por município. Somar votos de todas
+// as eleições inflaria os números — o eleitorado é o dado comparável.
+function eleitoresMaisRecentes(eleitorado: { ano: number; total: number }[]) {
+  if (eleitorado.length === 0) return { eleitores: 0, ano: null as number | null };
+  const ano = Math.max(...eleitorado.map((e) => e.ano));
+  const registro = eleitorado.find((e) => e.ano === ano);
+  return { eleitores: registro?.total ?? 0, ano };
+}
+
 export async function getMunicipios(regiaoId?: string) {
   const municipios = await prisma.municipio.findMany({
     where: regiaoId ? { regiaoId } : undefined,
     include: {
       regiao: true,
-      resultados: true,
+      eleitorado: true,
     },
     orderBy: { nome: "asc" },
   });
 
-  return municipios.map((m) => ({
-    ...m,
-    totalVotos: m.resultados.reduce((sum, r) => sum + r.votos, 0),
-  }));
+  return municipios.map((m) => {
+    const { eleitores, ano } = eleitoresMaisRecentes(m.eleitorado);
+    return { ...m, eleitores, anoEleitorado: ano };
+  });
 }
 
 export async function getMunicipio(id: string) {
@@ -727,30 +736,35 @@ export async function getMunicipio(id: string) {
     where: { id },
     include: {
       regiao: true,
+      eleitorado: true,
       resultados: {
-        include: { candidato: { include: { partido: true, cargo: true } } },
+        include: {
+          candidato: { include: { partido: true, cargo: { include: { eleicao: true } } } },
+        },
         orderBy: { votos: "desc" },
       },
       colegiosEleitorais: { orderBy: { nome: "asc" } },
     },
   });
-  return municipio;
+  if (!municipio) return null;
+  const { eleitores, ano } = eleitoresMaisRecentes(municipio.eleitorado);
+  return { ...municipio, eleitores, anoEleitorado: ano };
 }
 
 export async function getRegioes() {
   const regioes = await prisma.regiao.findMany({
     include: {
-      municipios: { include: { resultados: true } },
+      municipios: { include: { eleitorado: true } },
     },
     orderBy: { nome: "asc" },
   });
 
   return regioes.map((r) => {
-    const totalVotos = r.municipios.reduce(
-      (sum, m) => sum + m.resultados.reduce((s, res) => s + res.votos, 0),
+    const eleitores = r.municipios.reduce(
+      (sum, m) => sum + eleitoresMaisRecentes(m.eleitorado).eleitores,
       0
     );
-    return { ...r, totalVotos, totalMunicipios: r.municipios.length };
+    return { ...r, eleitores, totalMunicipios: r.municipios.length };
   });
 }
 

@@ -27,6 +27,9 @@ export default async function MunicipiosPage() {
         <h1 className="text-lg font-semibold">Municípios e regiões</h1>
         <p className="text-sm text-neutral-500">
           {municipios.length} municípios em {regioesOrdenadas.length} mesorregiões do Pará
+          {municipios[0]?.anoEleitorado
+            ? ` · eleitores aptos de ${municipios[0].anoEleitorado} (TSE)`
+            : ""}
         </p>
       </div>
 
@@ -44,7 +47,7 @@ export default async function MunicipiosPage() {
               <span className="flex items-center gap-2 text-xs text-neutral-500">
                 <span>{lista.length} municípios</span>
                 <span className="font-semibold text-amber-400">
-                  {(regiaoInfo?.totalVotos ?? 0).toLocaleString("pt-BR")} votos
+                  {(regiaoInfo?.eleitores ?? 0).toLocaleString("pt-BR")} eleitores
                 </span>
               </span>
             </summary>
@@ -54,7 +57,7 @@ export default async function MunicipiosPage() {
                 <CardLink key={m.id} href={`/municipios/${m.id}`}>
                   <p className="font-medium">{m.nome}</p>
                   <span className="text-sm font-semibold text-amber-400">
-                    {m.totalVotos.toLocaleString("pt-BR")}
+                    {m.eleitores.toLocaleString("pt-BR")}
                   </span>
                 </CardLink>
               ))}

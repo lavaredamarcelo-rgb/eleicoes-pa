@@ -13,17 +13,22 @@ export default async function MunicipioDetailPage({
   const municipio = await getMunicipio(id);
   if (!municipio) notFound();
 
-  const totalVotos = municipio.resultados.reduce((sum, r) => sum + r.votos, 0);
-
-  const porCargo = new Map<string, { nome: string; resultados: typeof municipio.resultados }>();
+  const porCargo = new Map<string, { nome: string; ano: number; resultados: typeof municipio.resultados }>();
   for (const r of municipio.resultados) {
     const atual = porCargo.get(r.candidato.cargo.id);
     if (atual) {
       atual.resultados.push(r);
     } else {
-      porCargo.set(r.candidato.cargo.id, { nome: r.candidato.cargo.nome, resultados: [r] });
+      porCargo.set(r.candidato.cargo.id, {
+        nome: r.candidato.cargo.nome,
+        ano: r.candidato.cargo.eleicao.ano,
+        resultados: [r],
+      });
     }
   }
+  const cargosOrdenados = Array.from(porCargo.values()).sort(
+    (a, b) => b.ano - a.ano || a.nome.localeCompare(b.nome, "pt-BR")
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -36,13 +41,16 @@ export default async function MunicipioDetailPage({
           <PdfDownloadLink href={`/api/pdf/municipio/${municipio.id}`} />
         </div>
         <p className="mt-2 text-2xl font-bold text-amber-400">
-          {totalVotos.toLocaleString("pt-BR")} votos
+          {municipio.eleitores.toLocaleString("pt-BR")} eleitores aptos
+          {municipio.anoEleitorado ? ` (${municipio.anoEleitorado})` : ""}
         </p>
       </section>
 
-      {Array.from(porCargo.values()).map((grupo) => (
-        <section key={grupo.nome} className="flex flex-col gap-2">
-          <h2 className="text-sm font-medium text-neutral-400">{grupo.nome}</h2>
+      {cargosOrdenados.map((grupo) => (
+        <section key={`${grupo.nome}-${grupo.ano}`} className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-neutral-400">
+            {grupo.nome} · {grupo.ano}
+          </h2>
           {grupo.resultados.map((r) => (
             <CardLink key={r.id} href={`/candidatos/${r.candidato.id}`}>
               <div>
