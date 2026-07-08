@@ -40,7 +40,14 @@ export default async function CandidatoDetailPage({
       <section>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-lg font-semibold">{candidato.nome}</h1>
+            <h1 className="flex items-center gap-2 text-lg font-semibold">
+              {candidato.nome}
+              {candidato.eleito && (
+                <span className="rounded-full bg-emerald-950 px-2 py-0.5 text-xs font-medium text-emerald-300">
+                  Eleito em {candidato.cargo.eleicao.ano}
+                </span>
+              )}
+            </h1>
             <p className="text-sm text-neutral-500">
               {candidato.numero} · {candidato.partido.sigla} · {candidato.cargo.nome}
               {candidato.cargo.municipio ? ` (${candidato.cargo.municipio.nome})` : " (PA)"} ·
@@ -124,9 +131,14 @@ export default async function CandidatoDetailPage({
           {candidaturasAnteriores.map((c) => (
             <CardLink key={c.id} href={`/candidatos/${c.id}`}>
               <div>
-                <p className="font-medium">
+                <p className="flex items-center gap-2 font-medium">
                   {c.cargo.nome}
                   {c.cargo.municipio ? ` (${c.cargo.municipio.nome})` : " (PA)"}
+                  {c.eleito && (
+                    <span className="rounded-full bg-emerald-950 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
+                      Eleito
+                    </span>
+                  )}
                 </p>
                 <p className="text-xs text-neutral-500">
                   {c.cargo.eleicao.ano} · {c.numero} · {c.partido.sigla}

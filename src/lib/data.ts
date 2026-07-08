@@ -1,71 +1,100 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
-import { distribuirVagas } from "@/lib/simulacaoPartido";
 
-// Lista, por cargo, apenas os candidatos eleitos (não os suplentes/não
-// eleitos) — usada na aba "Eleitos". Reaproveita a mesma regra de sobras
-// do cálculo de quociente para cargos proporcionais; para majoritários,
-// eleito é simplesmente quem tem mais votos.
-export async function getTodosEleitos(ano?: number) {
-  const cargos = await prisma.cargo.findMany({
-    where: ano ? { eleicao: { ano } } : undefined,
+// Anos de eleição que têm eleitos oficiais (flag do TSE) — alimenta o
+// seletor da aba "Eleitos" e exclui naturalmente eleições futuras.
+export async function getAnosComEleitos() {
+  const anos = await prisma.eleicao.findMany({
+    where: { cargos: { some: { candidatos: { some: { eleito: true } } } } },
+    select: { ano: true },
+    orderBy: { ano: "desc" },
+  });
+  return anos.map((a) => a.ano);
+}
+
+// Eleitos oficiais de um ano (situação DS_SIT_TOT_TURNO do TSE), agrupados
+// por cargo e, dentro do cargo, por município quando for disputa municipal.
+export async function getEleitosOficiais(ano: number) {
+  const candidatos = await prisma.candidato.findMany({
+    where: { eleito: true, cargo: { eleicao: { ano } } },
     include: {
-      eleicao: true,
-      municipio: true,
-      candidatos: { include: { partido: true, resultados: true } },
+      partido: true,
+      cargo: { include: { municipio: true } },
+      resultados: true,
     },
-    orderBy: [{ eleicao: { ano: "desc" } }, { nome: "asc" }],
   });
 
-  return cargos
-    .map((cargo) => {
-      const candidatosComVotos = cargo.candidatos.map((c) => ({
-        ...c,
-        votos: c.resultados.reduce((s, r) => s + r.votos, 0),
-      }));
+  type Eleito = {
+    id: string;
+    nome: string;
+    numero: number;
+    partidoSigla: string;
+    votos: number;
+    viceNome: string | null;
+  };
+  type GrupoMunicipio = { municipioId: string; municipioNome: string; eleitos: Eleito[] };
+  type GrupoCargo = {
+    cargoNome: string;
+    escopo: "estadual" | "municipal";
+    eleitos: Eleito[];
+    municipios: Map<string, GrupoMunicipio>;
+  };
 
-      let eleitos: typeof candidatosComVotos = [];
+  const porCargo = new Map<string, GrupoCargo>();
 
-      if (cargo.tipoApuracao === "MAJORITARIO") {
-        const ordenado = [...candidatosComVotos].sort((a, b) => b.votos - a.votos);
-        eleitos = ordenado.slice(0, 1);
-      } else {
-        const votosValidos = candidatosComVotos.reduce((s, c) => s + c.votos, 0);
-        const quocienteEleitoral = cargo.vagas > 0 ? Math.floor(votosValidos / cargo.vagas) : 0;
-
-        const porPartido = new Map<string, { partidoId: string; votos: number }>();
-        for (const c of candidatosComVotos) {
-          const atual = porPartido.get(c.partidoId);
-          if (atual) atual.votos += c.votos;
-          else porPartido.set(c.partidoId, { partidoId: c.partidoId, votos: c.votos });
-        }
-        const vagasFinais = distribuirVagas(Array.from(porPartido.values()), cargo.vagas, quocienteEleitoral);
-
-        const porPartidoOrdenado = new Map<string, typeof candidatosComVotos>();
-        for (const c of candidatosComVotos) {
-          const lista = porPartidoOrdenado.get(c.partidoId);
-          if (lista) lista.push(c);
-          else porPartidoOrdenado.set(c.partidoId, [c]);
-        }
-        for (const [partidoId, lista] of porPartidoOrdenado) {
-          const vagas = vagasFinais.get(partidoId) ?? 0;
-          const ordenado = [...lista].sort((a, b) => b.votos - a.votos);
-          eleitos.push(...ordenado.slice(0, vagas));
-        }
-      }
-
-      return {
-        cargoId: cargo.id,
-        cargoNome: cargo.nome,
-        tipoApuracao: cargo.tipoApuracao,
-        ano: cargo.eleicao.ano,
-        tipoEleicao: cargo.eleicao.tipo,
-        municipioId: cargo.municipio?.id ?? null,
-        municipioNome: cargo.municipio?.nome ?? null,
-        eleitos: eleitos.sort((a, b) => b.votos - a.votos),
+  for (const c of candidatos) {
+    const nome = c.cargo.nome;
+    let grupo = porCargo.get(nome);
+    if (!grupo) {
+      grupo = {
+        cargoNome: nome,
+        escopo: c.cargo.municipio ? "municipal" : "estadual",
+        eleitos: [],
+        municipios: new Map(),
       };
+      porCargo.set(nome, grupo);
+    }
+
+    const eleito: Eleito = {
+      id: c.id,
+      nome: c.nome,
+      numero: c.numero,
+      partidoSigla: c.partido.sigla,
+      votos: c.resultados.reduce((s, r) => s + r.votos, 0),
+      viceNome: c.viceNome,
+    };
+
+    if (c.cargo.municipio) {
+      let gm = grupo.municipios.get(c.cargo.municipio.id);
+      if (!gm) {
+        gm = { municipioId: c.cargo.municipio.id, municipioNome: c.cargo.municipio.nome, eleitos: [] };
+        grupo.municipios.set(c.cargo.municipio.id, gm);
+      }
+      gm.eleitos.push(eleito);
+    } else {
+      grupo.eleitos.push(eleito);
+    }
+  }
+
+  const ordemCargos = ["Governador", "Senador", "Deputado Federal", "Deputado Estadual", "Prefeito", "Vereador"];
+
+  return Array.from(porCargo.values())
+    .sort((a, b) => {
+      const ia = ordemCargos.indexOf(a.cargoNome);
+      const ib = ordemCargos.indexOf(b.cargoNome);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
     })
-    .filter((c) => c.eleitos.length > 0);
+    .map((g) => ({
+      cargoNome: g.cargoNome,
+      escopo: g.escopo,
+      eleitos: g.eleitos.sort((a, b) => b.votos - a.votos),
+      municipios: Array.from(g.municipios.values())
+        .map((m) => ({ ...m, eleitos: m.eleitos.sort((a, b) => b.votos - a.votos) }))
+        .sort((a, b) => a.municipioNome.localeCompare(b.municipioNome, "pt-BR")),
+      totalEleitos:
+        g.eleitos.length +
+        Array.from(g.municipios.values()).reduce((s, m) => s + m.eleitos.length, 0),
+    }));
 }
 
 export async function getEleicoes() {
@@ -141,36 +170,102 @@ export async function getHierarquiaDisputas() {
 
   return Array.from(porAno.values())
     .sort((a, b) => b.ano - a.ano)
-    .map((anoGrupo) => ({
-      ano: anoGrupo.ano,
-      tipo: anoGrupo.tipo,
-      cargos: Array.from(anoGrupo.cargos.values()).map((c) => ({
-        ...c,
-        municipios: c.municipios.sort((a, b) => b.totalVotos - a.totalVotos),
-      })),
-    }));
+    .map((anoGrupo) => {
+      const referencia = anoGrupo.cargos.get(CARGO_REFERENCIA[anoGrupo.tipo]);
+      const votosValidos = referencia
+        ? referencia.municipios.reduce((s, m) => s + m.totalVotos, 0)
+        : 0;
+      return {
+        ano: anoGrupo.ano,
+        tipo: anoGrupo.tipo,
+        votosValidos,
+        cargos: Array.from(anoGrupo.cargos.values()).map((c) => ({
+          ...c,
+          municipios: c.municipios.sort((a, b) => b.totalVotos - a.totalVotos),
+        })),
+      };
+    });
 }
 
-// Total de votos apurados por ano de eleição (somando todos os cargos),
-// para o gráfico comparativo de votações anteriores.
-export async function getVotosPorAnoEleicao() {
-  const cargos = await prisma.cargo.findMany({
-    include: { eleicao: true, candidatos: { include: { resultados: true } } },
-  });
+// Votos válidos (nominais) por eleição. Como o banco não separa 1º e 2º
+// turno, cargos majoritários somariam os dois turnos e inflariam o total;
+// por isso a referência é o cargo proporcional do ano (Vereador nas
+// municipais, Deputado Estadual nas estaduais), que sempre tem turno único.
+const CARGO_REFERENCIA: Record<string, string> = {
+  MUNICIPAL: "Vereador",
+  ESTADUAL: "Deputado Estadual",
+};
+
+export async function getVotosValidosPorAno() {
+  const linhas = await prisma.$queryRaw<{ ano: number; tipo: string; nome: string; votos: bigint }[]>`
+    SELECT e.ano as ano, e.tipo as tipo, g.nome as nome, SUM(r.votos) as votos
+    FROM Resultado r
+    JOIN Candidato c ON r.candidatoId = c.id
+    JOIN Cargo g ON c.cargoId = g.id
+    JOIN Eleicao e ON g.eleicaoId = e.id
+    GROUP BY e.ano, e.tipo, g.nome
+  `;
 
   const porAno = new Map<number, number>();
-  for (const cargo of cargos) {
-    const total = cargo.candidatos.reduce(
-      (s, c) => s + c.resultados.reduce((s2, r) => s2 + r.votos, 0),
-      0
-    );
-    porAno.set(cargo.eleicao.ano, (porAno.get(cargo.eleicao.ano) ?? 0) + total);
+  for (const l of linhas) {
+    if (l.nome === CARGO_REFERENCIA[l.tipo]) {
+      porAno.set(l.ano, (porAno.get(l.ano) ?? 0) + Number(l.votos));
+    }
   }
 
   return Array.from(porAno.entries())
     .filter(([, total]) => total > 0)
     .sort((a, b) => a[0] - b[0])
     .map(([ano, total]) => ({ ano, total }));
+}
+
+// Eleitorado atual do estado: soma de todos os municípios no ano mais
+// recente importado do TSE.
+export async function getEleitoradoAtual() {
+  const registros = await prisma.eleitorado.findMany();
+  if (registros.length === 0) return null;
+  const ano = Math.max(...registros.map((r) => r.ano));
+  const total = registros.filter((r) => r.ano === ano).reduce((s, r) => s + r.total, 0);
+  return { ano, total };
+}
+
+// Anos das eleições mais recentes por tipo — definem quem está com mandato
+// vigente (municipais: prefeitos/vereadores; estaduais: governador,
+// deputados e senador; senadores têm mandato de 8 anos, então a eleição
+// estadual anterior também conta para Senador).
+export async function getAnosMandatoAtual() {
+  const anos = await prisma.eleicao.findMany({
+    where: { cargos: { some: { candidatos: { some: { eleito: true } } } } },
+    select: { ano: true, tipo: true },
+  });
+  const municipais = anos.filter((a) => a.tipo === "MUNICIPAL").map((a) => a.ano);
+  const estaduais = anos.filter((a) => a.tipo === "ESTADUAL").map((a) => a.ano).sort((a, b) => b - a);
+  return {
+    municipal: municipais.length ? Math.max(...municipais) : null,
+    estadual: estaduais[0] ?? null,
+    estadualAnterior: estaduais[1] ?? null,
+  };
+}
+
+export async function getTotalEleitosComMandato() {
+  const anos = await getAnosMandatoAtual();
+  let total = 0;
+  if (anos.municipal) {
+    total += await prisma.candidato.count({
+      where: { eleito: true, cargo: { eleicao: { ano: anos.municipal } } },
+    });
+  }
+  if (anos.estadual) {
+    total += await prisma.candidato.count({
+      where: { eleito: true, cargo: { eleicao: { ano: anos.estadual } } },
+    });
+  }
+  if (anos.estadualAnterior) {
+    total += await prisma.candidato.count({
+      where: { eleito: true, cargo: { nome: "Senador", eleicao: { ano: anos.estadualAnterior } } },
+    });
+  }
+  return total;
 }
 
 // Total de eleitorado do estado por ano (soma de todos os municípios),
@@ -343,27 +438,62 @@ export async function getPartidos() {
   return prisma.partido.findMany({ orderBy: { sigla: "asc" } });
 }
 
-// Lista de partidos com estatísticas agregadas (total de eleitos e votos em
-// todo o histórico importado) — usada na aba "Partidos Políticos".
+// Votos de cada partido por ano de eleição, agregados direto no banco —
+// evita carregar todos os resultados em memória.
+async function votosPartidoPorAno() {
+  return prisma.$queryRaw<{ partidoId: string; ano: number; votos: bigint }[]>`
+    SELECT c.partidoId as partidoId, e.ano as ano, SUM(r.votos) as votos
+    FROM Resultado r
+    JOIN Candidato c ON r.candidatoId = c.id
+    JOIN Cargo g ON c.cargoId = g.id
+    JOIN Eleicao e ON g.eleicaoId = e.id
+    GROUP BY c.partidoId, e.ano
+  `;
+}
+
+// Lista de partidos com o desempenho na eleição mais recente (votos, não
+// somatória histórica) e o número de eleitos com mandato vigente.
 export async function getPartidosComEstatisticas() {
-  const partidos = await prisma.partido.findMany({
-    include: { candidatos: { include: { resultados: true, cargo: true } } },
-    orderBy: { sigla: "asc" },
-  });
+  const [partidos, votosAno, anosMandato] = await Promise.all([
+    prisma.partido.findMany({ orderBy: { sigla: "asc" } }),
+    votosPartidoPorAno(),
+    getAnosMandatoAtual(),
+  ]);
+
+  const ultimoAno = votosAno.length ? Math.max(...votosAno.map((v) => v.ano)) : null;
+  const votosUltimaPorPartido = new Map<string, number>();
+  for (const v of votosAno) {
+    if (v.ano === ultimoAno) votosUltimaPorPartido.set(v.partidoId, Number(v.votos));
+  }
+
+  const filtrosMandato = [];
+  if (anosMandato.municipal)
+    filtrosMandato.push({ eleito: true, cargo: { eleicao: { ano: anosMandato.municipal } } });
+  if (anosMandato.estadual)
+    filtrosMandato.push({ eleito: true, cargo: { eleicao: { ano: anosMandato.estadual } } });
+  if (anosMandato.estadualAnterior)
+    filtrosMandato.push({
+      eleito: true,
+      cargo: { nome: "Senador", eleicao: { ano: anosMandato.estadualAnterior } },
+    });
+
+  const mandatos = filtrosMandato.length
+    ? await prisma.candidato.groupBy({
+        by: ["partidoId"],
+        where: { OR: filtrosMandato },
+        _count: true,
+      })
+    : [];
+  const mandatosPorPartido = new Map(mandatos.map((m) => [m.partidoId, m._count]));
 
   return partidos
-    .map((p) => {
-      const totalVotos = p.candidatos.reduce(
-        (s, c) => s + c.resultados.reduce((s2, r) => s2 + r.votos, 0),
-        0
-      );
-      return {
-        ...p,
-        totalCandidatos: p.candidatos.length,
-        totalVotos,
-      };
-    })
-    .sort((a, b) => b.totalVotos - a.totalVotos);
+    .map((p) => ({
+      ...p,
+      ultimoAno,
+      votosUltimaEleicao: votosUltimaPorPartido.get(p.id) ?? 0,
+      eleitosComMandato: mandatosPorPartido.get(p.id) ?? 0,
+    }))
+    .sort((a, b) => b.votosUltimaEleicao - a.votosUltimaEleicao);
 }
 
 export async function getPartido(id: string) {
@@ -391,7 +521,57 @@ export async function getPartido(id: string) {
     ? partido.federacaoMembros.split(",").map((s) => s.trim()).filter(Boolean)
     : [];
 
-  return { ...partido, candidatos: candidatosComVotos, membrosFederacao };
+  // Desempenho por eleição: votos, candidaturas e eleitos em cada ano.
+  const porAno = new Map<number, { ano: number; votos: number; candidatos: number; eleitos: number }>();
+  for (const c of candidatosComVotos) {
+    const ano = c.cargo.eleicao.ano;
+    let linha = porAno.get(ano);
+    if (!linha) {
+      linha = { ano, votos: 0, candidatos: 0, eleitos: 0 };
+      porAno.set(ano, linha);
+    }
+    linha.votos += c.votos;
+    linha.candidatos++;
+    if (c.eleito) linha.eleitos++;
+  }
+  const desempenhoPorAno = Array.from(porAno.values()).sort((a, b) => a.ano - b.ano);
+
+  // Representatividade com mandato vigente, por âmbito federativo.
+  const anosMandato = await getAnosMandatoAtual();
+  const CARGOS_AMBITO: Record<string, "federal" | "estadual" | "municipal"> = {
+    "Senador": "federal",
+    "Deputado Federal": "federal",
+    "Governador": "estadual",
+    "Deputado Estadual": "estadual",
+    "Prefeito": "municipal",
+    "Vereador": "municipal",
+  };
+  const ambitos = { federal: 0, estadual: 0, municipal: 0 };
+  const detalheAmbito = new Map<string, number>();
+  for (const c of candidatosComVotos) {
+    if (!c.eleito) continue;
+    const ano = c.cargo.eleicao.ano;
+    const nome = c.cargo.nome;
+    const temMandato =
+      ano === anosMandato.municipal ||
+      ano === anosMandato.estadual ||
+      (nome === "Senador" && ano === anosMandato.estadualAnterior);
+    if (!temMandato) continue;
+    const ambito = CARGOS_AMBITO[nome];
+    if (ambito) {
+      ambitos[ambito]++;
+      detalheAmbito.set(nome, (detalheAmbito.get(nome) ?? 0) + 1);
+    }
+  }
+
+  return {
+    ...partido,
+    candidatos: candidatosComVotos,
+    membrosFederacao,
+    desempenhoPorAno,
+    ambitos,
+    detalheAmbito: Array.from(detalheAmbito.entries()).map(([cargo, qtd]) => ({ cargo, qtd })),
+  };
 }
 
 export async function getUsuarios() {

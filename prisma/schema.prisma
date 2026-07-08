@@ -92,11 +92,15 @@ model Candidato {
   cargo         Cargo          @relation(fields: [cargoId], references: [id])
   partidoId     String
   partido       Partido        @relation(fields: [partidoId], references: [id])
-  // Vice (Prefeito/Governador): concorrem na mesma chapa e são eleitos ou
-  // não junto com o titular, sem votação própria — por isso ficam como
-  // campos simples aqui, não como um Candidato separado.
+  // Vice (Prefeito/Governador) e suplentes de Senador: concorrem na mesma
+  // chapa e são eleitos ou não junto com o titular, sem votação própria —
+  // por isso ficam como campos simples aqui, não como um Candidato separado.
   viceNome      String?
   viceNumero    Int?
+  // Situação oficial do TSE (DS_SIT_TOT_TURNO indica "eleito"): quem de
+  // fato assumiu, incluindo eleitos por média — mais confiável que
+  // recalcular o quociente a partir só dos votos nominais.
+  eleito        Boolean        @default(false)
   resultados    Resultado[]
   users         User[]
   trocasPartido TrocaPartido[]

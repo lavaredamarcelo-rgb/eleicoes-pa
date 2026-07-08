@@ -3,21 +3,25 @@ import { CardLink } from "@/components/CardLink";
 import { CountUp } from "@/components/CountUp";
 import { DisputasPorAno } from "@/components/DisputasPorAno";
 import { GraficoBarras } from "@/components/GraficoBarras";
-import { getHierarquiaDisputas, getVotosPorAnoEleicao, getEleitoradoEstadoPorAno } from "@/lib/data";
+import {
+  getHierarquiaDisputas,
+  getVotosValidosPorAno,
+  getEleitoradoEstadoPorAno,
+  getEleitoradoAtual,
+  getTotalEleitosComMandato,
+} from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 
 export default async function InicioPage() {
-  const [hierarquia, votosPorAno, eleitoradoPorAno, totalMunicipios, totalCandidatos, totalVotosRow] =
+  const [hierarquia, votosPorAno, eleitoradoPorAno, eleitoradoAtual, eleitosComMandato, totalMunicipios] =
     await Promise.all([
       getHierarquiaDisputas(),
-      getVotosPorAnoEleicao(),
+      getVotosValidosPorAno(),
       getEleitoradoEstadoPorAno(),
+      getEleitoradoAtual(),
+      getTotalEleitosComMandato(),
       prisma.municipio.count(),
-      prisma.candidato.count(),
-      prisma.resultado.aggregate({ _sum: { votos: true } }),
     ]);
-
-  const totalVotos = totalVotosRow._sum.votos ?? 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -27,9 +31,12 @@ export default async function InicioPage() {
       </section>
 
       <section className="grid grid-cols-3 gap-3">
-        <StatCard label="Votos apurados" value={<CountUp value={totalVotos} />} />
+        <StatCard
+          label={eleitoradoAtual ? `Eleitores aptos (${eleitoradoAtual.ano})` : "Eleitores aptos"}
+          value={<CountUp value={eleitoradoAtual?.total ?? 0} />}
+        />
         <StatCard label="Municípios" value={<CountUp value={totalMunicipios} />} />
-        <StatCard label="Candidatos" value={<CountUp value={totalCandidatos} />} />
+        <StatCard label="Eleitos com mandato" value={<CountUp value={eleitosComMandato} />} />
       </section>
 
       <CardLink href="/mapa" className="bg-gradient-to-r from-amber-950/60 to-neutral-900">
@@ -37,7 +44,7 @@ export default async function InicioPage() {
           <Map className="text-amber-400" size={20} />
           <div>
             <p className="font-medium">Ver mapa do Pará</p>
-            <p className="text-xs text-neutral-500">Votos por município e por região</p>
+            <p className="text-xs text-neutral-500">Projeção de eleitores por município e região</p>
           </div>
         </div>
       </CardLink>
@@ -54,8 +61,8 @@ export default async function InicioPage() {
           pontos={eleitoradoPorAno.map((p) => ({ rotulo: String(p.ano), valor: p.total, projetado: p.projetado }))}
         />
         <GraficoBarras
-          titulo="Votos apurados por eleição"
-          subtitulo="Soma de todos os cargos em disputa no ano"
+          titulo="Votos válidos por eleição"
+          subtitulo="Votos nominais válidos no Pará (referência: Vereador/Dep. Estadual)"
           pontos={votosPorAno.map((p) => ({ rotulo: String(p.ano), valor: p.total }))}
         />
       </section>

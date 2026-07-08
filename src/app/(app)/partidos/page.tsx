@@ -4,7 +4,8 @@ import { getPartidosComEstatisticas } from "@/lib/data";
 
 export default async function PartidosPage() {
   const partidos = await getPartidosComEstatisticas();
-  const top10 = partidos.slice(0, 10);
+  const ultimoAno = partidos[0]?.ultimoAno;
+  const top10 = partidos.filter((p) => p.votosUltimaEleicao > 0).slice(0, 10);
 
   return (
     <div className="flex flex-col gap-6">
@@ -16,9 +17,9 @@ export default async function PartidosPage() {
       </div>
 
       <GraficoBarras
-        titulo="Votos totais por partido"
-        subtitulo="Soma de todos os candidatos, todas as eleições importadas"
-        pontos={top10.map((p) => ({ rotulo: p.sigla, valor: p.totalVotos }))}
+        titulo={ultimoAno ? `Votos por partido na eleição de ${ultimoAno}` : "Votos por partido"}
+        subtitulo="Votos nominais válidos no Pará na eleição mais recente"
+        pontos={top10.map((p) => ({ rotulo: p.sigla, valor: p.votosUltimaEleicao }))}
       />
 
       <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
@@ -40,10 +41,10 @@ export default async function PartidosPage() {
             </div>
             <div className="text-right">
               <p className="text-sm font-semibold text-amber-400">
-                {p.totalVotos.toLocaleString("pt-BR")}
+                {p.votosUltimaEleicao.toLocaleString("pt-BR")}
               </p>
               <p className="text-[10px] text-neutral-600">
-                {p.totalCandidatos} candidatura{p.totalCandidatos !== 1 ? "s" : ""}
+                votos em {p.ultimoAno ?? "—"} · {p.eleitosComMandato} com mandato
               </p>
             </div>
           </CardLink>

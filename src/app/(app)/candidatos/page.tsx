@@ -1,69 +1,48 @@
-import { CardLink } from "@/components/CardLink";
 import { AnoSelector } from "@/components/AnoSelector";
-import { getTodosEleitos, getEleicoes } from "@/lib/data";
+import { EleitosPorCargo } from "@/components/EleitosPorCargo";
+import { getAnosComEleitos, getEleitosOficiais } from "@/lib/data";
 
-export default async function CandidatosPage({
+export default async function EleitosPage({
   searchParams,
 }: {
   searchParams: Promise<{ ano?: string }>;
 }) {
+  const anosDisponiveis = await getAnosComEleitos();
   const { ano: anoParam } = await searchParams;
-  const ano = anoParam ? Number(anoParam) : undefined;
+  const anoSelecionado =
+    anoParam && anosDisponiveis.includes(Number(anoParam))
+      ? Number(anoParam)
+      : anosDisponiveis[0];
 
-  const [eleitos, eleicoes] = await Promise.all([getTodosEleitos(ano), getEleicoes()]);
-  const anosDisponiveis = Array.from(new Set(eleicoes.map((e) => e.ano))).sort((a, b) => b - a);
-
-  const porCargo = new Map<string, typeof eleitos>();
-  for (const entrada of eleitos) {
-    const lista = porCargo.get(entrada.cargoNome);
-    if (lista) lista.push(entrada);
-    else porCargo.set(entrada.cargoNome, [entrada]);
-  }
+  const cargos = anoSelecionado ? await getEleitosOficiais(anoSelecionado) : [];
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-lg font-semibold">Eleitos</h1>
-          <p className="text-sm text-neutral-500">Organizados por cargo</p>
+          <p className="text-sm text-neutral-500">
+            Situação oficial do TSE · escolha o cargo e o município
+          </p>
         </div>
-        <div className="w-40">
-          <AnoSelector anos={anosDisponiveis} selecionado={ano ?? "todos"} basePath="/candidatos" />
-        </div>
+        {anoSelecionado && (
+          <div className="w-32">
+            <AnoSelectorSimples anos={anosDisponiveis} selecionado={anoSelecionado} />
+          </div>
+        )}
       </div>
 
-      {porCargo.size === 0 && (
-        <p className="text-sm text-neutral-500">Nenhum eleito encontrado para esse filtro.</p>
+      {cargos.length > 0 ? (
+        <EleitosPorCargo cargos={cargos} />
+      ) : (
+        <p className="text-sm text-neutral-500">
+          Nenhum eleito importado ainda. Importe os dados do TSE em Configurações.
+        </p>
       )}
-
-      {Array.from(porCargo.entries()).map(([cargoNome, entradas]) => (
-        <section key={cargoNome} className="flex flex-col gap-2">
-          <h2 className="text-sm font-medium text-neutral-400">{cargoNome}</h2>
-          <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
-            {entradas.map((entrada) =>
-              entrada.eleitos.map((c) => (
-                <CardLink key={c.id} href={`/candidatos/${c.id}`}>
-                  <div className="flex flex-col gap-1">
-                    <p className="font-medium">{c.nome}</p>
-                    <p className="text-xs text-neutral-500">
-                      {c.numero} · {c.partido.sigla}
-                      {entrada.municipioNome ? ` · ${entrada.municipioNome}` : " · PA"} · {entrada.ano}
-                    </p>
-                    {c.viceNome && (
-                      <p className="text-xs text-amber-400/80">
-                        Vice: {c.viceNome} ({c.viceNumero})
-                      </p>
-                    )}
-                  </div>
-                  <span className="text-sm font-semibold text-amber-400">
-                    {c.votos.toLocaleString("pt-BR")}
-                  </span>
-                </CardLink>
-              ))
-            )}
-          </div>
-        </section>
-      ))}
     </div>
   );
+}
+
+function AnoSelectorSimples({ anos, selecionado }: { anos: number[]; selecionado: number }) {
+  return <AnoSelector anos={anos} selecionado={selecionado} basePath="/candidatos" somenteAnos />;
 }

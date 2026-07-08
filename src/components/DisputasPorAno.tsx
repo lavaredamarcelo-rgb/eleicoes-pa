@@ -6,7 +6,7 @@ import { ChevronRight, ChevronDown } from "lucide-react";
 
 type Municipio = { municipioId: string; municipioNome: string; totalVotos: number; cargoId: string };
 type Cargo = { cargoNome: string; tipoApuracao: string; municipios: Municipio[] };
-type Ano = { ano: number; tipo: string; cargos: Cargo[] };
+type Ano = { ano: number; tipo: string; votosValidos: number; cargos: Cargo[] };
 
 export function DisputasPorAno({ anos }: { anos: Ano[] }) {
   const [anoAberto, setAnoAberto] = useState<number | null>(anos[0]?.ano ?? null);
@@ -15,10 +15,6 @@ export function DisputasPorAno({ anos }: { anos: Ano[] }) {
   return (
     <div className="flex flex-col gap-2">
       {anos.map((anoGrupo) => {
-        const totalVotosAno = anoGrupo.cargos.reduce(
-          (s, c) => s + c.municipios.reduce((s2, m) => s2 + m.totalVotos, 0),
-          0
-        );
         const aberto = anoAberto === anoGrupo.ano;
         return (
           <div key={anoGrupo.ano} className="rounded-xl border border-neutral-800 bg-neutral-900">
@@ -41,7 +37,7 @@ export function DisputasPorAno({ anos }: { anos: Ano[] }) {
                 </span>
               </span>
               <span className="text-sm font-semibold text-amber-400">
-                {totalVotosAno.toLocaleString("pt-BR")} votos
+                {anoGrupo.votosValidos.toLocaleString("pt-BR")} votos válidos
               </span>
             </button>
 
@@ -78,7 +74,7 @@ export function DisputasPorAno({ anos }: { anos: Ano[] }) {
                           {cargo.municipios.map((m) => (
                             <Link
                               key={m.municipioId}
-                              href={`/municipios/${m.municipioId}`}
+                              href={`/disputas/${m.cargoId}?municipio=${m.municipioId}`}
                               className="flex items-center justify-between rounded-md px-2 py-1.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-900"
                             >
                               <span>{m.municipioNome}</span>

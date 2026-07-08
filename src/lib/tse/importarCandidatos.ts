@@ -41,6 +41,7 @@ export async function importarCandidatos(
     nome: string;
     numero: number;
     sqColigacao: string;
+    rotulo: string;
   };
 
   const linhas: Linha[] = [];
@@ -86,7 +87,18 @@ export async function importarCandidatos(
         resumo.avisos.push(`Linha ${numeroLinha}: dados de vice incompletos, ignorada.`);
         continue;
       }
-      vices.push({ cargoNome: cargoDoVice, municipioId, nome, numero, sqColigacao });
+      // Candidaturas substituídas/indeferidas geram vices duplicados na
+      // mesma chapa — só a candidatura apta interessa.
+      const situacao = (row["DS_SITUACAO_CANDIDATURA"] || "").trim().toLowerCase();
+      if (situacao && situacao !== "apto" && situacao !== "deferido") continue;
+      vices.push({
+        cargoNome: cargoDoVice,
+        municipioId,
+        nome,
+        numero,
+        sqColigacao,
+        rotulo: dsCargo!.trim().toLowerCase(),
+      });
       continue;
     }
 
@@ -126,7 +138,10 @@ export async function importarCandidatos(
   for (const [chave, lista] of grupos) {
     const { cargoNome, municipioId, tipoApuracao } = lista[0];
     const eleitos = lista.filter((l) => l.eleito).length;
-    const vagasInferidas = tipoApuracao === "MAJORITARIO" ? 1 : Math.max(eleitos, 1);
+    // Majoritário normalmente tem 1 vaga, mas Senador pode renovar 2
+    // cadeiras na mesma eleição (ex.: 2018) — o arquivo diz quantos foram
+    // eleitos.
+    const vagasInferidas = Math.max(eleitos, 1);
 
     let cargo = await prisma.cargo.findFirst({
       where: { eleicaoId, nome: cargoNome, municipioId },
@@ -143,6 +158,8 @@ export async function importarCandidatos(
         },
       });
       resumo.criados++;
+    } else if (tipoApuracao === "MAJORITARIO" && cargo.vagas !== vagasInferidas && eleitos > 0) {
+      await prisma.cargo.update({ where: { id: cargo.id }, data: { vagas: vagasInferidas } });
     } else if (tipoApuracao === "PROPORCIONAL" && eleitos > 0 && cargo.vagas !== vagasInferidas) {
       resumo.avisos.push(
         `Cargo "${cargoNome}"${municipioId ? "" : " (estadual)"}: número de vagas cadastrado (${cargo.vagas}) diverge do inferido pelo arquivo (${vagasInferidas}). Mantido o valor já cadastrado — ajuste manualmente se necessário.`
@@ -170,7 +187,10 @@ export async function importarCandidatos(
 
   // Candidatos (titulares), guardando a chapa (SQ_COLIGACAO) de cada um
   // para depois anexar o vice correspondente.
-  const chapaPorCandidato = new Map<string, { cargoId: string; sqColigacao: string }>();
+  const chapaPorCandidato = new Map<
+    string,
+    { cargoId: string; cargoNome: string; numero: number; sqColigacao: string }
+  >();
 
   for (const linha of linhas) {
     const chave = `${linha.cargoNome}::${linha.municipioId ?? "ESTADUAL"}`;
@@ -184,7 +204,7 @@ export async function importarCandidatos(
     let candidatoId: string;
     if (!existente) {
       const criado = await prisma.candidato.create({
-        data: { nome: linha.nome, numero: linha.numero, cargoId, partidoId },
+        data: { nome: linha.nome, numero: linha.numero, cargoId, partidoId, eleito: linha.eleito },
       });
       candidatoId = criado.id;
       resumo.criados++;
@@ -196,30 +216,56 @@ export async function importarCandidatos(
       }
       await prisma.candidato.update({
         where: { id: existente.id },
-        data: { nome: linha.nome, partidoId },
+        data: { nome: linha.nome, partidoId, eleito: linha.eleito },
       });
       candidatoId = existente.id;
       resumo.atualizados++;
     }
 
     if (linha.tipoApuracao === "MAJORITARIO" && linha.sqColigacao) {
-      chapaPorCandidato.set(candidatoId, { cargoId, sqColigacao: linha.sqColigacao });
+      chapaPorCandidato.set(candidatoId, {
+        cargoId,
+        cargoNome: linha.cargoNome,
+        numero: linha.numero,
+        sqColigacao: linha.sqColigacao,
+      });
     }
   }
 
-  // Anexa cada vice ao titular da mesma chapa (mesmo cargo + SQ_COLIGACAO).
+  // Anexa cada vice/suplente ao titular da mesma chapa. Para Senador a
+  // coligação pode lançar mais de um titular (ex.: 2018, duas vagas), então
+  // o vínculo é o número do candidato — o suplente herda o número do
+  // titular. Senador pode ter dois suplentes; os nomes vão juntos.
   let vicesAnexados = 0;
-  for (const [candidatoId, { cargoId, sqColigacao }] of chapaPorCandidato) {
-    const vice = vices.find((v) => {
-      const chave = `${v.cargoNome}::${v.municipioId ?? "ESTADUAL"}`;
-      return cargoIdPorChave.get(chave) === cargoId && v.sqColigacao === sqColigacao;
-    });
-    if (vice) {
+  for (const [candidatoId, { cargoId, cargoNome, numero, sqColigacao }] of chapaPorCandidato) {
+    const daChapa = vices
+      .filter((v) => {
+        const chave = `${v.cargoNome}::${v.municipioId ?? "ESTADUAL"}`;
+        if (cargoIdPorChave.get(chave) !== cargoId) return false;
+        if (cargoNome === "Senador") return v.numero === numero;
+        return v.sqColigacao === sqColigacao;
+      })
+      .sort((a, b) => a.rotulo.localeCompare(b.rotulo, "pt-BR"));
+
+    // Uma entrada por rótulo (vice, 1º suplente, 2º suplente) — descarta
+    // duplicatas remanescentes de substituições.
+    const porRotulo = new Map<string, (typeof daChapa)[number]>();
+    for (const v of daChapa) if (!porRotulo.has(v.rotulo)) porRotulo.set(v.rotulo, v);
+    const finais = Array.from(porRotulo.values());
+
+    if (finais.length === 1) {
       await prisma.candidato.update({
         where: { id: candidatoId },
-        data: { viceNome: vice.nome, viceNumero: vice.numero },
+        data: { viceNome: finais[0].nome, viceNumero: finais[0].numero },
       });
       vicesAnexados++;
+    } else if (finais.length > 1) {
+      const nomes = finais.map((v) => `${v.nome} (${v.rotulo})`).join(", ");
+      await prisma.candidato.update({
+        where: { id: candidatoId },
+        data: { viceNome: nomes, viceNumero: null },
+      });
+      vicesAnexados += finais.length;
     }
   }
   if (vices.length > 0 && vicesAnexados < vices.length) {

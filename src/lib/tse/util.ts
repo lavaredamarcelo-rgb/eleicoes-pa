@@ -25,6 +25,7 @@ const CARGOS_SUPORTADOS: Record<string, { nome: string; municipal: boolean; tipo
   "prefeito": { nome: "Prefeito", municipal: true, tipoApuracao: "MAJORITARIO" },
   "vereador": { nome: "Vereador", municipal: true, tipoApuracao: "PROPORCIONAL" },
   "governador": { nome: "Governador", municipal: false, tipoApuracao: "MAJORITARIO" },
+  "senador": { nome: "Senador", municipal: false, tipoApuracao: "MAJORITARIO" },
   "deputado estadual": { nome: "Deputado Estadual", municipal: false, tipoApuracao: "PROPORCIONAL" },
   "deputado federal": { nome: "Deputado Federal", municipal: false, tipoApuracao: "PROPORCIONAL" },
 };
@@ -33,12 +34,16 @@ export function resolverCargo(dsCargo: string) {
   return CARGOS_SUPORTADOS[normalizarTexto(dsCargo)];
 }
 
-// Vice-prefeito/vice-governador concorrem na mesma chapa do titular, sem
-// votação própria — mapeamos para o nome do Cargo do titular para poder
-// anexar o vice ao candidato certo durante a importação.
+// Vice-prefeito/vice-governador e suplentes de senador concorrem na mesma
+// chapa do titular, sem votação própria — mapeamos para o nome do Cargo do
+// titular para poder anexar ao candidato certo durante a importação.
 const VICE_PARA_CARGO: Record<string, string> = {
   "vice-prefeito": "Prefeito",
   "vice-governador": "Governador",
+  "1º suplente": "Senador",
+  "2º suplente": "Senador",
+  "1o suplente": "Senador",
+  "2o suplente": "Senador",
 };
 
 export function resolverCargoDoVice(dsCargo: string) {
