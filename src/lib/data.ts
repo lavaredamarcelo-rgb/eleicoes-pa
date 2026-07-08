@@ -111,14 +111,32 @@ export async function getEleicoes() {
 // resultados de cada município; para cargos municipais (um Cargo por
 // município), é a soma direta dos candidatos daquele Cargo.
 export async function getHierarquiaDisputas() {
-  const cargos = await prisma.cargo.findMany({
-    include: {
-      eleicao: true,
-      municipio: true,
-      candidatos: { include: { resultados: { include: { municipio: true } } } },
-    },
-    orderBy: [{ eleicao: { ano: "desc" } }, { nome: "asc" }],
-  });
+  // Agregação feita no banco: carregar 460k+ resultados com objetos
+  // aninhados estourava a memória do container em produção.
+  const linhas = await prisma.$queryRaw<
+    {
+      cargoId: string;
+      cargoNome: string;
+      tipoApuracao: string;
+      ano: number;
+      tipo: string;
+      municipioId: string;
+      municipioNome: string;
+      votos: bigint;
+    }[]
+  >`
+    SELECT g.id as cargoId, g.nome as cargoNome, g.tipoApuracao as tipoApuracao,
+           e.ano as ano, e.tipo as tipo,
+           r.municipioId as municipioId, m.nome as municipioNome,
+           SUM(r.votos) as votos
+    FROM Resultado r
+    JOIN Candidato c ON r.candidatoId = c.id
+    JOIN Cargo g ON c.cargoId = g.id
+    JOIN Eleicao e ON g.eleicaoId = e.id
+    JOIN Municipio m ON r.municipioId = m.id
+    WHERE r.turno = 1
+    GROUP BY g.id, r.municipioId
+  `;
 
   type MunicipioVoto = { municipioId: string; municipioNome: string; totalVotos: number; cargoId: string };
   type CargoGrupo = { cargoNome: string; tipoApuracao: string; municipios: MunicipioVoto[] };
@@ -126,45 +144,23 @@ export async function getHierarquiaDisputas() {
 
   const porAno = new Map<number, AnoGrupo>();
 
-  for (const cargo of cargos) {
-    const ano = cargo.eleicao.ano;
-    let anoGrupo = porAno.get(ano);
+  for (const l of linhas) {
+    let anoGrupo = porAno.get(l.ano);
     if (!anoGrupo) {
-      anoGrupo = { ano, tipo: cargo.eleicao.tipo, cargos: new Map() };
-      porAno.set(ano, anoGrupo);
+      anoGrupo = { ano: l.ano, tipo: l.tipo, cargos: new Map() };
+      porAno.set(l.ano, anoGrupo);
     }
-    let cargoGrupo = anoGrupo.cargos.get(cargo.nome);
+    let cargoGrupo = anoGrupo.cargos.get(l.cargoNome);
     if (!cargoGrupo) {
-      cargoGrupo = { cargoNome: cargo.nome, tipoApuracao: cargo.tipoApuracao, municipios: [] };
-      anoGrupo.cargos.set(cargo.nome, cargoGrupo);
+      cargoGrupo = { cargoNome: l.cargoNome, tipoApuracao: l.tipoApuracao, municipios: [] };
+      anoGrupo.cargos.set(l.cargoNome, cargoGrupo);
     }
-
-    if (cargo.municipio) {
-      const total = cargo.candidatos.reduce((s, c) => s + votosTurno(c.resultados, 1), 0);
-      cargoGrupo.municipios.push({
-        municipioId: cargo.municipio.id,
-        municipioNome: cargo.municipio.nome,
-        totalVotos: total,
-        cargoId: cargo.id,
-      });
-    } else {
-      const porMunicipio = new Map<string, MunicipioVoto>();
-      for (const c of cargo.candidatos) {
-        for (const r of c.resultados) {
-          if (r.turno !== 1) continue;
-          const atual = porMunicipio.get(r.municipioId);
-          if (atual) atual.totalVotos += r.votos;
-          else
-            porMunicipio.set(r.municipioId, {
-              municipioId: r.municipioId,
-              municipioNome: r.municipio.nome,
-              totalVotos: r.votos,
-              cargoId: cargo.id,
-            });
-        }
-      }
-      cargoGrupo.municipios.push(...porMunicipio.values());
-    }
+    cargoGrupo.municipios.push({
+      municipioId: l.municipioId,
+      municipioNome: l.municipioNome,
+      totalVotos: Number(l.votos),
+      cargoId: l.cargoId,
+    });
   }
 
   // Eleitores aptos por ano, para mostrar o percentual de votos válidos.
@@ -789,35 +785,47 @@ export async function getRegioes() {
 }
 
 export async function getMapaDados(cargoId?: string) {
-  const [municipios, projecaoPorMunicipio] = await Promise.all([
-    prisma.municipio.findMany({
-      include: {
-        regiao: true,
-        resultados: {
-          where: cargoId ? { candidato: { cargoId } } : undefined,
-          include: { candidato: { include: { partido: true } } },
-          orderBy: { votos: "desc" },
-        },
-      },
-    }),
+  const [municipios, projecaoPorMunicipio, totais] = await Promise.all([
+    prisma.municipio.findMany({ include: { regiao: true } }),
     getEleitoradoProjecao(),
+    prisma.resultado.groupBy({
+      by: ["municipioId"],
+      where: cargoId ? { candidato: { cargoId } } : undefined,
+      _sum: { votos: true },
+    }),
   ]);
+  const votosPorMunicipio = new Map(totais.map((t) => [t.municipioId, t._sum.votos ?? 0]));
 
-  return municipios.map((m) => {
-    const totalVotos = m.resultados.reduce((sum, r) => sum + r.votos, 0);
-    const lider = m.resultados[0]?.candidato;
-    return {
-      id: m.id,
-      nome: m.nome,
-      codigoIbge: m.codigoIbge,
-      regiaoId: m.regiaoId,
-      regiaoNome: m.regiao.nome,
-      totalVotos,
-      populacao: m.populacao,
-      lider: lider ? { nome: lider.nome, partido: lider.partido.sigla } : null,
-      eleitorado: projecaoPorMunicipio.get(m.id) ?? null,
-    };
-  });
+  // O líder só é relevante quando um cargo específico está selecionado —
+  // e aí o volume é pequeno o bastante para carregar.
+  const liderPorMunicipio = new Map<string, { nome: string; partido: string }>();
+  if (cargoId) {
+    const resultados = await prisma.resultado.findMany({
+      where: { candidato: { cargoId } },
+      include: { candidato: { include: { partido: true } } },
+      orderBy: { votos: "desc" },
+    });
+    for (const r of resultados) {
+      if (!liderPorMunicipio.has(r.municipioId)) {
+        liderPorMunicipio.set(r.municipioId, {
+          nome: r.candidato.nome,
+          partido: r.candidato.partido.sigla,
+        });
+      }
+    }
+  }
+
+  return municipios.map((m) => ({
+    id: m.id,
+    nome: m.nome,
+    codigoIbge: m.codigoIbge,
+    regiaoId: m.regiaoId,
+    regiaoNome: m.regiao.nome,
+    totalVotos: votosPorMunicipio.get(m.id) ?? 0,
+    populacao: m.populacao,
+    lider: liderPorMunicipio.get(m.id) ?? null,
+    eleitorado: projecaoPorMunicipio.get(m.id) ?? null,
+  }));
 }
 
 // Projeta o eleitorado de cada município para o próximo pleito (2028),
@@ -879,21 +887,37 @@ export async function buscarTudo(query: string) {
   const termoNormalizado = normalizar(termo);
   const numero = /^\d+$/.test(termo) ? Number(termo) : undefined;
 
-  const [todosCandidatos, todosMunicipios, todasRegioes, todosPartidos] = await Promise.all([
+  // Filtro no banco (contains cobre a imensa maioria; a normalização de
+  // acentos refina o resultado) — carregar 100k candidatos com resultados
+  // estourava a memória do container.
+  const [candidatosBrutos, todosMunicipios, todasRegioes, todosPartidos] = await Promise.all([
     prisma.candidato.findMany({
+      where: {
+        OR: [
+          { nome: { contains: termo } },
+          { nomeCompleto: { contains: termo } },
+          ...(numero !== undefined ? [{ numero }] : []),
+        ],
+      },
       include: {
         partido: true,
         cargo: { include: { municipio: true } },
         resultados: true,
       },
+      take: 200,
     }),
     prisma.municipio.findMany({ include: { regiao: true } }),
     prisma.regiao.findMany(),
     prisma.partido.findMany(),
   ]);
 
-  const candidatos = todosCandidatos
-    .filter((c) => normalizar(c.nome).includes(termoNormalizado) || c.numero === numero)
+  const candidatos = candidatosBrutos
+    .filter(
+      (c) =>
+        normalizar(c.nome).includes(termoNormalizado) ||
+        (c.nomeCompleto && normalizar(c.nomeCompleto).includes(termoNormalizado)) ||
+        c.numero === numero
+    )
     .map((c) => ({
       ...c,
       totalVotos: c.resultados.reduce((sum, r) => sum + r.votos, 0),
