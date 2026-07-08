@@ -54,15 +54,16 @@ model Eleicao {
 // qual município a disputa pertence. Para cargos estaduais (Governador/
 // Deputado), municipioId fica nulo pois a disputa é em todo o estado.
 model Cargo {
-  id           String       @id @default(cuid())
+  id           String        @id @default(cuid())
   nome         String
   tipoApuracao TipoApuracao
-  vagas        Int          @default(1)
+  vagas        Int           @default(1)
   eleicaoId    String
-  eleicao      Eleicao      @relation(fields: [eleicaoId], references: [id])
+  eleicao      Eleicao       @relation(fields: [eleicaoId], references: [id])
   municipioId  String?
-  municipio    Municipio?   @relation(fields: [municipioId], references: [id])
+  municipio    Municipio?    @relation(fields: [municipioId], references: [id])
   candidatos   Candidato[]
+  votosLegenda VotoLegenda[]
 }
 
 model Partido {
@@ -86,6 +87,7 @@ model Partido {
   candidatos           Candidato[]
   trocasComoOrigem     TrocaPartido[] @relation("TrocaPartidoOrigem")
   trocasComoDestino    TrocaPartido[] @relation("TrocaPartidoDestino")
+  votosLegenda         VotoLegenda[]
 }
 
 model Candidato {
@@ -152,6 +154,7 @@ model Municipio {
   cargos             Cargo[]
   colegiosEleitorais ColegioEleitoral[]
   eleitorado         Eleitorado[]
+  votosLegenda       VotoLegenda[]
 
   @@unique([nome, regiaoId])
 }
@@ -189,8 +192,28 @@ model Resultado {
   municipio          Municipio         @relation(fields: [municipioId], references: [id])
   colegioEleitoralId String?
   colegioEleitoral   ColegioEleitoral? @relation(fields: [colegioEleitoralId], references: [id])
+  // 1º ou 2º turno (NR_TURNO do TSE) — separados para que majoritários com
+  // segundo turno não somem as duas votações.
+  turno              Int               @default(1)
   votos              Int               @default(0)
   atualizadoEm       DateTime          @updatedAt
 
-  @@unique([candidatoId, municipioId, colegioEleitoralId])
+  @@unique([candidatoId, municipioId, colegioEleitoralId, turno])
+}
+
+// Votos de legenda (só no partido, sem candidato nominal) por cargo,
+// município e turno — arquivo votacao_partido_munzona do TSE. Entram na
+// soma dos votos válidos do quociente eleitoral (art. 106).
+model VotoLegenda {
+  id          String    @id @default(cuid())
+  cargoId     String
+  cargo       Cargo     @relation(fields: [cargoId], references: [id])
+  municipioId String
+  municipio   Municipio @relation(fields: [municipioId], references: [id])
+  partidoId   String
+  partido     Partido   @relation(fields: [partidoId], references: [id])
+  turno       Int       @default(1)
+  votos       Int       @default(0)
+
+  @@unique([cargoId, municipioId, partidoId, turno])
 }

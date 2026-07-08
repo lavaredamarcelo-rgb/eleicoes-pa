@@ -9,9 +9,14 @@ export default async function BuscaPage({
 }) {
   const { q } = await searchParams;
   const termo = q?.trim() ?? "";
-  const resultado = termo ? await buscarTudo(termo) : { candidatos: [], municipios: [], regioes: [] };
+  const resultado = termo
+    ? await buscarTudo(termo)
+    : { candidatos: [], municipios: [], regioes: [], partidos: [] };
   const totalResultados =
-    resultado.candidatos.length + resultado.municipios.length + resultado.regioes.length;
+    resultado.candidatos.length +
+    resultado.municipios.length +
+    resultado.regioes.length +
+    resultado.partidos.length;
 
   return (
     <div className="flex flex-col gap-5">
@@ -80,6 +85,25 @@ export default async function BuscaPage({
           {resultado.regioes.map((r) => (
             <CardLink key={r.id} href={`/municipios#regiao-${r.id}`}>
               <p className="font-medium">{r.nome}</p>
+            </CardLink>
+          ))}
+        </section>
+      )}
+
+      {resultado.partidos.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-neutral-400">
+            Partidos ({resultado.partidos.length})
+          </h2>
+          {resultado.partidos.map((p) => (
+            <CardLink key={p.id} href={`/partidos/${p.id}`}>
+              <div>
+                <p className="font-medium">{p.sigla}</p>
+                <p className="text-xs text-neutral-500">{p.nome}</p>
+              </div>
+              <span className="rounded-full bg-neutral-800 px-2 py-1 text-xs text-neutral-300">
+                nº {p.numero}
+              </span>
             </CardLink>
           ))}
         </section>

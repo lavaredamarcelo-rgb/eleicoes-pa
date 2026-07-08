@@ -20,7 +20,7 @@ export function ReportShell({
           <Text style={styles.title}>{title}</Text>
           {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
           <Text style={styles.metaLine}>
-            Relatório gerado em {geradoEm} · dados de demonstração
+            Relatório gerado em {geradoEm} · dados oficiais TSE/IBGE
           </Text>
         </View>
 

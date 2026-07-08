@@ -7,7 +7,13 @@ import { importarCandidatos } from "@/lib/tse/importarCandidatos";
 // o PA, em JSON) para preencher flag de eleito, vices/suplentes e o cargo
 // de Senador. Uso: npx tsx -r dotenv/config scripts/reimportar-candidatos.ts <dir>
 const dir = process.argv[2] ?? ".";
-const ANOS = [2018, 2020, 2022, 2024];
+// Importa todos os anos com arquivo candidatos_pa_<ano>.json presente.
+const ANOS = fs
+  .readdirSync(dir)
+  .map((f) => f.match(/^candidatos_pa_(\d{4})\.json$/)?.[1])
+  .filter((a): a is string => Boolean(a))
+  .map(Number)
+  .sort();
 
 async function main() {
   for (const ano of ANOS) {

@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { votosTurno, votosDecisivos } from "@/lib/turnos";
 
 // Anos de eleição que têm eleitos oficiais (flag do TSE) — alimenta o
 // seletor da aba "Eleitos" e exclui naturalmente eleições futuras.
@@ -60,7 +61,7 @@ export async function getEleitosOficiais(ano: number) {
       nome: c.nome,
       numero: c.numero,
       partidoSigla: c.partido.sigla,
-      votos: c.resultados.reduce((s, r) => s + r.votos, 0),
+      votos: votosDecisivos(c.resultados),
       viceNome: c.viceNome,
     };
 
@@ -139,10 +140,7 @@ export async function getHierarquiaDisputas() {
     }
 
     if (cargo.municipio) {
-      const total = cargo.candidatos.reduce(
-        (s, c) => s + c.resultados.reduce((s2, r) => s2 + r.votos, 0),
-        0
-      );
+      const total = cargo.candidatos.reduce((s, c) => s + votosTurno(c.resultados, 1), 0);
       cargoGrupo.municipios.push({
         municipioId: cargo.municipio.id,
         municipioNome: cargo.municipio.nome,
@@ -153,6 +151,7 @@ export async function getHierarquiaDisputas() {
       const porMunicipio = new Map<string, MunicipioVoto>();
       for (const c of cargo.candidatos) {
         for (const r of c.resultados) {
+          if (r.turno !== 1) continue;
           const atual = porMunicipio.get(r.municipioId);
           if (atual) atual.totalVotos += r.votos;
           else
@@ -211,11 +210,20 @@ export async function getVotosValidosPorAno() {
     JOIN Candidato c ON r.candidatoId = c.id
     JOIN Cargo g ON c.cargoId = g.id
     JOIN Eleicao e ON g.eleicaoId = e.id
+    WHERE r.turno = 1
+    GROUP BY e.ano, e.tipo, g.nome
+  `;
+  const legenda = await prisma.$queryRaw<{ ano: number; tipo: string; nome: string; votos: bigint }[]>`
+    SELECT e.ano as ano, e.tipo as tipo, g.nome as nome, SUM(v.votos) as votos
+    FROM VotoLegenda v
+    JOIN Cargo g ON v.cargoId = g.id
+    JOIN Eleicao e ON g.eleicaoId = e.id
+    WHERE v.turno = 1
     GROUP BY e.ano, e.tipo, g.nome
   `;
 
   const porAno = new Map<number, number>();
-  for (const l of linhas) {
+  for (const l of [...linhas, ...legenda]) {
     if (l.nome === CARGO_REFERENCIA[l.tipo]) {
       porAno.set(l.ano, (porAno.get(l.ano) ?? 0) + Number(l.votos));
     }
@@ -431,7 +439,7 @@ export async function getDadosSimulacaoCargo(cargoId: string) {
       partidoId: c.partidoId,
       partidoSigla: c.partido.sigla,
       eleito: c.eleito,
-      votos: c.resultados.reduce((s, r) => s + r.votos, 0),
+      votos: votosTurno(c.resultados, 1),
     }))
     .filter((c) => c.votos > 0)
     .sort((a, b) => b.votos - a.votos);
@@ -442,9 +450,19 @@ export async function getDadosSimulacaoCargo(cargoId: string) {
     if (atual) atual.votos += c.votos;
     else partidosMap.set(c.partidoId, { partidoId: c.partidoId, sigla: c.partidoSigla, votos: c.votos });
   }
+  // Votos de legenda entram no total do partido (quociente oficial).
+  const legenda = await prisma.votoLegenda.findMany({
+    where: { cargoId, turno: 1 },
+    include: { partido: true },
+  });
+  for (const vl of legenda) {
+    const atual = partidosMap.get(vl.partidoId);
+    if (atual) atual.votos += vl.votos;
+    else partidosMap.set(vl.partidoId, { partidoId: vl.partidoId, sigla: vl.partido.sigla, votos: vl.votos });
+  }
   const partidos = Array.from(partidosMap.values()).sort((a, b) => b.votos - a.votos);
 
-  const votosValidos = candidatos.reduce((s, c) => s + c.votos, 0);
+  const votosValidos = partidos.reduce((s, p) => s + p.votos, 0);
   const quocienteEleitoral =
     cargo.tipoApuracao === "PROPORCIONAL" && cargo.vagas > 0
       ? Math.floor(votosValidos / cargo.vagas)
@@ -477,14 +495,15 @@ export async function getDistribuicaoCandidato(candidatoId: string) {
     },
   });
   if (!candidato) return null;
-  const total = candidato.resultados.reduce((s, r) => s + r.votos, 0);
+  const t1 = candidato.resultados.filter((r) => r.turno === 1);
+  const total = t1.reduce((s, r) => s + r.votos, 0);
   return {
     id: candidato.id,
     nome: candidato.nome,
     numero: candidato.numero,
     partidoSigla: candidato.partido.sigla,
     total,
-    municipios: candidato.resultados
+    municipios: t1
       .filter((r) => r.votos > 0)
       .map((r) => ({ municipioNome: r.municipio.nome, votos: r.votos })),
   };
@@ -549,7 +568,7 @@ export async function getCandidaturasAnteriores(candidato: {
   });
 
   return candidatos
-    .map((c) => ({ ...c, totalVotos: c.resultados.reduce((s, r) => s + r.votos, 0) }))
+    .map((c) => ({ ...c, totalVotos: votosDecisivos(c.resultados) }))
     .sort((a, b) => b.cargo.eleicao.ano - a.cargo.eleicao.ano);
 }
 
@@ -794,6 +813,7 @@ export async function getMapaDados(cargoId?: string) {
       regiaoId: m.regiaoId,
       regiaoNome: m.regiao.nome,
       totalVotos,
+      populacao: m.populacao,
       lider: lider ? { nome: lider.nome, partido: lider.partido.sigla } : null,
       eleitorado: projecaoPorMunicipio.get(m.id) ?? null,
     };
@@ -854,12 +874,12 @@ function normalizar(texto: string) {
 
 export async function buscarTudo(query: string) {
   const termo = query.trim();
-  if (!termo) return { candidatos: [], municipios: [], regioes: [] };
+  if (!termo) return { candidatos: [], municipios: [], regioes: [], partidos: [] };
 
   const termoNormalizado = normalizar(termo);
   const numero = /^\d+$/.test(termo) ? Number(termo) : undefined;
 
-  const [todosCandidatos, todosMunicipios, todasRegioes] = await Promise.all([
+  const [todosCandidatos, todosMunicipios, todasRegioes, todosPartidos] = await Promise.all([
     prisma.candidato.findMany({
       include: {
         partido: true,
@@ -869,6 +889,7 @@ export async function buscarTudo(query: string) {
     }),
     prisma.municipio.findMany({ include: { regiao: true } }),
     prisma.regiao.findMany(),
+    prisma.partido.findMany(),
   ]);
 
   const candidatos = todosCandidatos
@@ -888,5 +909,14 @@ export async function buscarTudo(query: string) {
     .filter((r) => normalizar(r.nome).includes(termoNormalizado))
     .slice(0, 10);
 
-  return { candidatos, municipios, regioes };
+  const partidos = todosPartidos
+    .filter(
+      (p) =>
+        normalizar(p.sigla).includes(termoNormalizado) ||
+        normalizar(p.nome).includes(termoNormalizado) ||
+        p.numero === numero
+    )
+    .slice(0, 10);
+
+  return { candidatos, municipios, regioes, partidos };
 }

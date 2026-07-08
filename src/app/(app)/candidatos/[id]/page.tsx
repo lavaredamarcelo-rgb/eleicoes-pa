@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import { CardLink } from "@/components/CardLink";
+import { GraficoBarras } from "@/components/GraficoBarras";
 import { TrocaPartidoForm } from "@/components/TrocaPartidoForm";
 import { PdfDownloadLink } from "@/components/PdfDownloadLink";
 import { getCandidato, getCandidaturasAnteriores, getPartidos } from "@/lib/data";
+import { turnoDecisivo, votosTurno } from "@/lib/turnos";
 import { verifySession } from "@/lib/dal";
 
 export default async function CandidatoDetailPage({
@@ -16,11 +18,16 @@ export default async function CandidatoDetailPage({
 
   const candidaturasAnteriores = await getCandidaturasAnteriores(candidato);
 
-  const totalVotos = candidato.resultados.reduce((sum, r) => sum + r.votos, 0);
+  // Exibimos a votação do turno que decidiu a eleição; quando houve 2º
+  // turno, o 1º aparece como informação complementar.
+  const turno = turnoDecisivo(candidato.resultados);
+  const totalVotos = votosTurno(candidato.resultados, turno);
+  const votosPrimeiroTurno = turno > 1 ? votosTurno(candidato.resultados, 1) : null;
+  const resultadosTurno = candidato.resultados.filter((r) => r.turno === turno);
 
   const votosPorRegiao = new Map<string, { nome: string; votos: number }>();
   const resultadosPorRegiao = new Map<string, typeof candidato.resultados>();
-  for (const r of candidato.resultados) {
+  for (const r of resultadosTurno) {
     const regiao = r.municipio.regiao;
     const atual = votosPorRegiao.get(regiao.id);
     if (atual) {
@@ -31,6 +38,13 @@ export default async function CandidatoDetailPage({
       resultadosPorRegiao.set(regiao.id, [r]);
     }
   }
+
+  // Evolução: votação (turno decisivo) em cada eleição disputada, ligada
+  // pelo CPF, em ordem cronológica.
+  const evolucao = [
+    ...candidaturasAnteriores.map((c) => ({ ano: c.cargo.eleicao.ano, votos: c.totalVotos })),
+    { ano: candidato.cargo.eleicao.ano, votos: totalVotos },
+  ].sort((a, b) => a.ano - b.ano);
   const regioesOrdenadas = Array.from(votosPorRegiao.entries()).sort(
     (a, b) => b[1].votos - a[1].votos
   );
@@ -61,7 +75,13 @@ export default async function CandidatoDetailPage({
         </div>
         <p className="mt-2 text-2xl font-bold text-amber-400">
           {totalVotos.toLocaleString("pt-BR")} votos
+          {turno > 1 && <span className="text-sm font-medium text-neutral-500"> · 2º turno</span>}
         </p>
+        {votosPrimeiroTurno != null && (
+          <p className="text-xs text-neutral-500">
+            1º turno: {votosPrimeiroTurno.toLocaleString("pt-BR")} votos
+          </p>
+        )}
         {candidato.viceNome && (
           <p className="mt-2 rounded-lg border border-amber-900/40 bg-amber-950/10 px-3 py-2 text-sm text-amber-300">
             Vice: {candidato.viceNome} ({candidato.viceNumero})
@@ -127,6 +147,14 @@ export default async function CandidatoDetailPage({
           </details>
         ))}
       </section>
+
+      {evolucao.length > 1 && (
+        <GraficoBarras
+          titulo="Evolução eleitoral"
+          subtitulo="Votação em cada eleição disputada (turno decisivo)"
+          pontos={evolucao.map((e) => ({ rotulo: String(e.ano), valor: e.votos }))}
+        />
+      )}
 
       {candidaturasAnteriores.length > 0 && (
         <section className="flex flex-col gap-2">

@@ -1,5 +1,6 @@
 import { AnoSelector } from "@/components/AnoSelector";
 import { EleitosPorCargo } from "@/components/EleitosPorCargo";
+import { PdfDownloadLink } from "@/components/PdfDownloadLink";
 import { getAnosComEleitos, getEleitosOficiais } from "@/lib/data";
 
 export default async function EleitosPage({
@@ -26,8 +27,11 @@ export default async function EleitosPage({
           </p>
         </div>
         {anoSelecionado && (
-          <div className="w-32">
-            <AnoSelectorSimples anos={anosDisponiveis} selecionado={anoSelecionado} />
+          <div className="flex items-center gap-2">
+            <PdfDownloadLink href={`/api/pdf/eleitos/${anoSelecionado}`} />
+            <div className="w-32">
+              <AnoSelectorSimples anos={anosDisponiveis} selecionado={anoSelecionado} />
+            </div>
           </div>
         )}
       </div>

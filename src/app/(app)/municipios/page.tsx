@@ -1,3 +1,4 @@
+import { Scale } from "lucide-react";
 import { CardLink } from "@/components/CardLink";
 import { getMunicipios, getRegioes } from "@/lib/data";
 
@@ -32,6 +33,16 @@ export default async function MunicipiosPage() {
             : ""}
         </p>
       </div>
+
+      <CardLink href="/comparar">
+        <div className="flex items-center gap-3">
+          <Scale className="text-amber-400" size={18} />
+          <div>
+            <p className="font-medium">Comparar municípios</p>
+            <p className="text-xs text-neutral-500">Eleitores, população e câmaras lado a lado</p>
+          </div>
+        </div>
+      </CardLink>
 
       {regioesOrdenadas.map(([regiaoId, lista]) => {
         const regiaoInfo = regiaoInfoPorId.get(regiaoId);

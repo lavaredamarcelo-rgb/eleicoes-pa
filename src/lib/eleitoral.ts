@@ -1,12 +1,14 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { distribuirVagas } from "@/lib/simulacaoPartido";
+import { votosTurno } from "@/lib/turnos";
 
 // Referências: Código Eleitoral (Lei 4.737/65), art. 106 (quociente eleitoral),
 // art. 107 (quociente partidário) e art. 109 (distribuição das sobras pela
 // maior média). Aplicável apenas a cargos proporcionais (vereador, deputado
-// estadual/federal) — cargos majoritários (prefeito, governador) não usam
-// quociente eleitoral.
+// estadual/municipal) — cargos majoritários (prefeito, governador) não usam
+// quociente eleitoral. Os votos válidos somam NOMINAIS + LEGENDA do 1º turno
+// (proporcionais só têm um turno), como no cálculo oficial.
 
 export async function calcularQuocienteEleitoral(cargoId: string) {
   const cargo = await prisma.cargo.findUnique({
@@ -20,6 +22,7 @@ export async function calcularQuocienteEleitoral(cargoId: string) {
           resultados: { include: { municipio: { include: { regiao: true } } } },
         },
       },
+      votosLegenda: { where: { turno: 1 }, include: { partido: true } },
     },
   });
 
@@ -32,16 +35,28 @@ export async function calcularQuocienteEleitoral(cargoId: string) {
     id: c.id,
     nome: c.nome,
     numero: c.numero,
+    eleito: c.eleito,
     partido: c.partido,
-    votos: c.resultados.reduce((sum, r) => sum + r.votos, 0),
+    votos: votosTurno(c.resultados, 1),
   }));
 
-  const votosValidos = candidatosComVotos.reduce((sum, c) => sum + c.votos, 0);
+  const votosNominais = candidatosComVotos.reduce((sum, c) => sum + c.votos, 0);
+
+  // Votos de legenda por partido (entram nos válidos e no quociente
+  // partidário, mas não pertencem a nenhum candidato).
+  const legendaPorPartido = new Map<string, number>();
+  let votosLegendaTotal = 0;
+  for (const vl of cargo.votosLegenda) {
+    legendaPorPartido.set(vl.partidoId, (legendaPorPartido.get(vl.partidoId) ?? 0) + vl.votos);
+    votosLegendaTotal += vl.votos;
+  }
+
+  const votosValidos = votosNominais + votosLegendaTotal;
   const quocienteEleitoral = cargo.vagas > 0 ? Math.floor(votosValidos / cargo.vagas) : 0;
 
   const votosPorPartido = new Map<
     string,
-    { partidoId: string; sigla: string; nome: string; votos: number }
+    { partidoId: string; sigla: string; nome: string; votos: number; votosLegenda: number }
   >();
   for (const c of candidatosComVotos) {
     const atual = votosPorPartido.get(c.partido.id);
@@ -53,6 +68,23 @@ export async function calcularQuocienteEleitoral(cargoId: string) {
         sigla: c.partido.sigla,
         nome: c.partido.nome,
         votos: c.votos,
+        votosLegenda: 0,
+      });
+    }
+  }
+  for (const [partidoId, votos] of legendaPorPartido) {
+    const atual = votosPorPartido.get(partidoId);
+    if (atual) {
+      atual.votos += votos;
+      atual.votosLegenda = votos;
+    } else {
+      const vl = cargo.votosLegenda.find((v) => v.partidoId === partidoId)!;
+      votosPorPartido.set(partidoId, {
+        partidoId,
+        sigla: vl.partido.sigla,
+        nome: vl.partido.nome,
+        votos,
+        votosLegenda: votos,
       });
     }
   }
@@ -68,8 +100,6 @@ export async function calcularQuocienteEleitoral(cargoId: string) {
       ...p,
       quocientePartidario: vagasFinais.get(p.partidoId) ?? 0,
       percentual: votosValidos > 0 ? (p.votos / votosValidos) * 100 : 0,
-      // Votos que faltam para completar mais um quociente partidário
-      // "direto" (sem contar possíveis sobras adicionais pela maior média).
       votosFaltantesProximaVaga:
         quocienteEleitoral > 0 ? quocienteEleitoral - (p.votos % quocienteEleitoral) : 0,
     }))
@@ -77,9 +107,6 @@ export async function calcularQuocienteEleitoral(cargoId: string) {
 
   const vagasPorPartido = new Map(partidos.map((p) => [p.partidoId, p.quocientePartidario]));
 
-  // Dentro de cada partido, os candidatos mais votados até o número de
-  // vagas do partido (já incluindo sobras) são eleitos (titulares); os
-  // demais viram suplentes, na ordem de votação.
   const candidatosPorPartido = new Map<string, typeof candidatosComVotos>();
   for (const c of candidatosComVotos) {
     const lista = candidatosPorPartido.get(c.partido.id);
@@ -101,15 +128,13 @@ export async function calcularQuocienteEleitoral(cargoId: string) {
     }
   );
 
-  // Detalhamento por município (útil sobretudo em cargos estaduais, onde o
-  // quociente é calculado pelo total do estado, mas cada partido quer saber
-  // de onde vieram os votos).
   const votosPorMunicipio = new Map<
     string,
     { municipioId: string; municipioNome: string; regiaoNome: string; total: number; partidos: Map<string, number> }
   >();
   for (const c of cargo.candidatos) {
     for (const r of c.resultados) {
+      if (r.turno !== 1) continue;
       let entry = votosPorMunicipio.get(r.municipioId);
       if (!entry) {
         entry = {
@@ -137,6 +162,8 @@ export async function calcularQuocienteEleitoral(cargoId: string) {
   return {
     cargo,
     votosValidos,
+    votosNominais,
+    votosLegendaTotal,
     quocienteEleitoral,
     candidatos: candidatosComVotos.sort((a, b) => b.votos - a.votos),
     candidatosComSituacao: candidatosComSituacao.sort((a, b) => b.votos - a.votos),
@@ -165,28 +192,45 @@ export async function calcularMajoritario(cargoId: string) {
     throw new Error("Esta apuração é para cargos majoritários.");
   }
 
-  const candidatos = cargo.candidatos
-    .map((c) => ({
-      id: c.id,
-      nome: c.nome,
-      numero: c.numero,
-      partido: c.partido,
-      viceNome: c.viceNome,
-      viceNumero: c.viceNumero,
-      votos: c.resultados.reduce((sum, r) => sum + r.votos, 0),
-    }))
-    .sort((a, b) => b.votos - a.votos);
+  const turnosPresentes = Array.from(
+    new Set(cargo.candidatos.flatMap((c) => c.resultados.map((r) => r.turno)))
+  ).sort();
+  if (turnosPresentes.length === 0) turnosPresentes.push(1);
 
-  const votosValidos = candidatos.reduce((sum, c) => sum + c.votos, 0);
-  const lider = candidatos[0];
-  const percentualLider = votosValidos > 0 && lider ? (lider.votos / votosValidos) * 100 : 0;
+  const turnos = turnosPresentes.map((turno) => {
+    const candidatos = cargo.candidatos
+      .map((c) => ({
+        id: c.id,
+        nome: c.nome,
+        numero: c.numero,
+        partido: c.partido,
+        eleito: c.eleito,
+        viceNome: c.viceNome,
+        viceNumero: c.viceNumero,
+        votos: votosTurno(c.resultados, turno),
+      }))
+      .filter((c) => c.votos > 0)
+      .sort((a, b) => b.votos - a.votos);
+
+    const votosValidos = candidatos.reduce((sum, c) => sum + c.votos, 0);
+    const lider = candidatos[0];
+    const percentualLider = votosValidos > 0 && lider ? (lider.votos / votosValidos) * 100 : 0;
+
+    return { turno, candidatos, votosValidos, percentualLider };
+  });
+
+  const decisivo = turnos[turnos.length - 1];
 
   return {
     cargo,
-    candidatos,
-    votosValidos,
-    percentualLider,
-    segundoTurnoProvavel: percentualLider > 0 && percentualLider <= 50,
+    turnos,
+    turnoDecisivo: decisivo,
+    // Compatibilidade com telas que mostram uma única lista: o turno que
+    // decidiu a eleição.
+    candidatos: decisivo.candidatos,
+    votosValidos: decisivo.votosValidos,
+    percentualLider: decisivo.percentualLider,
+    segundoTurnoProvavel:
+      turnos.length === 1 && decisivo.percentualLider > 0 && decisivo.percentualLider <= 50,
   };
 }
-

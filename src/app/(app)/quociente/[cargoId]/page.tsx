@@ -57,6 +57,11 @@ export default async function QuocienteDetailPage({
           <StatCard label="Vagas (cadeiras)" value={String(resultado.cargo.vagas)} />
         </section>
 
+        <p className="text-xs text-neutral-600">
+          Votos válidos = {resultado.votosNominais.toLocaleString("pt-BR")} nominais +{" "}
+          {resultado.votosLegendaTotal.toLocaleString("pt-BR")} de legenda (art. 106).
+        </p>
+
         {eleitores && (
           <section className="grid grid-cols-2 gap-3">
             <StatCard
@@ -197,40 +202,46 @@ export default async function QuocienteDetailPage({
         </section>
       )}
 
-      <section className="rounded-xl border border-amber-900 bg-amber-950/40 px-4 py-3">
-        <p className="text-xs text-amber-300">Votos válidos</p>
-        <p className="text-2xl font-bold text-amber-300">
-          <CountUp value={resultado.votosValidos} />
-        </p>
-        {resultado.segundoTurnoProvavel && (
-          <p className="mt-2 rounded-md bg-amber-950 px-2 py-1 text-xs text-amber-300">
-            Líder com {resultado.percentualLider.toFixed(1)}% — pode indicar 2º turno se abaixo
-            de 50%+1 dos votos válidos.
-          </p>
-        )}
-      </section>
-
-      <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-medium text-neutral-400">Apuração majoritária</h2>
-        {resultado.candidatos.map((c, i) => (
-          <div
-            key={c.id}
-            className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3"
-          >
-            <div>
-              <p className="font-medium">
-                {i + 1}º · {c.nome}
+      {resultado.turnos.map((t) => (
+        <section key={t.turno} className="flex flex-col gap-2">
+          <div className="rounded-xl border border-amber-900 bg-amber-950/40 px-4 py-3">
+            <p className="text-xs text-amber-300">
+              {resultado.turnos.length > 1 ? `${t.turno}º turno · ` : ""}Votos válidos
+            </p>
+            <p className="text-2xl font-bold text-amber-300">
+              <CountUp value={t.votosValidos} />
+            </p>
+            {resultado.segundoTurnoProvavel && t.turno === 1 && (
+              <p className="mt-2 rounded-md bg-amber-950 px-2 py-1 text-xs text-amber-300">
+                Líder com {t.percentualLider.toFixed(1)}% — pode indicar 2º turno se abaixo de
+                50%+1 dos votos válidos.
               </p>
-              <p className="text-xs text-neutral-500">
-                {c.numero} · {c.partido.sigla}
-              </p>
-            </div>
-            <span className="text-sm font-semibold text-amber-400">
-              {c.votos.toLocaleString("pt-BR")}
-            </span>
+            )}
           </div>
-        ))}
-      </section>
+
+          <h2 className="text-sm font-medium text-neutral-400">
+            Apuração{resultado.turnos.length > 1 ? ` do ${t.turno}º turno` : " majoritária"}
+          </h2>
+          {t.candidatos.map((c, i) => (
+            <div
+              key={c.id}
+              className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3"
+            >
+              <div>
+                <p className="font-medium">
+                  {i + 1}º · {c.nome}
+                </p>
+                <p className="text-xs text-neutral-500">
+                  {c.numero} · {c.partido.sigla}
+                </p>
+              </div>
+              <span className="text-sm font-semibold text-amber-400">
+                {c.votos.toLocaleString("pt-BR")}
+              </span>
+            </div>
+          ))}
+        </section>
+      ))}
     </div>
   );
 }

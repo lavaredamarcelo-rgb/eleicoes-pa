@@ -9,7 +9,7 @@ import { resolverCargo, encontrarMunicipio, novoResumo, type ResumoImportacao } 
 // é sempre contado por município — só o Cargo em si é que não pertence
 // a um município específico (Cargo.municipioId fica nulo nesses casos).
 // Colunas relevantes: DS_CARGO, CD_MUNICIPIO, NM_MUNICIPIO, NR_CANDIDATO,
-// QT_VOTOS_NOMINAIS.
+// QT_VOTOS_NOMINAIS, NR_TURNO (1 quando ausente).
 export async function importarResultados(
   rows: Record<string, string>[],
   eleicaoId: string
@@ -18,7 +18,7 @@ export async function importarResultados(
 
   const votosPorChave = new Map<
     string,
-    { cargoNome: string; cargoMunicipioId: string | null; votoMunicipioId: string; numero: number; votos: number }
+    { cargoNome: string; cargoMunicipioId: string | null; votoMunicipioId: string; numero: number; turno: number; votos: number }
   >();
 
   for (const [i, row] of rows.entries()) {
@@ -52,8 +52,9 @@ export async function importarResultados(
       continue;
     }
 
+    const turno = Number(row["NR_TURNO"]) || 1;
     const cargoMunicipioId = cargoInfo.municipal ? municipio.id : null;
-    const chave = `${cargoInfo.nome}::${cargoMunicipioId ?? "ESTADUAL"}::${municipio.id}::${numero}`;
+    const chave = `${cargoInfo.nome}::${cargoMunicipioId ?? "ESTADUAL"}::${municipio.id}::${numero}::${turno}`;
     const atual = votosPorChave.get(chave);
     if (atual) {
       atual.votos += votos;
@@ -63,6 +64,7 @@ export async function importarResultados(
         cargoMunicipioId,
         votoMunicipioId: municipio.id,
         numero,
+        turno,
         votos,
       });
     }
@@ -103,6 +105,7 @@ export async function importarResultados(
         candidatoId: candidato.id,
         municipioId: item.votoMunicipioId,
         colegioEleitoralId: null,
+        turno: item.turno,
       },
     });
 
@@ -114,6 +117,7 @@ export async function importarResultados(
         data: {
           candidatoId: candidato.id,
           municipioId: item.votoMunicipioId,
+          turno: item.turno,
           votos: item.votos,
         },
       });
