@@ -381,6 +381,107 @@ export async function getEleitoresCargo(municipioId: string | null, anoEleicao: 
   return { eleitores, ano: anoMax };
 }
 
+// Lista compacta de cargos para os seletores da página de Simulações.
+export async function getCargosParaSimulacao(opcoes: {
+  tipoApuracao?: "MAJORITARIO" | "PROPORCIONAL";
+  somenteEstaduais?: boolean;
+}) {
+  const cargos = await prisma.cargo.findMany({
+    where: {
+      ...(opcoes.tipoApuracao ? { tipoApuracao: opcoes.tipoApuracao } : {}),
+      ...(opcoes.somenteEstaduais ? { municipioId: null } : {}),
+    },
+    include: { eleicao: true, municipio: true },
+    orderBy: [{ eleicao: { ano: "desc" } }, { nome: "asc" }, { municipio: { nome: "asc" } }],
+  });
+  return cargos.map((c) => ({
+    id: c.id,
+    nome: c.nome,
+    ano: c.eleicao.ano,
+    municipioNome: c.municipio?.nome ?? null,
+  }));
+}
+
+// Pacote de dados de um cargo para os simuladores: candidatos com votos,
+// totais por partido, quociente e eleitorado do recorte.
+export async function getDadosSimulacaoCargo(cargoId: string) {
+  const cargo = await prisma.cargo.findUnique({
+    where: { id: cargoId },
+    include: {
+      eleicao: true,
+      municipio: true,
+      candidatos: { include: { partido: true, resultados: true } },
+    },
+  });
+  if (!cargo) return null;
+
+  const candidatos = cargo.candidatos
+    .map((c) => ({
+      id: c.id,
+      nome: c.nome,
+      numero: c.numero,
+      partidoId: c.partidoId,
+      partidoSigla: c.partido.sigla,
+      eleito: c.eleito,
+      votos: c.resultados.reduce((s, r) => s + r.votos, 0),
+    }))
+    .filter((c) => c.votos > 0)
+    .sort((a, b) => b.votos - a.votos);
+
+  const partidosMap = new Map<string, { partidoId: string; sigla: string; votos: number }>();
+  for (const c of candidatos) {
+    const atual = partidosMap.get(c.partidoId);
+    if (atual) atual.votos += c.votos;
+    else partidosMap.set(c.partidoId, { partidoId: c.partidoId, sigla: c.partidoSigla, votos: c.votos });
+  }
+  const partidos = Array.from(partidosMap.values()).sort((a, b) => b.votos - a.votos);
+
+  const votosValidos = candidatos.reduce((s, c) => s + c.votos, 0);
+  const quocienteEleitoral =
+    cargo.tipoApuracao === "PROPORCIONAL" && cargo.vagas > 0
+      ? Math.floor(votosValidos / cargo.vagas)
+      : 0;
+  const eleitores = await getEleitoresCargo(cargo.municipioId, cargo.eleicao.ano);
+
+  return {
+    cargoId: cargo.id,
+    cargoNome: cargo.nome,
+    tipoApuracao: cargo.tipoApuracao,
+    ano: cargo.eleicao.ano,
+    municipioNome: cargo.municipio?.nome ?? null,
+    vagas: cargo.vagas,
+    votosValidos,
+    quocienteEleitoral,
+    eleitores,
+    candidatos,
+    partidos,
+  };
+}
+
+// Distribuição dos votos de um candidato por município — base do simulador
+// de meta de campanha.
+export async function getDistribuicaoCandidato(candidatoId: string) {
+  const candidato = await prisma.candidato.findUnique({
+    where: { id: candidatoId },
+    include: {
+      partido: true,
+      resultados: { include: { municipio: true }, orderBy: { votos: "desc" } },
+    },
+  });
+  if (!candidato) return null;
+  const total = candidato.resultados.reduce((s, r) => s + r.votos, 0);
+  return {
+    id: candidato.id,
+    nome: candidato.nome,
+    numero: candidato.numero,
+    partidoSigla: candidato.partido.sigla,
+    total,
+    municipios: candidato.resultados
+      .filter((r) => r.votos > 0)
+      .map((r) => ({ municipioNome: r.municipio.nome, votos: r.votos })),
+  };
+}
+
 export async function getCandidatosPorCargo(cargoId: string) {
   const candidatos = await prisma.candidato.findMany({
     where: { cargoId },
