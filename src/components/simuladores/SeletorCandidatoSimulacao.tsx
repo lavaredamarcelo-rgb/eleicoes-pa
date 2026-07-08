@@ -24,7 +24,7 @@ export function SeletorCandidatoSimulacao({
         value={selecionado ?? ""}
         onChange={(e) => {
           if (e.target.value)
-            router.push(`/simulacoes?sim=${sim}&cargo=${cargoId}&candidato=${e.target.value}`);
+            router.push(`/simulacoes?sim=${sim}&cargo=${cargoId}&candidato=${e.target.value}#simuladores`);
         }}
         className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm text-neutral-100"
       >

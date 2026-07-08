@@ -764,7 +764,8 @@ export async function getRegioes() {
       (sum, m) => sum + eleitoresMaisRecentes(m.eleitorado).eleitores,
       0
     );
-    return { ...r, eleitores, totalMunicipios: r.municipios.length };
+    const populacao = r.municipios.reduce((sum, m) => sum + (m.populacao ?? 0), 0);
+    return { ...r, eleitores, populacao, totalMunicipios: r.municipios.length };
   });
 }
 

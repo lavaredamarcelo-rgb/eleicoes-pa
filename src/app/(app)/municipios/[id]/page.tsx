@@ -44,6 +44,23 @@ export default async function MunicipioDetailPage({
           {municipio.eleitores.toLocaleString("pt-BR")} eleitores aptos
           {municipio.anoEleitorado ? ` (${municipio.anoEleitorado})` : ""}
         </p>
+        {municipio.populacao != null && (
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-3 text-center">
+              <p className="text-lg font-semibold">{municipio.populacao.toLocaleString("pt-BR")}</p>
+              <p className="text-[11px] text-neutral-500">Habitantes (Censo 2022)</p>
+            </div>
+            <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-3 text-center">
+              <p className="text-lg font-semibold">
+                {((municipio.eleitores / municipio.populacao) * 100).toLocaleString("pt-BR", {
+                  maximumFractionDigits: 1,
+                })}
+                %
+              </p>
+              <p className="text-[11px] text-neutral-500">da população é eleitora</p>
+            </div>
+          </div>
+        )}
       </section>
 
       {cargosOrdenados.map((grupo) => (

@@ -32,7 +32,7 @@ export function SeletorCargoSimulacao({
       <select
         value={selecionado ?? ""}
         onChange={(e) => {
-          if (e.target.value) router.push(`/simulacoes?sim=${sim}&cargo=${e.target.value}`);
+          if (e.target.value) router.push(`/simulacoes?sim=${sim}&cargo=${e.target.value}#simuladores`);
         }}
         className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm text-neutral-100"
       >

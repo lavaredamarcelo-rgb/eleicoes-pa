@@ -19,7 +19,7 @@ export function SeletorSimulacao({ ativa }: { ativa: string }) {
       {SIMULACOES.map((s) => (
         <button
           key={s.chave}
-          onClick={() => router.push(`/simulacoes?sim=${s.chave}`)}
+          onClick={() => router.push(`/simulacoes?sim=${s.chave}#simuladores`)}
           className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-150 ${
             ativa === s.chave
               ? "bg-amber-400 text-neutral-950"

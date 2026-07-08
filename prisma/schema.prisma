@@ -140,6 +140,8 @@ model Municipio {
   nome               String
   codigoIbge         String?            @unique
   codigoTse          String?            @unique
+  // População residente do Censo 2022 (IBGE, agregado 4709/variável 93).
+  populacao          Int?
   regiaoId           String
   regiao             Regiao             @relation(fields: [regiaoId], references: [id])
   resultados         Resultado[]

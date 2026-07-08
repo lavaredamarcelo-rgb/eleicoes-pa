@@ -28,7 +28,7 @@ export default async function MunicipiosPage() {
         <p className="text-sm text-neutral-500">
           {municipios.length} municípios em {regioesOrdenadas.length} mesorregiões do Pará
           {municipios[0]?.anoEleitorado
-            ? ` · eleitores aptos de ${municipios[0].anoEleitorado} (TSE)`
+            ? ` · eleitores aptos de ${municipios[0].anoEleitorado} (TSE) · população do Censo 2022 (IBGE)`
             : ""}
         </p>
       </div>
@@ -44,8 +44,9 @@ export default async function MunicipiosPage() {
           >
             <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 transition-colors duration-150 hover:border-neutral-700 hover:bg-neutral-800">
               <span className="font-medium">{regiaoInfo?.nome}</span>
-              <span className="flex items-center gap-2 text-xs text-neutral-500">
+              <span className="flex items-center gap-3 text-xs text-neutral-500">
                 <span>{lista.length} municípios</span>
+                <span>{(regiaoInfo?.populacao ?? 0).toLocaleString("pt-BR")} hab.</span>
                 <span className="font-semibold text-amber-400">
                   {(regiaoInfo?.eleitores ?? 0).toLocaleString("pt-BR")} eleitores
                 </span>
@@ -55,7 +56,14 @@ export default async function MunicipiosPage() {
             <div className="mt-2 grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
               {lista.map((m) => (
                 <CardLink key={m.id} href={`/municipios/${m.id}`}>
-                  <p className="font-medium">{m.nome}</p>
+                  <div>
+                    <p className="font-medium">{m.nome}</p>
+                    {m.populacao != null && (
+                      <p className="text-xs text-neutral-500">
+                        {m.populacao.toLocaleString("pt-BR")} habitantes
+                      </p>
+                    )}
+                  </div>
                   <span className="text-sm font-semibold text-amber-400">
                     {m.eleitores.toLocaleString("pt-BR")}
                   </span>
