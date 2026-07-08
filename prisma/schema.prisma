@@ -79,6 +79,10 @@ model Partido {
   espectro             String?
   fundacao             Int?
   figurasNotaveis      String?
+  // Bancadas no Congresso Nacional (senado.leg.br / dadosabertos.camara.
+  // leg.br), atualizadas por script — mudam na janela partidária.
+  senadoresNacional    Int?
+  deputadosNacional    Int?
   candidatos           Candidato[]
   trocasComoOrigem     TrocaPartido[] @relation("TrocaPartidoOrigem")
   trocasComoDestino    TrocaPartido[] @relation("TrocaPartidoDestino")

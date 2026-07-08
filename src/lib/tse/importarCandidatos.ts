@@ -34,6 +34,7 @@ export async function importarCandidatos(
     partidoNumero: number;
     partidoNome: string;
     eleito: boolean;
+    apta: boolean;
     sqColigacao: string;
   };
 
@@ -110,6 +111,7 @@ export async function importarCandidatos(
       continue;
     }
 
+    const situacaoCand = (row["DS_SITUACAO_CANDIDATURA"] || "").trim().toLowerCase();
     linhas.push({
       cargoNome: cargoInfo!.nome,
       municipal: cargoInfo!.municipal,
@@ -123,6 +125,7 @@ export async function importarCandidatos(
       partidoNumero: Number(row["NR_PARTIDO"]) || 0,
       partidoNome: (row["NM_PARTIDO"] || partidoSigla).trim(),
       eleito: situacaoIndicaEleito(row["DS_SIT_TOT_TURNO"]),
+      apta: !situacaoCand || situacaoCand === "apto" || situacaoCand === "deferido",
       sqColigacao,
     });
   }
@@ -189,6 +192,27 @@ export async function importarCandidatos(
     partidosPorSigla.set(linha.partidoSigla, partido.id);
   }
 
+  // O arquivo pode trazer o MESMO candidato em várias linhas: uma por turno
+  // (quem foi ao 2º turno tem "2º TURNO" no 1º e "ELEITO" no 2º) e uma por
+  // candidatura substituída/indeferida com o mesmo número. Consolidamos por
+  // cargo+número antes de gravar: preferimos a linha apta e consideramos
+  // eleito quem tiver QUALQUER linha indicando eleição — a ordem das linhas
+  // no arquivo deixa de importar.
+  const consolidadas = new Map<string, Linha>();
+  for (const linha of linhas) {
+    const chave = `${linha.cargoNome}::${linha.municipioId ?? "ESTADUAL"}::${linha.numero}`;
+    const atual = consolidadas.get(chave);
+    if (!atual) {
+      consolidadas.set(chave, { ...linha });
+      continue;
+    }
+    const preferida = linha.apta && !atual.apta ? { ...linha } : atual;
+    preferida.eleito = atual.eleito || linha.eleito;
+    preferida.apta = atual.apta || linha.apta;
+    consolidadas.set(chave, preferida);
+  }
+  const linhasFinais = Array.from(consolidadas.values());
+
   // Candidatos (titulares), guardando a chapa (SQ_COLIGACAO) de cada um
   // para depois anexar o vice correspondente.
   const chapaPorCandidato = new Map<
@@ -196,7 +220,7 @@ export async function importarCandidatos(
     { cargoId: string; cargoNome: string; numero: number; sqColigacao: string }
   >();
 
-  for (const linha of linhas) {
+  for (const linha of linhasFinais) {
     const chave = `${linha.cargoNome}::${linha.municipioId ?? "ESTADUAL"}`;
     const cargoId = cargoIdPorChave.get(chave)!;
     const partidoId = partidosPorSigla.get(linha.partidoSigla)!;

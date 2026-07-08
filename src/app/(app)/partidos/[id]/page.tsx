@@ -60,9 +60,36 @@ export default async function PartidoDetailPage({
         </section>
       )}
 
+      {(partido.senadoresNacional ?? 0) + (partido.deputadosNacional ?? 0) > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-neutral-400">
+            Representação nacional (Congresso)
+          </h2>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-3 text-center">
+              <p className="text-lg font-semibold text-amber-400">
+                {partido.senadoresNacional ?? 0}
+                <span className="text-xs font-normal text-neutral-600"> / 81</span>
+              </p>
+              <p className="text-[11px] text-neutral-500">Senadores</p>
+            </div>
+            <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-3 text-center">
+              <p className="text-lg font-semibold text-amber-400">
+                {partido.deputadosNacional ?? 0}
+                <span className="text-xs font-normal text-neutral-600"> / 513</span>
+              </p>
+              <p className="text-[11px] text-neutral-500">Deputados Federais</p>
+            </div>
+          </div>
+          <p className="text-xs text-neutral-600">
+            Bancadas em exercício no Congresso Nacional (Senado e Câmara, julho/2026).
+          </p>
+        </section>
+      )}
+
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-medium text-neutral-400">
-          Representatividade com mandato vigente ({totalMandatos} eleito{totalMandatos !== 1 ? "s" : ""})
+          Representatividade no Pará com mandato vigente ({totalMandatos} eleito{totalMandatos !== 1 ? "s" : ""})
         </h2>
         <div className="grid grid-cols-3 gap-3">
           <AmbitoCard label="Federal" qtd={partido.ambitos.federal} descricao="Senador e Dep. Federal" />
