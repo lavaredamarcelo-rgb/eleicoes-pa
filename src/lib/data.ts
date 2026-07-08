@@ -168,6 +168,10 @@ export async function getHierarquiaDisputas() {
     }
   }
 
+  // Eleitores aptos por ano, para mostrar o percentual de votos válidos.
+  const eleitorado = await prisma.eleitorado.groupBy({ by: ["ano"], _sum: { total: true } });
+  const aptosPorAno = new Map(eleitorado.map((e) => [e.ano, e._sum.total ?? 0]));
+
   return Array.from(porAno.values())
     .sort((a, b) => b.ano - a.ano)
     .map((anoGrupo) => {
@@ -175,13 +179,17 @@ export async function getHierarquiaDisputas() {
       const votosValidos = referencia
         ? referencia.municipios.reduce((s, m) => s + m.totalVotos, 0)
         : 0;
+      const eleitoresAptos = aptosPorAno.get(anoGrupo.ano) ?? 0;
       return {
         ano: anoGrupo.ano,
         tipo: anoGrupo.tipo,
         votosValidos,
+        eleitoresAptos,
         cargos: Array.from(anoGrupo.cargos.values()).map((c) => ({
           ...c,
-          municipios: c.municipios.sort((a, b) => b.totalVotos - a.totalVotos),
+          municipios: c.municipios.sort((a, b) =>
+            a.municipioNome.localeCompare(b.municipioNome, "pt-BR")
+          ),
         })),
       };
     });

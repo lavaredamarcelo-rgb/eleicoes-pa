@@ -6,7 +6,13 @@ import { ChevronRight, ChevronDown } from "lucide-react";
 
 type Municipio = { municipioId: string; municipioNome: string; totalVotos: number; cargoId: string };
 type Cargo = { cargoNome: string; tipoApuracao: string; municipios: Municipio[] };
-type Ano = { ano: number; tipo: string; votosValidos: number; cargos: Cargo[] };
+type Ano = {
+  ano: number;
+  tipo: string;
+  votosValidos: number;
+  eleitoresAptos: number;
+  cargos: Cargo[];
+};
 
 export function DisputasPorAno({ anos }: { anos: Ano[] }) {
   const [anoAberto, setAnoAberto] = useState<number | null>(anos[0]?.ano ?? null);
@@ -36,8 +42,18 @@ export function DisputasPorAno({ anos }: { anos: Ano[] }) {
                   {anoGrupo.tipo === "ESTADUAL" ? "Estadual" : "Municipal"}
                 </span>
               </span>
-              <span className="text-sm font-semibold text-amber-400">
-                {anoGrupo.votosValidos.toLocaleString("pt-BR")} votos válidos
+              <span className="text-right">
+                <span className="block text-sm font-semibold text-amber-400">
+                  {anoGrupo.votosValidos.toLocaleString("pt-BR")} votos válidos
+                </span>
+                {anoGrupo.eleitoresAptos > 0 && anoGrupo.votosValidos > 0 && (
+                  <span className="block text-[11px] text-neutral-500">
+                    {((anoGrupo.votosValidos / anoGrupo.eleitoresAptos) * 100).toLocaleString("pt-BR", {
+                      maximumFractionDigits: 1,
+                    })}
+                    % dos {anoGrupo.eleitoresAptos.toLocaleString("pt-BR")} aptos
+                  </span>
+                )}
               </span>
             </button>
 
