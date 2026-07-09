@@ -228,8 +228,10 @@ model ColegioEleitoral {
 
 // Votação nominal por LOCAL DE VOTAÇÃO (escola/colégio), separada de
 // Resultado para não interferir nas agregações municipais existentes.
+// É a maior tabela do banco (centenas de milhares de linhas por eleição):
+// id numérico e um único índice composto para caber no volume de 500MB.
 model VotoLocal {
-  id                 String           @id @default(cuid())
+  id                 Int              @id @default(autoincrement())
   candidatoId        String
   candidato          Candidato        @relation(fields: [candidatoId], references: [id])
   colegioEleitoralId String
@@ -237,8 +239,7 @@ model VotoLocal {
   turno              Int              @default(1)
   votos              Int              @default(0)
 
-  @@unique([candidatoId, colegioEleitoralId, turno])
-  @@index([colegioEleitoralId])
+  @@unique([colegioEleitoralId, candidatoId, turno])
 }
 
 model Resultado {
