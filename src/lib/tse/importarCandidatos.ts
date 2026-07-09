@@ -120,7 +120,11 @@ export async function importarCandidatos(
       numero,
       nome,
       nomeCompleto: (row["NM_CANDIDATO"] || "").trim() || null,
-      cpf: (row["NR_CPF_CANDIDATO"] || "").trim() || null,
+      // O TSE usa "-4" (e variantes) quando o CPF não é divulgado — esses
+      // valores repetidos ligariam pessoas diferentes entre si.
+      cpf: /^\d{11}$/.test((row["NR_CPF_CANDIDATO"] || "").trim())
+        ? (row["NR_CPF_CANDIDATO"] || "").trim()
+        : null,
       partidoSigla,
       partidoNumero: Number(row["NR_PARTIDO"]) || 0,
       partidoNome: (row["NM_PARTIDO"] || partidoSigla).trim(),

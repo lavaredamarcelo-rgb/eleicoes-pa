@@ -638,7 +638,8 @@ export async function getCandidaturasAnteriores(candidato: {
   nomeCompleto: string | null;
 }) {
   const filtros = [];
-  if (candidato.cpf) filtros.push({ cpf: candidato.cpf });
+  const cpfValido = candidato.cpf && /^\d{11}$/.test(candidato.cpf);
+  if (cpfValido) filtros.push({ cpf: candidato.cpf! });
   else if (candidato.nomeCompleto) filtros.push({ nomeCompleto: candidato.nomeCompleto });
   if (filtros.length === 0) return [];
 
