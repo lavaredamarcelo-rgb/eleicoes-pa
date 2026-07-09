@@ -11,6 +11,8 @@ type MunicipioMapa = {
   regiaoId: string;
   regiaoNome: string;
   totalVotos: number;
+  top: { nome: string; votos: number } | null;
+  linkCargoId: string | null;
   populacao: number | null;
   prefeito: { nome: string; partido: string; ano: number } | null;
   eleitorado: { ultimoAno: number; ultimoTotal: number; anoProjecao: number; projecao: number } | null;
@@ -42,14 +44,6 @@ function corRegiao(hue: number, valor: number, max: number) {
   return `hsl(${hue} 65% ${l}%)`;
 }
 
-const CAMADAS = [
-  { chave: "eleitores", rotulo: "Eleitores (projeção)" },
-  { chave: "populacao", rotulo: "População (2022)" },
-  { chave: "percentual", rotulo: "% eleitores/habitantes" },
-  { chave: "votos", rotulo: "Votos apurados" },
-] as const;
-type Camada = (typeof CAMADAS)[number]["chave"];
-
 export function MapaParaense({
   municipios,
   rotuloVotos,
@@ -59,20 +53,12 @@ export function MapaParaense({
 }) {
   const router = useRouter();
   const [modo, setModo] = useState<"municipio" | "regiao">("municipio");
-  const [camada, setCamada] = useState<Camada>(rotuloVotos ? "votos" : "eleitores");
 
-  const valorDe = (m: MunicipioMapa) => {
-    switch (camada) {
-      case "eleitores":
-        return m.eleitorado?.projecao ?? 0;
-      case "populacao":
-        return m.populacao ?? 0;
-      case "percentual":
-        return m.populacao && m.eleitorado ? (m.eleitorado.ultimoTotal / m.populacao) * 100 : 0;
-      case "votos":
-        return m.totalVotos;
-    }
-  };
+  // Camada fixa: eleitores (projeção) na visão geral; com um cargo
+  // selecionado, a cor passa a refletir os votos exibidos.
+  const comVotos = Boolean(rotuloVotos);
+  const valorDe = (m: MunicipioMapa) => (comVotos ? m.totalVotos : m.eleitorado?.projecao ?? 0);
+
   const [hover, setHover] = useState<MunicipioMapa | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ left: number; top: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -99,12 +85,12 @@ export function MapaParaense({
     }
     return map;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [municipios, camada]);
+  }, [municipios, comVotos]);
 
   const maxValorMunicipio = useMemo(
     () => Math.max(0, ...municipios.map((m) => valorDe(m))),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [municipios, camada]
+    [municipios, comVotos]
   );
   const maxValorRegiao = useMemo(
     () => Math.max(0, ...Array.from(totalPorRegiao.values())),
@@ -145,22 +131,6 @@ export function MapaParaense({
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {CAMADAS.map((c) => (
-          <button
-            key={c.chave}
-            onClick={() => setCamada(c.chave)}
-            className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-              camada === c.chave
-                ? "bg-amber-400 text-neutral-950"
-                : "border border-neutral-800 bg-neutral-900 text-neutral-400 hover:border-neutral-700"
-            }`}
-          >
-            {c.rotulo}
-          </button>
-        ))}
-      </div>
-
       <div
         ref={containerRef}
         className="relative overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950"
@@ -184,7 +154,13 @@ export function MapaParaense({
                 className="cursor-pointer transition-[fill,stroke] duration-150"
                 onMouseEnter={() => setHover(m)}
                 onMouseLeave={() => setHover((h) => (h?.id === m.id ? null : h))}
-                onClick={() => router.push(`/municipios/${m.id}`)}
+                onClick={() =>
+                  router.push(
+                    m.linkCargoId
+                      ? `/disputas/${m.linkCargoId}?municipio=${m.id}`
+                      : `/municipios/${m.id}`
+                  )
+                }
               />
             );
           })}
@@ -213,6 +189,11 @@ export function MapaParaense({
             {rotuloVotos && (
               <p className="font-medium text-amber-300">
                 {hover.totalVotos.toLocaleString("pt-BR")} {rotuloVotos}
+              </p>
+            )}
+            {rotuloVotos && hover.top && (
+              <p className="text-neutral-400">
+                Mais votado: {hover.top.nome} — {hover.top.votos.toLocaleString("pt-BR")} votos
               </p>
             )}
             {hover.populacao != null && (
@@ -245,7 +226,9 @@ export function MapaParaense({
       </div>
 
       <p className="text-center text-xs text-neutral-600">
-        Toque em um município para ver os detalhes. Cor mais clara = valor maior na camada escolhida.
+        {comVotos
+          ? "Toque em um município para ver todos os candidatos desse cargo nele. Cor mais clara = mais votos."
+          : "Toque em um município para ver os detalhes. Cor mais clara = mais eleitores (projeção)."}
       </p>
     </div>
   );
