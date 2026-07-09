@@ -75,8 +75,13 @@ export default async function MunicipiosPage() {
                       </p>
                     )}
                   </div>
-                  <span className="text-sm font-semibold text-amber-400">
-                    {m.eleitores.toLocaleString("pt-BR")}
+                  <span className="text-right">
+                    <span className="block text-sm font-semibold text-amber-400">
+                      {m.eleitores.toLocaleString("pt-BR")}
+                    </span>
+                    <span className="block text-[10px] text-neutral-500">
+                      eleitores aptos{m.anoEleitorado ? ` (${m.anoEleitorado})` : ""}
+                    </span>
                   </span>
                 </CardLink>
               ))}

@@ -893,6 +893,70 @@ export async function getMunicipio(id: string) {
   return { ...municipio, eleitores, anoEleitorado: ano };
 }
 
+// Ficha enxuta do município (sem os resultados completos — a página do
+// município mostra só os eleitos; a relação completa fica nas Disputas).
+export async function getMunicipioFicha(id: string) {
+  const municipio = await prisma.municipio.findUnique({
+    where: { id },
+    include: { regiao: true, eleitorado: true },
+  });
+  if (!municipio) return null;
+  const { eleitores, ano } = eleitoresMaisRecentes(municipio.eleitorado);
+  return { ...municipio, eleitores, anoEleitorado: ano };
+}
+
+// Eleitos da eleição municipal mais recente do município: prefeito (com
+// vice) e vereadores por ordem de votação — flag oficial do TSE.
+export async function getEleitosDoMunicipio(municipioId: string) {
+  const eleicao = await prisma.eleicao.findFirst({
+    where: {
+      tipo: "MUNICIPAL",
+      cargos: { some: { municipioId, candidatos: { some: { eleito: true } } } },
+    },
+    orderBy: { ano: "desc" },
+  });
+  if (!eleicao) return null;
+
+  const cargos = await prisma.cargo.findMany({
+    where: { municipioId, eleicaoId: eleicao.id },
+    include: {
+      candidatos: {
+        where: { eleito: true },
+        include: { partido: true, resultados: { where: { municipioId } } },
+      },
+    },
+  });
+
+  const prefeitoCargo = cargos.find((c) => c.nome === "Prefeito");
+  const vereadorCargo = cargos.find((c) => c.nome === "Vereador");
+
+  const p = prefeitoCargo?.candidatos[0];
+  return {
+    ano: eleicao.ano,
+    prefeito: p
+      ? {
+          id: p.id,
+          nome: p.nome,
+          numero: p.numero,
+          partidoSigla: p.partido.sigla,
+          viceNome: p.viceNome,
+          votos: votosDecisivos(p.resultados),
+        }
+      : null,
+    vereadores: (vereadorCargo?.candidatos ?? [])
+      .map((v) => ({
+        id: v.id,
+        nome: v.nome,
+        numero: v.numero,
+        partidoSigla: v.partido.sigla,
+        votos: votosTurno(v.resultados, 1),
+      }))
+      .sort((a, b) => b.votos - a.votos),
+    cargoVereadorId: vereadorCargo?.id ?? null,
+    cargoPrefeitoId: prefeitoCargo?.id ?? null,
+  };
+}
+
 // Locais de votação de um município com o total de votos nominais do 1º
 // turno mais recente (agregado no banco).
 export async function getLocaisDoMunicipio(municipioId: string) {

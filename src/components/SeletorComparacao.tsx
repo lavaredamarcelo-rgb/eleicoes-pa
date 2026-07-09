@@ -4,7 +4,9 @@ import { useRouter } from "next/navigation";
 
 type Opcao = { id: string; nome: string };
 
-// Três seletores de município; a URL (?m=id1,id2,id3) guia o server.
+const VAGAS = 6;
+
+// Até seis seletores de município; a URL (?m=id1,id2,...) guia o server.
 export function SeletorComparacao({
   municipios,
   selecionados,
@@ -23,7 +25,7 @@ export function SeletorComparacao({
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-      {[0, 1, 2].map((i) => (
+      {Array.from({ length: VAGAS }, (_, i) => (
         <div key={i}>
           <label className="mb-1 block text-xs text-neutral-500">Município {i + 1}</label>
           <select
@@ -33,7 +35,11 @@ export function SeletorComparacao({
           >
             <option value="">{i < 2 ? "Escolha…" : "(opcional)"}</option>
             {municipios.map((m) => (
-              <option key={m.id} value={m.id} disabled={selecionados.includes(m.id) && selecionados[i] !== m.id}>
+              <option
+                key={m.id}
+                value={m.id}
+                disabled={selecionados.includes(m.id) && selecionados[i] !== m.id}
+              >
                 {m.nome}
               </option>
             ))}

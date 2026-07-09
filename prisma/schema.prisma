@@ -167,6 +167,13 @@ model Municipio {
   codigoTse          String?            @unique
   // População residente do Censo 2022 (IBGE, agregado 4709/variável 93).
   populacao          Int?
+  // Ficha do IBGE: área territorial do Censo 2022 (agregado 4714/6318),
+  // gentílico, ano de criação do município e resumo histórico (biblioteca
+  // do IBGE Cidades) — preenchidos por scripts/importar-historia.ts.
+  areaKm2            Float?
+  gentilico          String?
+  anoCriacao         Int?
+  historia           String?
   regiaoId           String
   regiao             Regiao             @relation(fields: [regiaoId], references: [id])
   resultados         Resultado[]

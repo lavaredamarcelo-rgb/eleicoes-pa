@@ -1,8 +1,9 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { School } from "lucide-react";
 import { CardLink } from "@/components/CardLink";
 import { PdfDownloadLink } from "@/components/PdfDownloadLink";
-import { getMunicipio, getLocaisDoMunicipio } from "@/lib/data";
+import { getMunicipioFicha, getEleitosDoMunicipio, getLocaisDoMunicipio } from "@/lib/data";
 
 export default async function MunicipioDetailPage({
   params,
@@ -10,26 +11,12 @@ export default async function MunicipioDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const municipio = await getMunicipio(id);
+  const municipio = await getMunicipioFicha(id);
   if (!municipio) notFound();
-  const locais = await getLocaisDoMunicipio(id);
-
-  const porCargo = new Map<string, { nome: string; ano: number; resultados: typeof municipio.resultados }>();
-  for (const r of municipio.resultados) {
-    const atual = porCargo.get(r.candidato.cargo.id);
-    if (atual) {
-      atual.resultados.push(r);
-    } else {
-      porCargo.set(r.candidato.cargo.id, {
-        nome: r.candidato.cargo.nome,
-        ano: r.candidato.cargo.eleicao.ano,
-        resultados: [r],
-      });
-    }
-  }
-  const cargosOrdenados = Array.from(porCargo.values()).sort(
-    (a, b) => b.ano - a.ano || a.nome.localeCompare(b.nome, "pt-BR")
-  );
+  const [eleitos, locais] = await Promise.all([
+    getEleitosDoMunicipio(id),
+    getLocaisDoMunicipio(id),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -37,7 +24,10 @@ export default async function MunicipioDetailPage({
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-lg font-semibold">{municipio.nome}</h1>
-            <p className="text-sm text-neutral-500">{municipio.regiao.nome}</p>
+            <p className="text-sm text-neutral-500">
+              {municipio.regiao.nome}
+              {municipio.gentilico ? ` · gentílico: ${municipio.gentilico}` : ""}
+            </p>
           </div>
           <PdfDownloadLink href={`/api/pdf/municipio/${municipio.id}`} />
         </div>
@@ -64,24 +54,97 @@ export default async function MunicipioDetailPage({
         )}
       </section>
 
-      {cargosOrdenados.map((grupo) => (
-        <section key={`${grupo.nome}-${grupo.ano}`} className="flex flex-col gap-2">
-          <h2 className="text-sm font-medium text-neutral-400">
-            {grupo.nome} · {grupo.ano}
-          </h2>
-          {grupo.resultados.map((r) => (
-            <CardLink key={r.id} href={`/candidatos/${r.candidato.id}`}>
-              <div>
-                <p>{r.candidato.nome}</p>
-                <p className="text-xs text-neutral-500">
-                  {r.candidato.numero} · {r.candidato.partido.sigla}
-                </p>
+      {(municipio.historia || municipio.areaKm2 != null || municipio.anoCriacao != null) && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-neutral-400">Sobre o município</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {municipio.anoCriacao != null && (
+              <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-3 text-center">
+                <p className="text-lg font-semibold">{municipio.anoCriacao}</p>
+                <p className="text-[11px] text-neutral-500">Criação do município</p>
               </div>
-              <span className="text-sm font-medium">{r.votos.toLocaleString("pt-BR")}</span>
+            )}
+            {municipio.areaKm2 != null && (
+              <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-3 text-center">
+                <p className="text-lg font-semibold">
+                  {municipio.areaKm2.toLocaleString("pt-BR", { maximumFractionDigits: 0 })} km²
+                </p>
+                <p className="text-[11px] text-neutral-500">Área territorial</p>
+              </div>
+            )}
+            {municipio.areaKm2 != null && municipio.populacao != null && (
+              <div className="col-span-2 rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-3 text-center sm:col-span-1">
+                <p className="text-lg font-semibold">
+                  {(municipio.populacao / municipio.areaKm2).toLocaleString("pt-BR", {
+                    maximumFractionDigits: 1,
+                  })}
+                </p>
+                <p className="text-[11px] text-neutral-500">hab./km² (densidade)</p>
+              </div>
+            )}
+          </div>
+          {municipio.historia && (
+            <p className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm leading-relaxed text-neutral-300">
+              {municipio.historia}
+            </p>
+          )}
+          <p className="text-right text-[10px] text-neutral-600">Fonte: IBGE Cidades</p>
+        </section>
+      )}
+
+      {eleitos?.prefeito && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-neutral-400">
+            Prefeito eleito · {eleitos.ano}
+          </h2>
+          <CardLink href={`/candidatos/${eleitos.prefeito.id}`}>
+            <div>
+              <p className="font-medium">{eleitos.prefeito.nome}</p>
+              <p className="text-xs text-neutral-500">
+                {eleitos.prefeito.numero} · {eleitos.prefeito.partidoSigla}
+                {eleitos.prefeito.viceNome ? ` · Vice: ${eleitos.prefeito.viceNome}` : ""}
+              </p>
+            </div>
+            <span className="text-sm font-semibold text-amber-400">
+              {eleitos.prefeito.votos.toLocaleString("pt-BR")}
+            </span>
+          </CardLink>
+        </section>
+      )}
+
+      {eleitos && eleitos.vereadores.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium text-neutral-400">
+              Vereadores eleitos · {eleitos.ano} ({eleitos.vereadores.length})
+            </h2>
+            {eleitos.cargoVereadorId && (
+              <Link
+                href={`/disputas/${eleitos.cargoVereadorId}`}
+                className="text-xs text-amber-400 hover:underline"
+              >
+                Ver todos os candidatos
+              </Link>
+            )}
+          </div>
+          {eleitos.vereadores.map((v, i) => (
+            <CardLink key={v.id} href={`/candidatos/${v.id}`}>
+              <div className="flex items-center gap-3">
+                <span className="w-6 text-right text-xs text-neutral-600">{i + 1}º</span>
+                <div>
+                  <p className="text-sm font-medium">{v.nome}</p>
+                  <p className="text-xs text-neutral-500">
+                    {v.numero} · {v.partidoSigla}
+                  </p>
+                </div>
+              </div>
+              <span className="text-sm font-semibold text-amber-400">
+                {v.votos.toLocaleString("pt-BR")}
+              </span>
             </CardLink>
           ))}
         </section>
-      ))}
+      )}
 
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-medium text-neutral-400">

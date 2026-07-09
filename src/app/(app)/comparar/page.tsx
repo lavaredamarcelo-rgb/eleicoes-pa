@@ -60,7 +60,7 @@ export default async function CompararPage({
   searchParams: Promise<{ m?: string }>;
 }) {
   const { m } = await searchParams;
-  const ids = (m ?? "").split(",").filter(Boolean).slice(0, 3);
+  const ids = (m ?? "").split(",").filter(Boolean).slice(0, 6);
 
   const [municipios, colunas] = await Promise.all([
     prisma.municipio.findMany({ orderBy: { nome: "asc" }, select: { id: true, nome: true } }),
@@ -73,7 +73,7 @@ export default async function CompararPage({
       <div>
         <h1 className="text-lg font-semibold">Comparar municípios</h1>
         <p className="text-sm text-neutral-500">
-          Escolha 2 ou 3 municípios para ver os números lado a lado.
+          Escolha de 2 a 6 municípios para ver os números lado a lado.
         </p>
       </div>
 
@@ -82,8 +82,11 @@ export default async function CompararPage({
       {dados.length >= 2 && (
         <div className="overflow-x-auto">
           <div
-            className="grid min-w-[560px] gap-3"
-            style={{ gridTemplateColumns: `repeat(${dados.length}, minmax(0, 1fr))` }}
+            className="grid gap-3"
+            style={{
+              gridTemplateColumns: `repeat(${dados.length}, minmax(0, 1fr))`,
+              minWidth: `${dados.length * 190}px`,
+            }}
           >
             {dados.map((d) => (
               <div key={d.id} className="flex flex-col gap-2 rounded-xl border border-neutral-800 bg-neutral-900 p-4">
