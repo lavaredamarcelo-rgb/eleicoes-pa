@@ -23,6 +23,20 @@ enum TipoApuracao {
   PROPORCIONAL
 }
 
+// Relatório analítico gerado por IA (aba Relatórios): parâmetros do pedido
+// e conteúdo estruturado (JSON) para reexibição e PDF.
+model Relatorio {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  tipo       String
+  titulo     String
+  parametros String
+  conteudo   String
+  modelo     String?
+  createdAt  DateTime @default(now())
+}
+
 model User {
   id                String             @id @default(cuid())
   nome              String
@@ -39,6 +53,7 @@ model User {
   criadoPor         User?              @relation("UsuariosCriados", fields: [criadoPorId], references: [id])
   criados           User[]             @relation("UsuariosCriados")
   favoritosApuracao ApuracaoFavorito[]
+  relatorios        Relatorio[]
   createdAt         DateTime           @default(now())
 }
 

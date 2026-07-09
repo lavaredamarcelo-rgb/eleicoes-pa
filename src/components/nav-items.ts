@@ -1,4 +1,4 @@
-import { Home, Users, MapPin, Calculator, Landmark, Flag, Activity } from "lucide-react";
+import { Home, Users, MapPin, Calculator, Landmark, Flag, Activity, FileText } from "lucide-react";
 
 export const NAV_ITEMS = [
   { href: "/inicio", label: "Início", icon: Home },
@@ -8,4 +8,5 @@ export const NAV_ITEMS = [
   { href: "/cenario", label: "Cenários", icon: Landmark },
   { href: "/partidos", label: "Partidos", icon: Flag },
   { href: "/simulacoes", label: "Quociente e Simulações", icon: Calculator },
+  { href: "/relatorios", label: "Relatórios", icon: FileText },
 ];

@@ -40,6 +40,12 @@ export const styles = StyleSheet.create({
     marginBottom: 6,
     color: "#1d4ed8",
   },
+  paragraph: {
+    fontSize: 9.5,
+    lineHeight: 1.5,
+    color: "#111827",
+    marginBottom: 5,
+  },
   statsRow: {
     flexDirection: "row",
     gap: 10,
