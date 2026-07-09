@@ -252,3 +252,11 @@ model VotoLegenda {
 
   @@unique([cargoId, municipioId, partidoId, turno])
 }
+
+// Pequeno armazenamento chave-valor para controle interno (ex.: data da
+// última atualização automática de bancadas).
+model ConfigSistema {
+  chave        String   @id
+  valor        String
+  atualizadoEm DateTime @updatedAt
+}
