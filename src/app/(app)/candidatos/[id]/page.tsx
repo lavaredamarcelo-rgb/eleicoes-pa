@@ -39,6 +39,23 @@ export default async function CandidatoDetailPage({
     }
   }
 
+  // Linha do tempo de filiações vista pelas urnas: o partido de cada
+  // candidatura, em ordem cronológica; a "troca" é a mudança entre uma
+  // eleição e a seguinte.
+  const filiacoes = [
+    ...candidaturasAnteriores.map((c) => ({
+      ano: c.cargo.eleicao.ano,
+      sigla: c.partido.sigla,
+    })),
+    { ano: candidato.cargo.eleicao.ano, sigla: candidato.partido.sigla },
+  ].sort((a, b) => a.ano - b.ano);
+  const trocasUrna: { ano: number; de: string; para: string }[] = [];
+  for (let i = 1; i < filiacoes.length; i++) {
+    if (filiacoes[i].sigla !== filiacoes[i - 1].sigla) {
+      trocasUrna.push({ ano: filiacoes[i].ano, de: filiacoes[i - 1].sigla, para: filiacoes[i].sigla });
+    }
+  }
+
   // Evolução: votação (turno decisivo) em cada eleição disputada, ligada
   // pelo CPF, em ordem cronológica.
   const evolucao = [
@@ -182,8 +199,49 @@ export default async function CandidatoDetailPage({
         </section>
       )}
 
+      {filiacoes.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-neutral-400">
+            Filiações partidárias (histórico das urnas)
+          </h2>
+          <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {filiacoes.map((f, i) => (
+                <span key={`${f.ano}-${f.sigla}`} className="flex items-center gap-1.5">
+                  {i > 0 && <span className="text-neutral-600">→</span>}
+                  <span
+                    className={`rounded-full border px-2.5 py-1 text-xs font-medium ${
+                      i > 0 && filiacoes[i - 1].sigla !== f.sigla
+                        ? "border-amber-700 bg-amber-950/40 text-amber-300"
+                        : "border-neutral-800 bg-neutral-950 text-neutral-300"
+                    }`}
+                  >
+                    {f.sigla} <span className="text-neutral-500">{f.ano}</span>
+                  </span>
+                </span>
+              ))}
+            </div>
+            {trocasUrna.length > 0 ? (
+              <div className="mt-3 flex flex-col gap-1 border-t border-neutral-800 pt-2">
+                {trocasUrna.map((tr) => (
+                  <p key={`${tr.ano}-${tr.para}`} className="text-xs text-neutral-500">
+                    Trocou de <span className="text-neutral-300">{tr.de}</span> para{" "}
+                    <span className="text-amber-300">{tr.para}</span> entre as eleições (concorreu
+                    pelo {tr.para} em {tr.ano})
+                  </p>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-xs text-neutral-600">
+                Mesmo partido em todas as eleições registradas.
+              </p>
+            )}
+          </div>
+        </section>
+      )}
+
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-medium text-neutral-400">Histórico partidário</h2>
+        <h2 className="text-sm font-medium text-neutral-400">Trocas registradas manualmente</h2>
         {candidato.trocasPartido.length > 0 ? (
           candidato.trocasPartido.map((t) => (
             <div

@@ -4,6 +4,7 @@ import { calcularQuocienteEleitoral, calcularMajoritario } from "@/lib/eleitoral
 import { getPartidos } from "@/lib/data";
 import { SimuladorPartido } from "@/components/SimuladorPartido";
 import { MunicipioSwitcher } from "@/components/MunicipioSwitcher";
+import { ComposicaoCasa } from "@/components/ComposicaoCasa";
 
 export default async function CenarioDetailPage({
   params,
@@ -51,65 +52,51 @@ export default async function CenarioDetailPage({
         />
 
         <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-medium text-neutral-400">Composição da casa</h2>
-          <div className="flex flex-col gap-2 rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
-            {partidosComCadeira
-              .filter((p) => p.quocientePartidario > 0)
-              .map((p) => (
-                <div key={p.partidoId} className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">{p.sigla}</span>
-                    <span className="text-neutral-400">
-                      {p.quocientePartidario} {p.quocientePartidario === 1 ? "cadeira" : "cadeiras"}
-                    </span>
-                  </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-800">
-                    <div
-                      className="h-1.5 rounded-full bg-amber-400"
-                      style={{ width: `${(p.quocientePartidario / maxCadeiras) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            {partidosComCadeira.every((p) => p.quocientePartidario === 0) && (
-              <p className="text-xs text-neutral-500">Nenhuma cadeira distribuída ainda.</p>
-            )}
-          </div>
+          <h2 className="text-sm font-medium text-neutral-400">
+            Composição da casa — clique no partido para ver eleitos e suplentes
+          </h2>
+          <ComposicaoCasa
+            partidos={resultado.partidos.map((p) => ({
+              partidoId: p.partidoId,
+              sigla: p.sigla,
+              cadeiras: p.quocientePartidario,
+            }))}
+            candidatos={resultado.candidatosComSituacao.map((c) => ({
+              id: c.id,
+              nome: c.nome,
+              numero: c.numero,
+              votos: c.votos,
+              situacao: c.situacao,
+              ordemSuplencia: c.ordemSuplencia,
+              partidoId: c.partido.id,
+              partidoSigla: c.partido.sigla,
+            }))}
+          />
         </section>
 
-        <section className="flex flex-col gap-3">
-          <h2 className="text-sm font-medium text-neutral-400">Eleitos e suplentes por partido</h2>
-          {partidosComCadeira.map((p) => {
-            const membros = resultado.candidatosComSituacao.filter((c) => c.partido.id === p.partidoId);
-            if (membros.length === 0) return null;
-            return (
-              <div key={p.partidoId} className="flex flex-col gap-2">
-                <p className="text-xs font-medium text-neutral-500">{p.sigla}</p>
-                {membros.map((c) => (
-                  <div
-                    key={c.id}
-                    className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-2"
-                  >
-                    <div>
-                      <p>{c.nome}</p>
-                      <p className="text-xs text-neutral-500">
-                        {c.numero} · {c.votos.toLocaleString("pt-BR")} votos
-                      </p>
-                    </div>
-                    {c.situacao === "eleito" ? (
-                      <span className="rounded-full bg-emerald-950 px-2 py-1 text-xs font-medium text-emerald-300">
-                        Eleito
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-neutral-800 px-2 py-1 text-xs text-neutral-400">
-                        {c.ordemSuplencia}º suplente
-                      </span>
-                    )}
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-neutral-400">Eleitos — por ordem de votação</h2>
+          {resultado.candidatosComSituacao
+            .filter((c) => c.situacao === "eleito")
+            .map((c, i) => (
+              <div
+                key={c.id}
+                className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-2"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="w-7 text-right text-xs text-neutral-600">{i + 1}º</span>
+                  <div>
+                    <p>{c.nome}</p>
+                    <p className="text-xs text-neutral-500">
+                      {c.numero} · {c.partido.sigla}
+                    </p>
                   </div>
-                ))}
+                </div>
+                <span className="text-sm font-semibold text-amber-400">
+                  {c.votos.toLocaleString("pt-BR")}
+                </span>
               </div>
-            );
-          })}
+            ))}
         </section>
 
         <section className="flex flex-col gap-2 rounded-xl border border-orange-900/50 bg-orange-950/10 px-4 py-4">
