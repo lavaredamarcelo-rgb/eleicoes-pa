@@ -6,13 +6,16 @@ import { SeletorCandidatoSimulacao } from "@/components/simuladores/SeletorCandi
 import { SimuladorSegundoTurno } from "@/components/simuladores/SimuladorSegundoTurno";
 import { SimuladorFederacao } from "@/components/simuladores/SimuladorFederacao";
 import { SimuladorTransferencia } from "@/components/simuladores/SimuladorTransferencia";
+import { SimuladorChapa } from "@/components/simuladores/SimuladorChapa";
 import { SimuladorComparecimento } from "@/components/simuladores/SimuladorComparecimento";
 import { SimuladorMeta } from "@/components/simuladores/SimuladorMeta";
+import { BuscaCandidatoMeta } from "@/components/simuladores/BuscaCandidatoMeta";
 import {
   getCargosParaSimulacao,
   getDadosSimulacaoCargo,
-  getDistribuicaoCandidato,
+  getDistribuicaoMeta,
   getHierarquiaCargos,
+  type BaseMeta,
 } from "@/lib/data";
 
 const DESCRICOES: Record<string, string> = {
@@ -20,6 +23,7 @@ const DESCRICOES: Record<string, string> = {
   "segundo-turno": "Leve os dois mais votados a um 2º turno hipotético e distribua os votos dos eliminados.",
   federacao: "Una partidos em uma federação e veja o efeito na distribuição de cadeiras.",
   transferencia: "Simule uma desistência com transferência de votos e veja quem se elegeria.",
+  chapa: "Ajuste os votos de vários candidatos ao mesmo tempo e veja quem se elege no cenário.",
   comparecimento: "Projete o quociente eleitoral a partir do comparecimento dos eleitores.",
   meta: "Defina uma meta de votos e veja quanto falta em cada município.",
 };
@@ -27,9 +31,9 @@ const DESCRICOES: Record<string, string> = {
 export default async function SimulacoesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ sim?: string; cargo?: string; candidato?: string }>;
+  searchParams: Promise<{ sim?: string; cargo?: string; candidato?: string; base?: string }>;
 }) {
-  const { sim: simParam, cargo: cargoId, candidato: candidatoId } = await searchParams;
+  const { sim: simParam, cargo: cargoId, candidato: candidatoId, base } = await searchParams;
   const sim = simParam && simParam in DESCRICOES ? simParam : "projecao";
   const anosQuociente = await getHierarquiaCargos();
 
@@ -76,13 +80,34 @@ export default async function SimulacoesPage({
 
         <SeletorSimulacao ativa={sim} />
 
-        {sim === "projecao" && <CalculadoraCenarios />}
+        {sim === "projecao" && <SecaoProjecao cargoId={cargoId} />}
         {sim === "segundo-turno" && <SecaoSegundoTurno cargoId={cargoId} />}
         {sim === "federacao" && <SecaoFederacao cargoId={cargoId} />}
         {sim === "transferencia" && <SecaoTransferencia cargoId={cargoId} />}
+        {sim === "chapa" && <SecaoChapa cargoId={cargoId} />}
         {sim === "comparecimento" && <SecaoComparecimento cargoId={cargoId} />}
-        {sim === "meta" && <SecaoMeta cargoId={cargoId} candidatoId={candidatoId} />}
+        {sim === "meta" && <SecaoMeta candidatoId={candidatoId} base={base} />}
       </section>
+    </div>
+  );
+}
+
+async function SecaoProjecao({ cargoId }: { cargoId?: string }) {
+  const cargos = await getCargosParaSimulacao({ tipoApuracao: "PROPORCIONAL" });
+  const dados = cargoId ? await getDadosSimulacaoCargo(cargoId) : null;
+  return (
+    <div className="flex flex-col gap-4">
+      <SeletorCargoSimulacao cargos={cargos} selecionado={cargoId} sim="projecao" />
+      <CalculadoraCenarios
+        key={cargoId ?? "livre"}
+        vagasIniciais={dados?.vagas}
+        votosValidosIniciais={dados?.votosValidos}
+        rotuloReferencia={
+          dados
+            ? `${dados.cargoNome} · ${dados.municipioNome ?? "PA"} · ${dados.ano}`
+            : undefined
+        }
+      />
     </div>
   );
 }
@@ -132,6 +157,19 @@ async function SecaoTransferencia({ cargoId }: { cargoId?: string }) {
   );
 }
 
+async function SecaoChapa({ cargoId }: { cargoId?: string }) {
+  const cargos = await getCargosParaSimulacao({ tipoApuracao: "PROPORCIONAL" });
+  const dados = cargoId ? await getDadosSimulacaoCargo(cargoId) : null;
+  return (
+    <div className="flex flex-col gap-4">
+      <SeletorCargoSimulacao cargos={cargos} selecionado={cargoId} sim="chapa" />
+      {dados && (
+        <SimuladorChapa candidatos={dados.candidatos} partidos={dados.partidos} vagas={dados.vagas} />
+      )}
+    </div>
+  );
+}
+
 async function SecaoComparecimento({ cargoId }: { cargoId?: string }) {
   const cargos = await getCargosParaSimulacao({ tipoApuracao: "PROPORCIONAL" });
   const dados = cargoId ? await getDadosSimulacaoCargo(cargoId) : null;
@@ -154,21 +192,15 @@ async function SecaoComparecimento({ cargoId }: { cargoId?: string }) {
   );
 }
 
-async function SecaoMeta({ cargoId, candidatoId }: { cargoId?: string; candidatoId?: string }) {
-  const cargos = await getCargosParaSimulacao({ somenteEstaduais: true });
-  const dados = cargoId ? await getDadosSimulacaoCargo(cargoId) : null;
-  const distribuicao = candidatoId ? await getDistribuicaoCandidato(candidatoId) : null;
+async function SecaoMeta({ candidatoId, base }: { candidatoId?: string; base?: string }) {
+  const baseEscolhida: BaseMeta =
+    base === "partido" || base === "eleitorado" ? base : "candidato";
+  const distribuicao = candidatoId
+    ? await getDistribuicaoMeta(candidatoId, baseEscolhida)
+    : null;
   return (
     <div className="flex flex-col gap-4">
-      <SeletorCargoSimulacao cargos={cargos} selecionado={cargoId} sim="meta" />
-      {dados && cargoId && (
-        <SeletorCandidatoSimulacao
-          candidatos={dados.candidatos}
-          cargoId={cargoId}
-          selecionado={candidatoId}
-          sim="meta"
-        />
-      )}
+      <BuscaCandidatoMeta base={baseEscolhida} />
       {distribuicao && <SimuladorMeta distribuicao={distribuicao} />}
     </div>
   );

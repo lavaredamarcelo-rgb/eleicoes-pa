@@ -2,9 +2,17 @@
 
 import { useMemo, useState } from "react";
 
-export function CalculadoraCenarios() {
-  const [vagas, setVagas] = useState(10);
-  const [votosValidos, setVotosValidos] = useState(100000);
+export function CalculadoraCenarios({
+  vagasIniciais,
+  votosValidosIniciais,
+  rotuloReferencia,
+}: {
+  vagasIniciais?: number;
+  votosValidosIniciais?: number;
+  rotuloReferencia?: string;
+} = {}) {
+  const [vagas, setVagas] = useState(vagasIniciais ?? 10);
+  const [votosValidos, setVotosValidos] = useState(votosValidosIniciais ?? 100000);
 
   const [votosAtuais, setVotosAtuais] = useState(5000);
   const [crescimento, setCrescimento] = useState(0);
@@ -26,6 +34,11 @@ export function CalculadoraCenarios() {
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-3 rounded-xl border border-neutral-800 bg-neutral-900 p-4">
         <p className="text-sm font-medium text-neutral-300">Quociente eleitoral do cenário</p>
+        {rotuloReferencia && (
+          <p className="rounded-md bg-amber-950/40 px-3 py-1.5 text-xs text-amber-300">
+            Pré-carregado com os dados reais de {rotuloReferencia} — ajuste livremente os campos.
+          </p>
+        )}
 
         <div className="flex flex-col gap-3 sm:flex-row">
           <div className="flex-1">

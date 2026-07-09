@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { verifySession } from "@/lib/dal";
 import { getUsuarios } from "@/lib/data";
 import { CriarUsuarioForm } from "@/components/CriarUsuarioForm";
-import { alternarStatusUsuario } from "@/app/actions/usuarios";
+import { alternarStatusUsuario, excluirUsuario } from "@/app/actions/usuarios";
+import { ExcluirUsuarioBotao } from "@/components/ExcluirUsuarioBotao";
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: "Administrador",
@@ -49,21 +50,36 @@ export default async function UsuariosPage() {
                 </p>
                 {u.expiresAt && (
                   <p className="text-xs text-neutral-600">
-                    Expira em {u.expiresAt.toLocaleDateString("pt-BR")}
+                    Expira em{" "}
+                    {u.expiresAt.toLocaleString("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </p>
                 )}
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <span className={`text-xs font-medium ${statusColor}`}>{statusLabel}</span>
                 {u.id !== session.userId && (
-                  <form action={alternarStatusUsuario.bind(null, u.id, !u.ativo)}>
-                    <button
-                      type="submit"
-                      className="rounded-lg border border-neutral-700 px-2 py-1 text-xs text-neutral-400 transition-colors hover:border-neutral-600 hover:text-neutral-200"
+                  <>
+                    <form
+                      action={alternarStatusUsuario.bind(null, u.id, !u.ativo || u.expirado)}
                     >
-                      {u.ativo ? "Desativar" : "Reativar"}
-                    </button>
-                  </form>
+                      <button
+                        type="submit"
+                        className="rounded-lg border border-neutral-700 px-2 py-1 text-xs text-neutral-400 transition-colors hover:border-neutral-600 hover:text-neutral-200"
+                      >
+                        {!u.ativo || u.expirado ? "Reabilitar" : "Desativar"}
+                      </button>
+                    </form>
+                    <ExcluirUsuarioBotao
+                      acao={excluirUsuario.bind(null, u.id)}
+                      nome={u.nome}
+                    />
+                  </>
                 )}
               </div>
             </div>

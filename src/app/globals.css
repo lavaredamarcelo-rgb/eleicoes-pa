@@ -50,3 +50,14 @@ body {
     animation: none;
   }
 }
+
+/* Telas de celular: fonte base maior (todas as medidas rem escalam junto)
+   e sem ajuste automático do iOS que encolhe texto em paisagem. */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+@media (max-width: 1023px) {
+  html {
+    font-size: 17.5px;
+  }
+}

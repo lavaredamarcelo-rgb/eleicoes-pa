@@ -480,6 +480,94 @@ export async function getDadosSimulacaoCargo(cargoId: string) {
   };
 }
 
+// Distribuição para o simulador de meta de campanha. A base define os
+// PESOS por município: o perfil histórico do próprio candidato, o perfil
+// do partido dele na última eleição de Deputado Estadual (útil quando o
+// candidato muda de âmbito, ex.: vereador disputando dep. estadual) ou o
+// eleitorado apto de cada município.
+export type BaseMeta = "candidato" | "partido" | "eleitorado";
+
+export async function getDistribuicaoMeta(candidatoId: string, base: BaseMeta) {
+  const candidato = await prisma.candidato.findUnique({
+    where: { id: candidatoId },
+    include: {
+      partido: true,
+      cargo: { include: { eleicao: true, municipio: true } },
+      resultados: { include: { municipio: true } },
+    },
+  });
+  if (!candidato) return null;
+
+  const votosAtuaisPorMunicipio = new Map<string, number>();
+  for (const r of candidato.resultados) {
+    if (r.turno !== 1) continue;
+    votosAtuaisPorMunicipio.set(
+      r.municipio.nome,
+      (votosAtuaisPorMunicipio.get(r.municipio.nome) ?? 0) + r.votos
+    );
+  }
+  const totalAtual = Array.from(votosAtuaisPorMunicipio.values()).reduce((s, v) => s + v, 0);
+
+  let pesos: { municipioNome: string; peso: number }[] = [];
+  let descricaoBase = "";
+
+  if (base === "candidato") {
+    pesos = Array.from(votosAtuaisPorMunicipio.entries()).map(([municipioNome, peso]) => ({
+      municipioNome,
+      peso,
+    }));
+    descricaoBase = `perfil do próprio candidato (${candidato.cargo.eleicao.ano})`;
+  } else if (base === "partido") {
+    const anoEstadual = await prisma.eleicao.findFirst({
+      where: { tipo: "ESTADUAL", cargos: { some: { candidatos: { some: { eleito: true } } } } },
+      orderBy: { ano: "desc" },
+    });
+    if (anoEstadual) {
+      const linhas = await prisma.$queryRaw<{ nome: string; votos: bigint }[]>`
+        SELECT m.nome as nome, SUM(r.votos) as votos
+        FROM Resultado r
+        JOIN Candidato c ON r.candidatoId = c.id
+        JOIN Cargo g ON c.cargoId = g.id
+        JOIN Municipio m ON r.municipioId = m.id
+        WHERE g.nome = 'Deputado Estadual' AND g.eleicaoId = ${anoEstadual.id}
+          AND c.partidoId = ${candidato.partidoId} AND r.turno = 1
+        GROUP BY m.nome
+      `;
+      pesos = linhas.map((l) => ({ municipioNome: l.nome, peso: Number(l.votos) }));
+      descricaoBase = `votação do ${candidato.partido.sigla} para Dep. Estadual em ${anoEstadual.ano}`;
+    }
+  } else {
+    const registros = await prisma.eleitorado.findMany({ include: { municipio: true } });
+    const anoMax = registros.length ? Math.max(...registros.map((r) => r.ano)) : 0;
+    pesos = registros
+      .filter((r) => r.ano === anoMax)
+      .map((r) => ({ municipioNome: r.municipio.nome, peso: r.total }));
+    descricaoBase = `eleitorado apto de ${anoMax}`;
+  }
+
+  const totalPesos = pesos.reduce((s, p) => s + p.peso, 0);
+
+  return {
+    id: candidato.id,
+    nome: candidato.nome,
+    numero: candidato.numero,
+    partidoSigla: candidato.partido.sigla,
+    origem: `${candidato.cargo.nome} · ${candidato.cargo.municipio?.nome ?? "PA"} · ${candidato.cargo.eleicao.ano}`,
+    totalAtual,
+    base,
+    descricaoBase,
+    municipios: pesos
+      .filter((p) => p.peso > 0)
+      .sort((a, b) => b.peso - a.peso)
+      .map((p) => ({
+        municipioNome: p.municipioNome,
+        peso: p.peso,
+        fracao: totalPesos > 0 ? p.peso / totalPesos : 0,
+        votosAtuais: votosAtuaisPorMunicipio.get(p.municipioNome) ?? 0,
+      })),
+  };
+}
+
 // Distribuição dos votos de um candidato por município — base do simulador
 // de meta de campanha.
 export async function getDistribuicaoCandidato(candidatoId: string) {

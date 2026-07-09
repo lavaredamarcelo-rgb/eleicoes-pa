@@ -20,7 +20,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <Sidebar />
 
       <div className="flex min-h-screen flex-col lg:pl-60">
-        <header className="sticky top-0 z-10 border-b border-neutral-800 bg-neutral-950/95 backdrop-blur">
+        <header
+          className="sticky top-0 z-10 border-b border-neutral-800 bg-neutral-950/95 backdrop-blur"
+          style={{ paddingTop: "env(safe-area-inset-top)" }}
+        >
           <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-4 py-3 lg:max-w-5xl lg:px-8">
             <div>
               <p className="text-sm font-semibold">Eleições PA</p>

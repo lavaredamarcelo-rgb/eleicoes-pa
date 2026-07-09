@@ -1,10 +1,21 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { Copy, Check } from "lucide-react";
 import { criarUsuarioTemporario } from "@/app/actions/usuarios";
 
 export function CriarUsuarioForm() {
   const [state, action, pending] = useActionState(criarUsuarioTemporario, undefined);
+  const [copiado, setCopiado] = useState(false);
+
+  async function copiarCredenciais() {
+    if (!state?.senhaGerada || !state.email) return;
+    await navigator.clipboard.writeText(
+      `Acesso ao Eleições PA\nLink: ${window.location.origin}/login\nE-mail: ${state.email}\nSenha: ${state.senhaGerada}`
+    );
+    setCopiado(true);
+    setTimeout(() => setCopiado(false), 2500);
+  }
 
   return (
     <form action={action} className="flex flex-col gap-3 rounded-xl border border-neutral-800 bg-neutral-900 p-4">
@@ -45,10 +56,10 @@ export function CriarUsuarioForm() {
 
       <div>
         <label className="mb-1 block text-xs text-neutral-500">
-          Expira em (opcional — deixe em branco para acesso sem prazo)
+          Expira em — data e hora (opcional; em branco = acesso sem prazo)
         </label>
         <input
-          type="date"
+          type="datetime-local"
           name="expiraEm"
           className="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100"
         />
@@ -70,6 +81,14 @@ export function CriarUsuarioForm() {
           <p className="mt-1 text-emerald-400/80">
             Copie e envie agora — ela não será exibida novamente.
           </p>
+          <button
+            type="button"
+            onClick={copiarCredenciais}
+            className="mt-2 flex items-center gap-1.5 rounded-lg bg-emerald-900 px-3 py-1.5 text-xs font-medium text-emerald-100 transition-colors hover:bg-emerald-800"
+          >
+            {copiado ? <Check size={13} /> : <Copy size={13} />}
+            {copiado ? "Copiado!" : "Copiar link, e-mail e senha"}
+          </button>
         </div>
       )}
 

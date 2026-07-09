@@ -63,6 +63,25 @@ export async function criarUsuarioTemporario(
 
 export async function alternarStatusUsuario(userId: string, ativo: boolean) {
   await exigirAdmin();
-  await prisma.user.update({ where: { id: userId }, data: { ativo } });
+  // Reativar também limpa uma expiração já vencida — senão o acesso
+  // continua bloqueado mesmo com o usuário "ativo".
+  const usuario = await prisma.user.findUnique({ where: { id: userId } });
+  const expiracaoVencida = !!usuario?.expiresAt && usuario.expiresAt.getTime() < Date.now();
+  await prisma.user.update({
+    where: { id: userId },
+    data: { ativo, ...(ativo && expiracaoVencida ? { expiresAt: null } : {}) },
+  });
+  revalidatePath("/configuracoes/usuarios");
+}
+
+export async function excluirUsuario(userId: string) {
+  const admin = await exigirAdmin();
+  if (userId === admin.userId) {
+    throw new Error("Você não pode excluir o próprio usuário.");
+  }
+  // Usuários criados por este continuam existindo, apenas sem o vínculo.
+  await prisma.user.updateMany({ where: { criadoPorId: userId }, data: { criadoPorId: null } });
+  await prisma.apuracaoFavorito.deleteMany({ where: { userId } });
+  await prisma.user.delete({ where: { id: userId } });
   revalidatePath("/configuracoes/usuarios");
 }
