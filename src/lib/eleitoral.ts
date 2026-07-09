@@ -114,19 +114,44 @@ export async function calcularQuocienteEleitoral(cargoId: string) {
     else candidatosPorPartido.set(c.partido.id, [c]);
   }
 
+  // A situação eleito/suplente segue a FLAG OFICIAL do TSE quando ela
+  // existe (cassações e decisões judiciais fazem a distribuição real
+  // divergir da matemática pura — ex.: candidato inapto não assume mesmo
+  // com votos). O cálculo pelo quociente fica para os simuladores.
+  const temFlagOficial = candidatosComVotos.some((c) => c.eleito);
   const candidatosComSituacao = Array.from(candidatosPorPartido.entries()).flatMap(
     ([partidoId, lista]) => {
       const vagas = vagasPorPartido.get(partidoId) ?? 0;
-      return lista
-        .sort((a, b) => b.votos - a.votos)
-        .map((c, i) => ({
+      const ordenado = [...lista].sort((a, b) => b.votos - a.votos);
+      if (temFlagOficial) {
+        let suplente = 0;
+        return ordenado.map((c, i) => ({
           ...c,
-          situacao: i < vagas ? ("eleito" as const) : ("suplente" as const),
+          situacao: c.eleito ? ("eleito" as const) : ("suplente" as const),
           posicaoNoPartido: i + 1,
-          ordemSuplencia: i < vagas ? null : i + 1 - vagas,
+          ordemSuplencia: c.eleito ? null : ++suplente,
         }));
+      }
+      return ordenado.map((c, i) => ({
+        ...c,
+        situacao: i < vagas ? ("eleito" as const) : ("suplente" as const),
+        posicaoNoPartido: i + 1,
+        ordemSuplencia: i < vagas ? null : i + 1 - vagas,
+      }));
     }
   );
+
+  // Cadeiras reais por partido (contagem oficial), para a composição da
+  // casa; quocientePartidario permanece como o valor calculado (didático).
+  const cadeirasOficiaisPorPartido = new Map<string, number>();
+  for (const c of candidatosComVotos) {
+    if (c.eleito) {
+      cadeirasOficiaisPorPartido.set(
+        c.partido.id,
+        (cadeirasOficiaisPorPartido.get(c.partido.id) ?? 0) + 1
+      );
+    }
+  }
 
   const votosPorMunicipio = new Map<
     string,
@@ -159,15 +184,25 @@ export async function calcularQuocienteEleitoral(cargoId: string) {
     }))
     .sort((a, b) => b.total - a.total);
 
+  // Cadeiras "reais" por partido: contagem oficial quando disponível;
+  // senão, o valor calculado pelo quociente.
+  const partidosComCadeiras = partidos.map((p) => ({
+    ...p,
+    cadeirasOficiais: temFlagOficial
+      ? cadeirasOficiaisPorPartido.get(p.partidoId) ?? 0
+      : p.quocientePartidario,
+  }));
+
   return {
     cargo,
     votosValidos,
     votosNominais,
     votosLegendaTotal,
     quocienteEleitoral,
+    temFlagOficial,
     candidatos: candidatosComVotos.sort((a, b) => b.votos - a.votos),
     candidatosComSituacao: candidatosComSituacao.sort((a, b) => b.votos - a.votos),
-    partidos,
+    partidos: partidosComCadeiras,
     municipiosComVotos,
   };
 }

@@ -12,7 +12,7 @@ type MunicipioMapa = {
   regiaoNome: string;
   totalVotos: number;
   populacao: number | null;
-  lider: { nome: string; partido: string } | null;
+  prefeito: { nome: string; partido: string; ano: number } | null;
   eleitorado: { ultimoAno: number; ultimoTotal: number; anoProjecao: number; projecao: number } | null;
 };
 
@@ -50,10 +50,16 @@ const CAMADAS = [
 ] as const;
 type Camada = (typeof CAMADAS)[number]["chave"];
 
-export function MapaParaense({ municipios }: { municipios: MunicipioMapa[] }) {
+export function MapaParaense({
+  municipios,
+  rotuloVotos,
+}: {
+  municipios: MunicipioMapa[];
+  rotuloVotos?: string;
+}) {
   const router = useRouter();
   const [modo, setModo] = useState<"municipio" | "regiao">("municipio");
-  const [camada, setCamada] = useState<Camada>("eleitores");
+  const [camada, setCamada] = useState<Camada>(rotuloVotos ? "votos" : "eleitores");
 
   const valorDe = (m: MunicipioMapa) => {
     switch (camada) {
@@ -204,6 +210,11 @@ export function MapaParaense({ municipios }: { municipios: MunicipioMapa[] }) {
             ) : (
               <p className="mt-1 text-neutral-500">Sem dado de eleitorado</p>
             )}
+            {rotuloVotos && (
+              <p className="font-medium text-amber-300">
+                {hover.totalVotos.toLocaleString("pt-BR")} {rotuloVotos}
+              </p>
+            )}
             {hover.populacao != null && (
               <p className="text-neutral-500">
                 {hover.populacao.toLocaleString("pt-BR")} habitantes
@@ -212,9 +223,9 @@ export function MapaParaense({ municipios }: { municipios: MunicipioMapa[] }) {
                   : ""}
               </p>
             )}
-            {hover.lider && (
+            {hover.prefeito && (
               <p className="text-neutral-400">
-                Líder: {hover.lider.nome} ({hover.lider.partido})
+                Prefeito: {hover.prefeito.nome} ({hover.prefeito.partido} · {hover.prefeito.ano})
               </p>
             )}
           </div>

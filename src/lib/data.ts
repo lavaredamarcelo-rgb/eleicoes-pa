@@ -985,34 +985,41 @@ export async function getRegioes() {
   });
 }
 
-export async function getMapaDados(cargoId?: string) {
-  const [municipios, projecaoPorMunicipio, totais] = await Promise.all([
+export async function getMapaDados(opcoes: { cargoId?: string; candidatoId?: string } = {}) {
+  const { cargoId, candidatoId } = opcoes;
+  const filtroVotos = candidatoId
+    ? { candidatoId, turno: 1 }
+    : cargoId
+      ? { candidato: { cargoId }, turno: 1 }
+      : undefined;
+
+  const [municipios, projecaoPorMunicipio, totais, prefeitos] = await Promise.all([
     prisma.municipio.findMany({ include: { regiao: true } }),
     getEleitoradoProjecao(),
     prisma.resultado.groupBy({
       by: ["municipioId"],
-      where: cargoId ? { candidato: { cargoId } } : undefined,
+      where: filtroVotos,
       _sum: { votos: true },
+    }),
+    // Prefeito eleito mais recente de cada município — sempre visível no
+    // tooltip como referência local.
+    prisma.candidato.findMany({
+      where: { eleito: true, cargo: { nome: "Prefeito", eleicao: { tipo: "MUNICIPAL" } } },
+      include: { partido: true, cargo: { include: { eleicao: true } } },
     }),
   ]);
   const votosPorMunicipio = new Map(totais.map((t) => [t.municipioId, t._sum.votos ?? 0]));
 
-  // O líder só é relevante quando um cargo específico está selecionado —
-  // e aí o volume é pequeno o bastante para carregar.
-  const liderPorMunicipio = new Map<string, { nome: string; partido: string }>();
-  if (cargoId) {
-    const resultados = await prisma.resultado.findMany({
-      where: { candidato: { cargoId } },
-      include: { candidato: { include: { partido: true } } },
-      orderBy: { votos: "desc" },
-    });
-    for (const r of resultados) {
-      if (!liderPorMunicipio.has(r.municipioId)) {
-        liderPorMunicipio.set(r.municipioId, {
-          nome: r.candidato.nome,
-          partido: r.candidato.partido.sigla,
-        });
-      }
+  const prefeitoPorMunicipio = new Map<string, { nome: string; partido: string; ano: number }>();
+  for (const p of prefeitos) {
+    if (!p.cargo.municipioId) continue;
+    const atual = prefeitoPorMunicipio.get(p.cargo.municipioId);
+    if (!atual || p.cargo.eleicao.ano > atual.ano) {
+      prefeitoPorMunicipio.set(p.cargo.municipioId, {
+        nome: p.nome,
+        partido: p.partido.sigla,
+        ano: p.cargo.eleicao.ano,
+      });
     }
   }
 
@@ -1024,9 +1031,33 @@ export async function getMapaDados(cargoId?: string) {
     regiaoNome: m.regiao.nome,
     totalVotos: votosPorMunicipio.get(m.id) ?? 0,
     populacao: m.populacao,
-    lider: liderPorMunicipio.get(m.id) ?? null,
+    prefeito: prefeitoPorMunicipio.get(m.id) ?? null,
     eleitorado: projecaoPorMunicipio.get(m.id) ?? null,
   }));
+}
+
+// Cargos estaduais (um por eleição) para o seletor do mapa.
+export async function getCargosEstaduais() {
+  const cargos = await prisma.cargo.findMany({
+    where: { municipioId: null },
+    include: { eleicao: true },
+    orderBy: [{ eleicao: { ano: "desc" } }, { nome: "asc" }],
+  });
+  return cargos.map((c) => ({ id: c.id, nome: c.nome, ano: c.eleicao.ano }));
+}
+
+// Candidatos de um cargo estadual, por votação (para o seletor do mapa).
+export async function getCandidatosDoCargo(cargoId: string) {
+  const linhas = await prisma.$queryRaw<{ id: string; nome: string; sigla: string; votos: bigint }[]>`
+    SELECT c.id as id, c.nome as nome, p.sigla as sigla, COALESCE(SUM(r.votos), 0) as votos
+    FROM Candidato c
+    JOIN Partido p ON c.partidoId = p.id
+    LEFT JOIN Resultado r ON r.candidatoId = c.id AND r.turno = 1
+    WHERE c.cargoId = ${cargoId}
+    GROUP BY c.id
+    ORDER BY votos DESC
+  `;
+  return linhas.map((l) => ({ id: l.id, nome: l.nome, sigla: l.sigla, votos: Number(l.votos) }));
 }
 
 // Projeta o eleitorado de cada município para o próximo pleito (2028),

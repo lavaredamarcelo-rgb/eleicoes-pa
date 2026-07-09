@@ -59,7 +59,7 @@ export default async function CenarioDetailPage({
             partidos={resultado.partidos.map((p) => ({
               partidoId: p.partidoId,
               sigla: p.sigla,
-              cadeiras: p.quocientePartidario,
+              cadeiras: p.cadeirasOficiais,
             }))}
             candidatos={resultado.candidatosComSituacao.map((c) => ({
               id: c.id,
