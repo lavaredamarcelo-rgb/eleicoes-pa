@@ -9,6 +9,8 @@ import { prisma } from "@/lib/prisma";
 // As casas usam grafias próprias para algumas siglas.
 const ALIAS_SIGLA: Record<string, string> = {
   PODEMOS: "PODE",
+  UB: "UNIÃO",
+  REP: "REPUBLICANOS",
   PCDOB: "PC DO B",
   "PC-DO-B": "PC DO B",
   UNIAO: "UNIÃO",
@@ -134,12 +136,60 @@ async function parlamentaresPA(): Promise<
   return lista;
 }
 
+// Deputados estaduais em exercício, raspados da página institucional da
+// ALEPA (não há API): tokens "Deputado(a)" seguidos de nome e sigla.
+async function deputadosEstaduaisALEPA(): Promise<
+  { nome: string; sigla: string; cargoNome: string; fonte: string }[]
+> {
+  const resp = await fetch("https://www.alepa.pa.gov.br/Institucional/Deputados", {
+    headers: { "User-Agent": "eleicoes-pa/1.0" },
+    cache: "no-store",
+  });
+  if (!resp.ok) throw new Error(`ALEPA respondeu ${resp.status}`);
+  const html = await resp.text();
+  const tokens = html
+    .replace(/<[^>]+>/g, "\n")
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const lista: { nome: string; sigla: string; cargoNome: string; fonte: string }[] = [];
+  for (let i = 0; i + 2 < tokens.length; i++) {
+    if (tokens[i] !== "Deputado" && tokens[i] !== "Deputada") continue;
+    const nome = tokens[i + 1];
+    const sigla = tokens[i + 2];
+    if (nome.length < 2 || nome.length > 50) continue;
+    if (!/^[A-ZÀ-Ú][A-ZÀ-Ú ]{1,14}$/.test(sigla)) continue;
+    lista.push({
+      nome,
+      sigla: normalizarSigla(sigla),
+      cargoNome: "Deputado Estadual",
+      fonte: "Assembleia Legislativa do Pará",
+    });
+  }
+  // Sanidade: a ALEPA tem 41 cadeiras; menos de 35 indica mudança no site.
+  if (lista.length < 35) {
+    throw new Error(`ALEPA: só ${lista.length} deputados extraídos; layout deve ter mudado.`);
+  }
+  return lista;
+}
+
 export async function sincronizarFiliacoesPA() {
   const parlamentares = await parlamentaresPA();
 
+  // A raspagem da ALEPA não pode derrubar a sincronização federal.
+  try {
+    parlamentares.push(...(await deputadosEstaduaisALEPA()));
+  } catch (err) {
+    console.error("[filiações] ALEPA indisponível:", err);
+  }
+
   // Última candidatura ELEITA de cada pessoa no cargo correspondente.
   const eleitos = await prisma.candidato.findMany({
-    where: { eleito: true, cargo: { nome: { in: ["Deputado Federal", "Senador"] } } },
+    where: {
+      eleito: true,
+      cargo: { nome: { in: ["Deputado Federal", "Senador", "Deputado Estadual"] } },
+    },
     include: {
       partido: true,
       cargo: { include: { eleicao: true } },
