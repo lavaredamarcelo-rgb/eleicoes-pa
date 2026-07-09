@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { School } from "lucide-react";
 import { CardLink } from "@/components/CardLink";
 import { PdfDownloadLink } from "@/components/PdfDownloadLink";
-import { getMunicipio } from "@/lib/data";
+import { getMunicipio, getLocaisDoMunicipio } from "@/lib/data";
 
 export default async function MunicipioDetailPage({
   params,
@@ -12,6 +12,7 @@ export default async function MunicipioDetailPage({
   const { id } = await params;
   const municipio = await getMunicipio(id);
   if (!municipio) notFound();
+  const locais = await getLocaisDoMunicipio(id);
 
   const porCargo = new Map<string, { nome: string; ano: number; resultados: typeof municipio.resultados }>();
   for (const r of municipio.resultados) {
@@ -83,24 +84,33 @@ export default async function MunicipioDetailPage({
       ))}
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-medium text-neutral-400">Distribuição por colégio eleitoral</h2>
-        {municipio.colegiosEleitorais.length > 0 ? (
-          municipio.colegiosEleitorais.map((c) => (
-            <div
-              key={c.id}
-              className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3"
-            >
-              {c.nome}
+        <h2 className="text-sm font-medium text-neutral-400">
+          Locais de votação ({locais.length})
+        </h2>
+        {locais.length > 0 ? (
+          <details className="group">
+            <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 transition-colors duration-150 hover:border-neutral-700 hover:bg-neutral-800">
+              <span className="text-sm font-medium">Ver votação por local (escola/colégio)</span>
+              <span className="text-xs text-neutral-500">
+                {locais.reduce((s, l) => s + l.votos, 0).toLocaleString("pt-BR")} votos detalhados
+              </span>
+            </summary>
+            <div className="mt-2 flex max-h-96 flex-col gap-1.5 overflow-y-auto pr-1">
+              {locais.map((l) => (
+                <CardLink key={l.id} href={`/locais/${l.id}`}>
+                  <p className="min-w-0 flex-1 truncate text-sm">{l.nome}</p>
+                  <span className="ml-2 shrink-0 text-sm font-semibold text-amber-400">
+                    {l.votos.toLocaleString("pt-BR")}
+                  </span>
+                </CardLink>
+              ))}
             </div>
-          ))
+          </details>
         ) : (
           <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-neutral-700 bg-neutral-900/50 px-6 py-8 text-center">
             <School className="text-neutral-600" size={22} />
             <p className="text-sm text-neutral-400">
-              Ainda não há dados por colégio eleitoral neste município.
-            </p>
-            <p className="text-xs text-neutral-600">
-              Essa granularidade chega com a importação oficial do TSE.
+              Ainda não há votação por local importada para este município.
             </p>
           </div>
         )}

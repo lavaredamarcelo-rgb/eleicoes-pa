@@ -131,6 +131,7 @@ model Candidato {
   // recalcular o quociente a partir só dos votos nominais.
   eleito        Boolean        @default(false)
   resultados    Resultado[]
+  votosLocais   VotoLocal[]
   users         User[]
   trocasPartido TrocaPartido[]
 }
@@ -200,6 +201,22 @@ model ColegioEleitoral {
   municipioId String
   municipio   Municipio   @relation(fields: [municipioId], references: [id])
   resultados  Resultado[]
+  votosLocais VotoLocal[]
+}
+
+// Votação nominal por LOCAL DE VOTAÇÃO (escola/colégio), separada de
+// Resultado para não interferir nas agregações municipais existentes.
+model VotoLocal {
+  id                 String           @id @default(cuid())
+  candidatoId        String
+  candidato          Candidato        @relation(fields: [candidatoId], references: [id])
+  colegioEleitoralId String
+  colegioEleitoral   ColegioEleitoral @relation(fields: [colegioEleitoralId], references: [id])
+  turno              Int              @default(1)
+  votos              Int              @default(0)
+
+  @@unique([candidatoId, colegioEleitoralId, turno])
+  @@index([colegioEleitoralId])
 }
 
 model Resultado {

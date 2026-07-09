@@ -854,6 +854,80 @@ export async function getMunicipio(id: string) {
   return { ...municipio, eleitores, anoEleitorado: ano };
 }
 
+// Locais de votação de um município com o total de votos nominais do 1º
+// turno mais recente (agregado no banco).
+export async function getLocaisDoMunicipio(municipioId: string) {
+  const linhas = await prisma.$queryRaw<{ id: string; nome: string; votos: bigint }[]>`
+    SELECT ce.id as id, ce.nome as nome, COALESCE(SUM(v.votos), 0) as votos
+    FROM ColegioEleitoral ce
+    LEFT JOIN VotoLocal v ON v.colegioEleitoralId = ce.id AND v.turno = 1
+    WHERE ce.municipioId = ${municipioId}
+    GROUP BY ce.id
+    ORDER BY votos DESC
+  `;
+  return linhas.map((l) => ({ id: l.id, nome: l.nome, votos: Number(l.votos) }));
+}
+
+// Detalhe de um local de votação: votos por candidato, agrupados por
+// cargo/eleição, com turno.
+export async function getLocalVotacao(colegioId: string) {
+  const colegio = await prisma.colegioEleitoral.findUnique({
+    where: { id: colegioId },
+    include: { municipio: true },
+  });
+  if (!colegio) return null;
+
+  const votos = await prisma.votoLocal.findMany({
+    where: { colegioEleitoralId: colegioId },
+    include: {
+      candidato: {
+        include: { partido: true, cargo: { include: { eleicao: true } } },
+      },
+    },
+  });
+
+  const grupos = new Map<
+    string,
+    {
+      cargoNome: string;
+      ano: number;
+      turno: number;
+      candidatos: { id: string; nome: string; numero: number; partidoSigla: string; eleito: boolean; votos: number }[];
+    }
+  >();
+  for (const v of votos) {
+    const chave = `${v.candidato.cargo.eleicao.ano}::${v.candidato.cargo.nome}::${v.turno}`;
+    let g = grupos.get(chave);
+    if (!g) {
+      g = {
+        cargoNome: v.candidato.cargo.nome,
+        ano: v.candidato.cargo.eleicao.ano,
+        turno: v.turno,
+        candidatos: [],
+      };
+      grupos.set(chave, g);
+    }
+    g.candidatos.push({
+      id: v.candidato.id,
+      nome: v.candidato.nome,
+      numero: v.candidato.numero,
+      partidoSigla: v.candidato.partido.sigla,
+      eleito: v.candidato.eleito,
+      votos: v.votos,
+    });
+  }
+
+  return {
+    id: colegio.id,
+    nome: colegio.nome,
+    municipioId: colegio.municipioId,
+    municipioNome: colegio.municipio.nome,
+    grupos: Array.from(grupos.values())
+      .map((g) => ({ ...g, candidatos: g.candidatos.sort((a, b) => b.votos - a.votos) }))
+      .sort((a, b) => b.ano - a.ano || a.cargoNome.localeCompare(b.cargoNome, "pt-BR") || a.turno - b.turno),
+  };
+}
+
 export async function getRegioes() {
   const regioes = await prisma.regiao.findMany({
     include: {
