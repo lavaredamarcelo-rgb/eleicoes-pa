@@ -628,6 +628,18 @@ export async function getCandidato(id: string) {
   });
 }
 
+// Filiação atual da pessoa: a troca de partido mais recente registrada em
+// QUALQUER das candidaturas dela (as trocas não alteram o partido da urna).
+export async function getFiliacaoAtual(candidatoIds: string[]) {
+  const troca = await prisma.trocaPartido.findFirst({
+    where: { candidatoId: { in: candidatoIds } },
+    include: { partidoDestino: true },
+    orderBy: { data: "desc" },
+  });
+  if (!troca) return null;
+  return { sigla: troca.partidoDestino.sigla, data: troca.data, motivo: troca.motivo };
+}
+
 // Outras candidaturas da MESMA PESSOA em anos diferentes. O nome de urna se
 // repete entre pessoas distintas (ex.: vários "HELDER"), então o vínculo é
 // pelo CPF do TSE — com fallback para o nome civil completo. Sem nenhum dos
@@ -1129,22 +1141,20 @@ export async function getMapaDados(opcoes: {
     for (const t of totais) votosPorMunicipio.set(t.municipioId, t._sum.votos ?? 0);
     for (const m of municipios) linkPorMunicipio.set(m.id, cargoId);
 
-    const top = await prisma.$queryRaw<{ id: string; nome: string }[]>`
-      SELECT c.id as id, c.nome as nome
-      FROM Candidato c
-      JOIN Resultado r ON r.candidatoId = c.id AND r.turno = 1
-      WHERE c.cargoId = ${cargoId}
-      GROUP BY c.id ORDER BY SUM(r.votos) DESC LIMIT 1
+    // Mais votado do cargo EM CADA município (não o líder estadual): em
+    // Jacareacanga o mais votado local pode não ser o mais votado do Pará.
+    const tops = await prisma.$queryRaw<{ municipioId: string; nome: string; votos: bigint }[]>`
+      SELECT municipioId, nome, votos FROM (
+        SELECT r.municipioId as municipioId, c.nome as nome, SUM(r.votos) as votos,
+               ROW_NUMBER() OVER (PARTITION BY r.municipioId ORDER BY SUM(r.votos) DESC) as rn
+        FROM Resultado r
+        JOIN Candidato c ON r.candidatoId = c.id
+        WHERE c.cargoId = ${cargoId} AND r.turno = 1
+        GROUP BY r.municipioId, c.id
+      ) WHERE rn = 1
     `;
-    if (top[0]) {
-      const votosTop = await prisma.resultado.groupBy({
-        by: ["municipioId"],
-        where: { candidatoId: top[0].id, turno: 1 },
-        _sum: { votos: true },
-      });
-      for (const v of votosTop) {
-        topPorMunicipio.set(v.municipioId, { nome: top[0].nome, votos: v._sum.votos ?? 0 });
-      }
+    for (const l of tops) {
+      topPorMunicipio.set(l.municipioId, { nome: l.nome, votos: Number(l.votos) });
     }
   }
 

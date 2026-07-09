@@ -24,29 +24,32 @@ export async function registrarTrocaPartido(
     return { error: "Preencha todos os campos obrigatórios." };
   }
 
-  const candidato = await prisma.candidato.findUnique({ where: { id: candidatoId } });
+  const candidato = await prisma.candidato.findUnique({
+    where: { id: candidatoId },
+    include: {
+      trocasPartido: { orderBy: { data: "desc" }, take: 1 },
+    },
+  });
   if (!candidato) {
     return { error: "Candidato não encontrado." };
   }
-  if (candidato.partidoId === novoPartidoId) {
+  // A filiação atual é a última troca registrada (ou o partido da urna). O
+  // partido da candidatura NÃO é alterado: ele preserva os votos por partido
+  // e o quociente do ano da eleição.
+  const filiacaoAtualId = candidato.trocasPartido[0]?.partidoDestinoId ?? candidato.partidoId;
+  if (filiacaoAtualId === novoPartidoId) {
     return { error: "O candidato já está filiado a esse partido." };
   }
 
-  await prisma.$transaction([
-    prisma.trocaPartido.create({
-      data: {
-        candidatoId,
-        partidoOrigemId: candidato.partidoId,
-        partidoDestinoId: novoPartidoId,
-        data: new Date(dataStr),
-        motivo,
-      },
-    }),
-    prisma.candidato.update({
-      where: { id: candidatoId },
-      data: { partidoId: novoPartidoId },
-    }),
-  ]);
+  await prisma.trocaPartido.create({
+    data: {
+      candidatoId,
+      partidoOrigemId: filiacaoAtualId,
+      partidoDestinoId: novoPartidoId,
+      data: new Date(dataStr),
+      motivo,
+    },
+  });
 
   revalidatePath(`/candidatos/${candidatoId}`);
   return { success: true };

@@ -3,7 +3,7 @@ import { CardLink } from "@/components/CardLink";
 import { GraficoBarras } from "@/components/GraficoBarras";
 import { TrocaPartidoForm } from "@/components/TrocaPartidoForm";
 import { PdfDownloadLink } from "@/components/PdfDownloadLink";
-import { getCandidato, getCandidaturasAnteriores, getPartidos } from "@/lib/data";
+import { getCandidato, getCandidaturasAnteriores, getFiliacaoAtual, getPartidos } from "@/lib/data";
 import { turnoDecisivo, votosTurno } from "@/lib/turnos";
 import { verifySession } from "@/lib/dal";
 
@@ -17,6 +17,10 @@ export default async function CandidatoDetailPage({
   if (!candidato) notFound();
 
   const candidaturasAnteriores = await getCandidaturasAnteriores(candidato);
+  const filiacaoAtual = await getFiliacaoAtual([
+    candidato.id,
+    ...candidaturasAnteriores.map((c) => c.id),
+  ]);
 
   // Exibimos a votação do turno que decidiu a eleição; quando houve 2º
   // turno, o 1º aparece como informação complementar.
@@ -87,6 +91,16 @@ export default async function CandidatoDetailPage({
               {candidato.cargo.municipio ? ` (${candidato.cargo.municipio.nome})` : " (PA)"} ·
               eleição de {candidato.cargo.eleicao.ano}
             </p>
+            {filiacaoAtual && filiacaoAtual.sigla !== candidato.partido.sigla && (
+              <p className="mt-1 text-sm">
+                <span className="rounded-full border border-amber-700 bg-amber-950/40 px-2.5 py-0.5 text-xs font-medium text-amber-300">
+                  Filiação atual: {filiacaoAtual.sigla}
+                </span>
+                <span className="ml-2 text-xs text-neutral-500">
+                  desde {new Date(filiacaoAtual.data).toLocaleDateString("pt-BR")}
+                </span>
+              </p>
+            )}
           </div>
           <PdfDownloadLink href={`/api/pdf/candidato/${candidato.id}`} />
         </div>
@@ -241,7 +255,9 @@ export default async function CandidatoDetailPage({
       )}
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-medium text-neutral-400">Trocas registradas manualmente</h2>
+        <h2 className="text-sm font-medium text-neutral-400">
+          Trocas de partido registradas (após as urnas)
+        </h2>
         {candidato.trocasPartido.length > 0 ? (
           candidato.trocasPartido.map((t) => (
             <div

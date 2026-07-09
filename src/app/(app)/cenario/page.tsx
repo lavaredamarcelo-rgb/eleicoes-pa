@@ -7,7 +7,7 @@ export default async function CenarioPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-lg font-semibold">Cenário Eleitoral</h1>
+        <h1 className="text-lg font-semibold">Cenários Eleitorais</h1>
         <p className="text-sm text-neutral-500">
           Escolha um ano, depois o cargo e o município para ver a composição da casa (federal,
           estadual ou municipal) e simular cenários de troca de partido.

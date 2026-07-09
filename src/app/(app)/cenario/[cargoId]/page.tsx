@@ -206,7 +206,7 @@ function Header({
   return (
     <div>
       <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-        Cenário Eleitoral
+        Cenários Eleitorais
       </p>
       <h1 className="text-lg font-semibold">
         {cargoNome} <span className="text-neutral-500">· {ano}</span>
