@@ -109,8 +109,9 @@ export default async function RelatorioPage({ params }: { params: Promise<{ id: 
       )}
 
       <p className="text-center text-[11px] text-neutral-600">
-        Relatório gerado por inteligência artificial (Claude) a partir dos dados do sistema —
-        confira números críticos antes de decisões importantes.
+        {relatorio.modelo === "padrao"
+          ? "Relatório padrão gerado automaticamente a partir dos dados oficiais do sistema (TSE/IBGE)."
+          : "Relatório gerado por inteligência artificial (Claude) a partir dos dados do sistema — confira números críticos antes de decisões importantes."}
       </p>
     </div>
   );

@@ -8,9 +8,11 @@ import type { ConteudoRelatorio } from "@/lib/relatorios";
 export function RelatorioIA({
   conteudo,
   tipoRotulo,
+  modoPadrao,
 }: {
   conteudo: ConteudoRelatorio;
   tipoRotulo: string;
+  modoPadrao?: boolean;
 }) {
   return (
     <ReportShell title={conteudo.titulo} subtitle={tipoRotulo}>
@@ -54,8 +56,9 @@ export function RelatorioIA({
       ) : null}
 
       <Text style={[styles.paragraph, { marginTop: 12, fontSize: 8, color: "#777777" }]}>
-        Relatório gerado por inteligência artificial (Claude) a partir dos dados do sistema —
-        confira números críticos antes de decisões importantes.
+        {modoPadrao
+          ? "Relatório padrão gerado automaticamente a partir dos dados oficiais do sistema (TSE/IBGE)."
+          : "Relatório gerado por inteligência artificial (Claude) a partir dos dados do sistema — confira números críticos antes de decisões importantes."}
       </Text>
     </ReportShell>
   );

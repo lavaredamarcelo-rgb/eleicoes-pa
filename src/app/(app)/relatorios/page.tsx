@@ -34,8 +34,8 @@ export default async function RelatoriosPage() {
       <div>
         <h1 className="text-lg font-semibold">Relatórios</h1>
         <p className="text-sm text-neutral-500">
-          Análises geradas por inteligência artificial a partir dos dados oficiais do sistema
-          (TSE, IBGE, Câmara e Senado). Escolha um modelo guiado ou faça um pedido livre.
+          Relatórios prontos a partir dos dados oficiais do sistema (TSE, IBGE, Câmara e
+          Senado): números, tabelas e destaques — com análise escrita por IA quando ativada.
         </p>
       </div>
 
@@ -43,27 +43,27 @@ export default async function RelatoriosPage() {
         <p className="rounded-2xl border border-neutral-800 bg-neutral-900 px-4 py-4 text-sm text-neutral-400">
           A geração de relatórios está restrita ao administrador.
         </p>
-      ) : disponivel ? (
-        <NovoRelatorio partidos={partidos} municipios={municipios} anos={eleicoes} />
       ) : (
-        <div className="flex flex-col gap-2 rounded-2xl border border-amber-900/60 bg-amber-950/20 p-4">
-          <p className="flex items-center gap-2 text-sm font-medium text-amber-300">
-            <KeyRound size={16} /> Falta configurar a chave da API
-          </p>
-          <p className="text-sm text-neutral-400">
-            Para ativar os relatórios, crie uma chave em{" "}
-            <span className="text-neutral-200">console.anthropic.com</span> (Settings → API keys)
-            e adicione na Railway: projeto <span className="text-neutral-200">eleicoes-pa</span> →
-            serviço → aba <span className="text-neutral-200">Variables</span> → nova variável{" "}
-            <span className="rounded bg-neutral-900 px-1.5 py-0.5 font-mono text-xs text-amber-300">
-              ANTHROPIC_API_KEY
-            </span>{" "}
-            com o valor da chave. O serviço reinicia sozinho e esta página passa a funcionar.
-          </p>
-          <p className="text-xs text-neutral-600">
-            Custo estimado: centavos de dólar por relatório, sem mensalidade.
-          </p>
-        </div>
+        <>
+          {!disponivel && (
+            <p className="flex items-start gap-2 rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-xs text-neutral-400">
+              <KeyRound size={14} className="mt-0.5 shrink-0 text-neutral-500" />
+              <span>
+                <span className="font-medium text-neutral-300">Modo padrão ativo:</span> os
+                relatórios saem com números, tabelas e destaques calculados pelo sistema. Para
+                adicionar análise escrita por IA e liberar o pedido livre, configure a variável{" "}
+                <span className="font-mono text-amber-300">ANTHROPIC_API_KEY</span> na Railway
+                (chave criada em console.anthropic.com).
+              </span>
+            </p>
+          )}
+          <NovoRelatorio
+            partidos={partidos}
+            municipios={municipios}
+            anos={eleicoes}
+            temIA={disponivel}
+          />
+        </>
       )}
 
       <section className="flex flex-col gap-2">

@@ -25,7 +25,11 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   const conteudo = JSON.parse(relatorio.conteudo) as ConteudoRelatorio;
 
   return pdfResponse(
-    <RelatorioIA conteudo={conteudo} tipoRotulo={TIPO_ROTULO[relatorio.tipo] ?? relatorio.tipo} />,
+    <RelatorioIA
+      conteudo={conteudo}
+      tipoRotulo={TIPO_ROTULO[relatorio.tipo] ?? relatorio.tipo}
+      modoPadrao={relatorio.modelo === "padrao"}
+    />,
     nomeArquivo("relatorio", conteudo.titulo.slice(0, 60))
   );
 }

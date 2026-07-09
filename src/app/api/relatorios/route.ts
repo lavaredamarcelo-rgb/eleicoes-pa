@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession } from "@/lib/dal";
-import { gerarRelatorio, relatoriosDisponiveis, type TipoRelatorio } from "@/lib/relatorios";
+import { gerarRelatorio, type TipoRelatorio } from "@/lib/relatorios";
 
 const TIPOS: TipoRelatorio[] = ["candidato", "partido", "municipio", "comparativo", "livre"];
 
@@ -16,13 +16,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: "Apenas o administrador pode gerar relatórios." },
       { status: 403 }
-    );
-  }
-
-  if (!relatoriosDisponiveis()) {
-    return NextResponse.json(
-      { error: "A chave da API (ANTHROPIC_API_KEY) ainda não foi configurada no servidor." },
-      { status: 503 }
     );
   }
 

@@ -52,11 +52,14 @@ export function NovoRelatorio({
   partidos,
   municipios,
   anos,
+  temIA,
 }: {
   partidos: PartidoOpcao[];
   municipios: MunicipioOpcao[];
   anos: AnoOpcao[];
+  temIA: boolean;
 }) {
+  const tipos = temIA ? TIPOS : TIPOS.filter((t) => t.chave !== "livre");
   const router = useRouter();
   const [tipo, setTipo] = useState<Tipo>("candidato");
   const [gerando, setGerando] = useState(false);
@@ -122,7 +125,7 @@ export function NovoRelatorio({
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-neutral-800 bg-neutral-900 p-4">
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {TIPOS.map((t) => (
+        {tipos.map((t) => (
           <button
             key={t.chave}
             onClick={() => {
@@ -297,7 +300,11 @@ export function NovoRelatorio({
         className="flex items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-semibold text-neutral-950 transition-opacity disabled:opacity-40"
       >
         <Sparkles size={16} />
-        {gerando ? "Gerando relatório… (pode levar até 1 minuto)" : "Gerar relatório"}
+        {gerando
+          ? temIA
+            ? "Gerando relatório… (pode levar até 1 minuto)"
+            : "Gerando relatório…"
+          : "Gerar relatório"}
       </button>
     </div>
   );
