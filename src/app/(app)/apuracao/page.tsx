@@ -8,28 +8,18 @@ export default async function ApuracaoPage() {
     where: { userId: session.userId },
     orderBy: { ordem: "asc" },
   });
-  const municipios = await prisma.municipio.findMany({
-    where: { codigoTse: { not: null } },
-    orderBy: { nome: "asc" },
-    select: { codigoTse: true, nome: true },
-  });
 
   return (
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-lg font-semibold">Apuração ao vivo</h1>
         <p className="text-sm text-neutral-500">
-          Resultados oficiais direto do TSE, atualizados automaticamente a cada minuto. No dia da
-          eleição, acompanhe a contagem em tempo real; fora dele, veja a totalização final de
-          qualquer pleito do índice — as eleições de 2026 aparecem aqui assim que o TSE as
-          publicar.
+          Eleições Gerais de 2026 — resultados oficiais direto do TSE, atualizados a cada minuto
+          no dia da votação. O painel liga automaticamente quando o TSE publicar o pleito.
         </p>
       </div>
 
-      <ApuracaoAoVivo
-        municipios={municipios.map((m) => ({ codigoTse: m.codigoTse!, nome: m.nome }))}
-        favoritos={favoritos}
-      />
+      <ApuracaoAoVivo favoritos={favoritos} />
     </div>
   );
 }

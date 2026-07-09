@@ -30,12 +30,10 @@ const INTERVALO_MS = 60_000;
 export function ApuracaoCardFavorito({
   favorito,
   indice,
-  aoAbrir,
   registrarAtualizador,
 }: {
   favorito: Favorito;
   indice: number;
-  aoAbrir: (f: Favorito) => void;
   registrarAtualizador?: (id: string, fn: () => void) => void;
 }) {
   const [dados, setDados] = useState<{ candidatos: Candidato[]; meta: Record<string, unknown> } | null>(null);
@@ -78,12 +76,7 @@ export function ApuracaoCardFavorito({
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-neutral-800 bg-neutral-900 p-3">
       <div className="flex items-start justify-between gap-2">
-        <button
-          onClick={() => aoAbrir(favorito)}
-          className="text-left text-sm font-medium text-amber-400 hover:underline"
-        >
-          {favorito.rotulo}
-        </button>
+        <span className="text-left text-sm font-medium text-amber-400">{favorito.rotulo}</span>
         <button
           onClick={() => removerFavoritoApuracao(favorito.id)}
           title="Remover dos favoritos"
