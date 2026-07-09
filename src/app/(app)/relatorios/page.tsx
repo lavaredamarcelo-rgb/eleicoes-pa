@@ -39,7 +39,11 @@ export default async function RelatoriosPage() {
         </p>
       </div>
 
-      {disponivel ? (
+      {session.role !== "ADMIN" ? (
+        <p className="rounded-2xl border border-neutral-800 bg-neutral-900 px-4 py-4 text-sm text-neutral-400">
+          A geração de relatórios está restrita ao administrador.
+        </p>
+      ) : disponivel ? (
         <NovoRelatorio partidos={partidos} municipios={municipios} anos={eleicoes} />
       ) : (
         <div className="flex flex-col gap-2 rounded-2xl border border-amber-900/60 bg-amber-950/20 p-4">

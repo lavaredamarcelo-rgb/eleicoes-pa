@@ -10,6 +10,15 @@ export const maxDuration = 120;
 export async function POST(req: NextRequest) {
   const session = await verifySession();
 
+  // Geração restrita ao administrador — cada relatório consome créditos da
+  // API paga.
+  if (session.role !== "ADMIN") {
+    return NextResponse.json(
+      { error: "Apenas o administrador pode gerar relatórios." },
+      { status: 403 }
+    );
+  }
+
   if (!relatoriosDisponiveis()) {
     return NextResponse.json(
       { error: "A chave da API (ANTHROPIC_API_KEY) ainda não foi configurada no servidor." },
