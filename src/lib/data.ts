@@ -639,11 +639,13 @@ export async function getCandidaturasAnteriores(candidato: {
 }) {
   const filtros = [];
   const cpfValido = candidato.cpf && /^\d{11}$/.test(candidato.cpf);
+  // CPF e nome civil juntos: anos em que o TSE mascarou o CPF ("-4")
+  // continuam ligados pelo nome completo.
   if (cpfValido) filtros.push({ cpf: candidato.cpf! });
-  else if (candidato.nomeCompleto) filtros.push({ nomeCompleto: candidato.nomeCompleto });
+  if (candidato.nomeCompleto) filtros.push({ nomeCompleto: candidato.nomeCompleto });
   if (filtros.length === 0) return [];
 
-  const candidatos = await prisma.candidato.findMany({
+  const brutos = await prisma.candidato.findMany({
     where: { OR: filtros, id: { not: candidato.id } },
     include: {
       partido: true,
@@ -652,9 +654,45 @@ export async function getCandidaturasAnteriores(candidato: {
     },
   });
 
-  return candidatos
-    .map((c) => ({ ...c, totalVotos: votosDecisivos(c.resultados) }))
-    .sort((a, b) => b.cargo.eleicao.ano - a.cargo.eleicao.ano);
+  // Salvaguardas contra homônimos de nome completo:
+  // 1) CPF válido divergente = outra pessoa.
+  // 2) Duas candidaturas no MESMO ano são impossíveis para a mesma pessoa;
+  //    quando isso acontece no conjunto (ou colide com o ano da candidatura
+  //    aberta), descartamos as ambíguas em vez de escolher errado.
+  const candidatos = brutos.filter(
+    (c) => !(cpfValido && c.cpf && /^\d{11}$/.test(c.cpf) && c.cpf !== candidato.cpf)
+  );
+  const anoAtual = await prisma.candidato
+    .findUnique({ where: { id: candidato.id }, include: { cargo: { include: { eleicao: true } } } })
+    .then((c) => c?.cargo.eleicao.ano);
+  const comVotos = candidatos.map((c) => ({ ...c, totalVotos: votosDecisivos(c.resultados) }));
+  const porAno = new Map<number, typeof comVotos>();
+  for (const c of comVotos) {
+    const ano = c.cargo.eleicao.ano;
+    const lista = porAno.get(ano);
+    if (lista) lista.push(c);
+    else porAno.set(ano, [c]);
+  }
+
+  const resultado: typeof comVotos = [];
+  for (const [ano, lista] of porAno) {
+    if (ano === anoAtual) continue;
+    if (lista.length === 1) {
+      resultado.push(lista[0]);
+      continue;
+    }
+    // Duplicata no mesmo ano: se todos são a MESMA pessoa (mesmo CPF, caso
+    // de registro substituído — trocou de cargo/número antes do pleito),
+    // fica a candidatura efetiva (a que recebeu votos); homônimos de nome
+    // sem CPF são ambíguos e ficam de fora.
+    const cpfs = new Set(lista.map((c) => c.cpf).filter(Boolean));
+    const mesmaPessoa = cpfs.size <= 1 && (!cpfValido || cpfs.size === 0 || cpfs.has(candidato.cpf!));
+    if (mesmaPessoa && cpfs.size === 1) {
+      resultado.push(lista.sort((a, b) => b.totalVotos - a.totalVotos)[0]);
+    }
+  }
+
+  return resultado.sort((a, b) => b.cargo.eleicao.ano - a.cargo.eleicao.ano);
 }
 
 export async function getPartidos() {
