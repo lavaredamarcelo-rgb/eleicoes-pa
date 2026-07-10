@@ -61,6 +61,74 @@ export function SimuladorPartido({
 
   const simulacaoAtiva = overrides.size > 0;
 
+  // Quadro da casa: cadeiras oficiais de hoje (por partido da urna) versus
+  // as cadeiras do cenário simulado, com o saldo destacado.
+  const quadroCasa = useMemo(() => {
+    const antes = new Map<string, number>();
+    for (const c of candidatos) {
+      if (c.situacaoOriginal === "eleito") {
+        antes.set(c.partidoId, (antes.get(c.partidoId) ?? 0) + 1);
+      }
+    }
+    const depois = new Map(resultado.partidos.map((p) => [p.partidoId, p.quocientePartidario]));
+    const ids = new Set([...antes.keys(), ...depois.keys()]);
+    return Array.from(ids)
+      .map((partidoId) => {
+        const a = antes.get(partidoId) ?? 0;
+        const d = depois.get(partidoId) ?? 0;
+        return {
+          partidoId,
+          sigla: partidoById.get(partidoId)?.sigla ?? "?",
+          antes: a,
+          depois: d,
+          delta: d - a,
+        };
+      })
+      .filter((q) => q.antes > 0 || q.depois > 0)
+      .sort((a, b) => b.depois - a.depois || b.antes - a.antes);
+  }, [candidatos, resultado.partidos, partidoById]);
+
+  // Eleitos do cenário, agrupados pelo partido efetivo, na ordem de votos
+  // projetados; marca quem entra na casa e quem chegou por troca.
+  const eleitosSimulados = useMemo(
+    () =>
+      resultado.partidos
+        .filter((p) => p.quocientePartidario > 0)
+        .map((p) => ({
+          partidoId: p.partidoId,
+          sigla: p.sigla,
+          eleitos: [...p.candidatos]
+            .sort((a, b) => b.votosEfetivos - a.votosEfetivos)
+            .slice(0, p.quocientePartidario)
+            .map((c) => ({
+              id: c.id,
+              nome: c.nome,
+              votos: c.votosEfetivos,
+              trocou: c.partidoIdEfetivo !== c.partidoId,
+              partidoOrigem: c.partidoSigla,
+              entra: candidatoById.get(c.id)?.situacaoOriginal !== "eleito",
+            })),
+        }))
+        .sort((a, b) => b.eleitos.length - a.eleitos.length),
+    [resultado.partidos, candidatoById]
+  );
+
+  const quemSai = useMemo(
+    () =>
+      candidatos
+        .filter(
+          (c) =>
+            c.situacaoOriginal === "eleito" && resultado.situacao.get(c.id)?.situacao === "suplente"
+        )
+        .map((c) => ({
+          id: c.id,
+          nome: c.nome,
+          sigla: partidoById.get(overrides.get(c.id)?.partidoId ?? c.partidoId)?.sigla ?? c.partidoSigla,
+          ordemSuplencia: resultado.situacao.get(c.id)?.ordemSuplencia ?? 0,
+        })),
+    [candidatos, resultado.situacao, partidoById, overrides]
+  );
+
   const candidatoAtual = candidatoById.get(candidatoSelecionado);
   const previaVotos = candidatoAtual ? votosProjetados(candidatoAtual.votos, percentual) : 0;
 
@@ -101,7 +169,9 @@ export function SimuladorPartido({
         <h2 className="text-sm font-medium text-orange-300">Simulador de cenários</h2>
         <p className="text-xs text-neutral-500">
           Teste hipóteses sem alterar os dados reais — troca de partido, crescimento de votos ou
-          os dois combinados, para avaliar se um candidato se elegeria em um cenário futuro.
+          os dois combinados. Você pode <span className="text-neutral-300">adicionar vários
+          candidatos ao mesmo cenário</span> (ex.: dois vereadores trocando de partido): o
+          resultado considera todas as mudanças juntas.
         </p>
       </div>
 
@@ -130,7 +200,7 @@ export function SimuladorPartido({
             disabled={!candidatoSelecionado || (!novoPartido && percentual === 0)}
             className="rounded-lg bg-orange-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600 disabled:opacity-40"
           >
-            Simular
+            {overrides.size > 0 ? "Adicionar ao cenário" : "Simular"}
           </button>
         </div>
 
@@ -221,19 +291,95 @@ export function SimuladorPartido({
 
           <div className="flex flex-col gap-2">
             <p className="text-xs font-medium text-neutral-500">
-              Vagas por partido (simulado)
+              Como ficaria a casa (cadeiras por partido: hoje → simulado)
             </p>
-            {resultado.partidos.map((p) => (
+            {quadroCasa.map((q) => (
               <div
-                key={p.partidoId}
-                className="flex items-center justify-between rounded-lg bg-neutral-900 px-3 py-2 text-sm"
+                key={q.partidoId}
+                className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${
+                  q.delta !== 0 ? "border border-amber-900/60 bg-amber-950/20" : "bg-neutral-900"
+                }`}
               >
-                <span>{p.sigla}</span>
-                <span className="rounded-full bg-neutral-800 px-2 py-0.5 text-xs">
-                  {p.quocientePartidario} {p.quocientePartidario === 1 ? "vaga" : "vagas"}
+                <span className="font-medium">{q.sigla}</span>
+                <span className="flex items-center gap-2">
+                  <span className="text-neutral-500">{q.antes}</span>
+                  <span className="text-neutral-600">→</span>
+                  <span className={q.delta !== 0 ? "font-semibold text-amber-300" : ""}>
+                    {q.depois}
+                  </span>
+                  {q.delta !== 0 && (
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                        q.delta > 0
+                          ? "bg-emerald-950 text-emerald-300"
+                          : "bg-red-950 text-red-300"
+                      }`}
+                    >
+                      {q.delta > 0 ? `▲ +${q.delta}` : `▼ ${q.delta}`}
+                    </span>
+                  )}
                 </span>
               </div>
             ))}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-medium text-neutral-500">
+              Eleitos no cenário simulado ({eleitosSimulados.reduce((s, g) => s + g.eleitos.length, 0)}
+              {" "}de {vagas} vagas)
+            </p>
+            {eleitosSimulados.map((g) => (
+              <div key={g.partidoId} className="rounded-lg bg-neutral-900 px-3 py-2">
+                <p className="mb-1.5 text-xs font-semibold text-neutral-300">
+                  {g.sigla} · {g.eleitos.length} {g.eleitos.length === 1 ? "cadeira" : "cadeiras"}
+                </p>
+                <div className="flex flex-col gap-1">
+                  {g.eleitos.map((c, i) => (
+                    <div
+                      key={c.id}
+                      className={`flex items-center justify-between rounded px-2 py-1 text-xs ${
+                        c.entra ? "bg-emerald-950/50" : ""
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-5 text-right text-neutral-600">{i + 1}º</span>
+                        <span className={c.entra ? "font-medium text-emerald-200" : ""}>{c.nome}</span>
+                        {c.trocou && (
+                          <span className="rounded-full bg-amber-950 px-1.5 py-0.5 text-[10px] text-amber-300">
+                            veio do {c.partidoOrigem}
+                          </span>
+                        )}
+                        {c.entra && (
+                          <span className="rounded-full bg-emerald-900 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-200">
+                            ENTRA
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-neutral-400">{c.votos.toLocaleString("pt-BR")}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+            {quemSai.length > 0 && (
+              <div className="rounded-lg border border-red-900/50 bg-red-950/20 px-3 py-2">
+                <p className="mb-1.5 text-xs font-semibold text-red-300">
+                  Quem sai da casa ({quemSai.length})
+                </p>
+                <div className="flex flex-col gap-1">
+                  {quemSai.map((c) => (
+                    <div key={c.id} className="flex items-center justify-between text-xs">
+                      <span className="text-red-200 line-through decoration-red-500/60">
+                        {c.nome} ({c.sigla})
+                      </span>
+                      <span className="text-neutral-500">
+                        vira {c.ordemSuplencia}º suplente
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">
