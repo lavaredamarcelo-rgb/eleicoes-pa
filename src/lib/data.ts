@@ -281,7 +281,7 @@ export async function getTotalEleitosComMandato() {
 }
 
 // Total de eleitorado do estado por ano (soma de todos os municípios),
-// incluindo a projeção para a próxima eleição municipal (2028).
+// incluindo a projeção para a próxima eleição.
 export async function getEleitoradoEstadoPorAno() {
   const registros = await prisma.eleitorado.findMany({ orderBy: { ano: "asc" } });
 
@@ -298,7 +298,7 @@ export async function getEleitoradoEstadoPorAno() {
     const [ultimoAno, ultimoTotal] = anos[anos.length - 1];
     const anosSpan = ultimoAno - primeiroAno;
     const taxaAnual = anosSpan > 0 && primeiroTotal > 0 ? Math.pow(ultimoTotal / primeiroTotal, 1 / anosSpan) - 1 : 0;
-    const anoProjecao = ANO_PROJECAO_ELEITORADO;
+    const anoProjecao = proximaEleicao(ultimoAno);
     if (anoProjecao > ultimoAno) {
       const projecao = Math.round(ultimoTotal * Math.pow(1 + taxaAnual, anoProjecao - ultimoAno));
       pontos.push({ ano: anoProjecao, total: projecao, projetado: true });
@@ -308,7 +308,13 @@ export async function getEleitoradoEstadoPorAno() {
   return pontos;
 }
 
-const ANO_PROJECAO_ELEITORADO = 2028;
+// Próxima eleição após o último ano com dados reais de eleitorado: as
+// eleições acontecem a cada 2 anos (2026 estadual, 2028 municipal...), então
+// a projeção mira sempre o pleito seguinte e avança sozinha quando o TSE
+// publicar o eleitorado do ano corrente.
+function proximaEleicao(ultimoAnoComDados: number) {
+  return ultimoAnoComDados % 2 === 0 ? ultimoAnoComDados + 2 : ultimoAnoComDados + 1;
+}
 
 export async function getCargos() {
   return prisma.cargo.findMany({
@@ -1211,12 +1217,12 @@ export async function getCandidatosDoCargo(cargoId: string) {
   return linhas.map((l) => ({ id: l.id, nome: l.nome, sigla: l.sigla, votos: Number(l.votos) }));
 }
 
-// Projeta o eleitorado de cada município para o próximo pleito (2028),
+// Projeta o eleitorado de cada município para o próximo pleito,
 // a partir da taxa de crescimento observada entre o primeiro e o último
 // ano de eleitorado importado (ex: 2018 → 2024). Estimativa simples de
 // planejamento — não é dado oficial do TSE, que só existe para anos já
 // fechados.
-const ANO_PROJECAO = 2028;
+
 
 export async function getEleitoradoProjecao() {
   const registros = await prisma.eleitorado.findMany({ orderBy: { ano: "asc" } });
@@ -1239,12 +1245,13 @@ export async function getEleitoradoProjecao() {
     const anos = ultimo.ano - primeiro.ano;
     const taxaAnual =
       anos > 0 && primeiro.total > 0 ? Math.pow(ultimo.total / primeiro.total, 1 / anos) - 1 : 0;
-    const anosAteProjecao = Math.max(0, ANO_PROJECAO - ultimo.ano);
+    const anoProjecao = proximaEleicao(ultimo.ano);
+    const anosAteProjecao = Math.max(0, anoProjecao - ultimo.ano);
     const projecao = Math.round(ultimo.total * Math.pow(1 + taxaAnual, anosAteProjecao));
     resultado.set(municipioId, {
       ultimoAno: ultimo.ano,
       ultimoTotal: ultimo.total,
-      anoProjecao: ANO_PROJECAO,
+      anoProjecao,
       projecao,
     });
   }

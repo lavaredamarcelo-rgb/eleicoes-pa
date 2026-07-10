@@ -57,7 +57,11 @@ export default async function InicioPage() {
       <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <GraficoBarras
           titulo="Eleitorado do Pará"
-          subtitulo="Total de eleitores por ano, com projeção para 2028"
+          subtitulo={`Total de eleitores por ano, com projeção para a próxima eleição${
+            eleitoradoPorAno.find((p) => p.projetado)
+              ? ` (${eleitoradoPorAno.find((p) => p.projetado)!.ano})`
+              : ""
+          }`}
           pontos={eleitoradoPorAno.map((p) => ({ rotulo: String(p.ano), valor: p.total, projetado: p.projetado }))}
         />
         <GraficoBarras
