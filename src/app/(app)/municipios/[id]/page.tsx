@@ -13,10 +13,11 @@ export default async function MunicipioDetailPage({
   const { id } = await params;
   const municipio = await getMunicipioFicha(id);
   if (!municipio) notFound();
-  const [eleitos, locais] = await Promise.all([
+  const [eleitos, locaisInfo] = await Promise.all([
     getEleitosDoMunicipio(id),
     getLocaisDoMunicipio(id),
   ]);
+  const { referencia, locais } = locaisInfo;
 
   return (
     <div className="flex flex-col gap-6">
@@ -155,7 +156,8 @@ export default async function MunicipioDetailPage({
             <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 transition-colors duration-150 hover:border-neutral-700 hover:bg-neutral-800">
               <span className="text-sm font-medium">Ver votação por local (escola/colégio)</span>
               <span className="text-xs text-neutral-500">
-                {locais.reduce((s, l) => s + l.votos, 0).toLocaleString("pt-BR")} votos detalhados
+                {locais.reduce((s, l) => s + l.votos, 0).toLocaleString("pt-BR")} votos
+                {referencia ? ` para ${referencia.cargo} (${referencia.ano})` : " detalhados"}
               </span>
             </summary>
             <div className="mt-2 flex max-h-96 flex-col gap-1.5 overflow-y-auto pr-1">

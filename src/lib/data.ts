@@ -975,18 +975,41 @@ export async function getEleitosDoMunicipio(municipioId: string) {
   };
 }
 
-// Locais de votação de um município com o total de votos nominais do 1º
-// turno mais recente (agregado no banco).
+// Locais de votação de um município. Somar tudo (todos os cargos e anos)
+// inflaria o número — cada eleitor vota em vários cargos —, então o total
+// exibido usa o cargo proporcional de referência do ano mais recente
+// disponível (Vereador nas municipais, Dep. Estadual nas estaduais), o
+// mesmo critério dos votos válidos.
 export async function getLocaisDoMunicipio(municipioId: string) {
+  const ref = await prisma.$queryRaw<{ ano: number; cargo: string }[]>`
+    SELECT e.ano as ano, g.nome as cargo
+    FROM VotoLocal v
+    JOIN ColegioEleitoral ce ON v.colegioEleitoralId = ce.id
+    JOIN Candidato c ON v.candidatoId = c.id
+    JOIN Cargo g ON c.cargoId = g.id
+    JOIN Eleicao e ON g.eleicaoId = e.id
+    WHERE ce.municipioId = ${municipioId} AND g.nome IN ('Vereador', 'Deputado Estadual')
+    ORDER BY e.ano DESC LIMIT 1
+  `;
+  const referencia = ref[0] ?? null;
+
   const linhas = await prisma.$queryRaw<{ id: string; nome: string; votos: bigint }[]>`
-    SELECT ce.id as id, ce.nome as nome, COALESCE(SUM(v.votos), 0) as votos
+    SELECT ce.id as id, ce.nome as nome, COALESCE(SUM(
+      CASE WHEN g.nome = ${referencia?.cargo ?? ""} AND e.ano = ${referencia?.ano ?? 0} AND v.turno = 1
+           THEN v.votos END), 0) as votos
     FROM ColegioEleitoral ce
-    LEFT JOIN VotoLocal v ON v.colegioEleitoralId = ce.id AND v.turno = 1
+    LEFT JOIN VotoLocal v ON v.colegioEleitoralId = ce.id
+    LEFT JOIN Candidato c ON v.candidatoId = c.id
+    LEFT JOIN Cargo g ON c.cargoId = g.id
+    LEFT JOIN Eleicao e ON g.eleicaoId = e.id
     WHERE ce.municipioId = ${municipioId}
     GROUP BY ce.id
     ORDER BY votos DESC
   `;
-  return linhas.map((l) => ({ id: l.id, nome: l.nome, votos: Number(l.votos) }));
+  return {
+    referencia,
+    locais: linhas.map((l) => ({ id: l.id, nome: l.nome, votos: Number(l.votos) })),
+  };
 }
 
 // Detalhe de um local de votação: votos por candidato, agrupados por
