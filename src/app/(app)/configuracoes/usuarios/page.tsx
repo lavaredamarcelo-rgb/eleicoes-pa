@@ -3,7 +3,7 @@ import { verifySession } from "@/lib/dal";
 import { getUsuarios } from "@/lib/data";
 import { CriarUsuarioForm } from "@/components/CriarUsuarioForm";
 import { alternarStatusUsuario, excluirUsuario } from "@/app/actions/usuarios";
-import { ExcluirUsuarioBotao } from "@/components/ExcluirUsuarioBotao";
+import { BotaoExcluir } from "@/components/BotaoExcluir";
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: "Administrador",
@@ -75,7 +75,7 @@ export default async function UsuariosPage() {
                         {!u.ativo || u.expirado ? "Reabilitar" : "Desativar"}
                       </button>
                     </form>
-                    <ExcluirUsuarioBotao
+                    <BotaoExcluir
                       acao={excluirUsuario.bind(null, u.id)}
                       nome={u.nome}
                     />

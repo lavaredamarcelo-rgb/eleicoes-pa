@@ -476,6 +476,7 @@ export async function getDadosSimulacaoCargo(cargoId: string) {
     cargoNome: cargo.nome,
     tipoApuracao: cargo.tipoApuracao,
     ano: cargo.eleicao.ano,
+    municipioId: cargo.municipioId,
     municipioNome: cargo.municipio?.nome ?? null,
     vagas: cargo.vagas,
     votosValidos,
@@ -575,13 +576,14 @@ export async function getDistribuicaoMeta(candidatoId: string, base: BaseMeta) {
 }
 
 // Distribuição dos votos de um candidato por município — base do simulador
-// de meta de campanha.
+// de meta de campanha e da projeção percentual.
 export async function getDistribuicaoCandidato(candidatoId: string) {
   const candidato = await prisma.candidato.findUnique({
     where: { id: candidatoId },
     include: {
       partido: true,
-      resultados: { include: { municipio: true }, orderBy: { votos: "desc" } },
+      cargo: { include: { eleicao: true, municipio: true } },
+      resultados: { include: { municipio: { include: { regiao: true } } }, orderBy: { votos: "desc" } },
     },
   });
   if (!candidato) return null;
@@ -592,11 +594,26 @@ export async function getDistribuicaoCandidato(candidatoId: string) {
     nome: candidato.nome,
     numero: candidato.numero,
     partidoSigla: candidato.partido.sigla,
+    origem: `${candidato.cargo.nome} · ${candidato.cargo.municipio?.nome ?? "PA"} · ${candidato.cargo.eleicao.ano}`,
     total,
     municipios: t1
       .filter((r) => r.votos > 0)
-      .map((r) => ({ municipioNome: r.municipio.nome, votos: r.votos })),
+      .map((r) => ({
+        municipioNome: r.municipio.nome,
+        regiaoNome: r.municipio.regiao.nome,
+        votos: r.votos,
+      })),
   };
+}
+
+// Lista enxuta de municípios (com região) para a distribuição manual de
+// votos no simulador de meta.
+export async function getMunicipiosParaMeta() {
+  const municipios = await prisma.municipio.findMany({
+    include: { regiao: true },
+    orderBy: { nome: "asc" },
+  });
+  return municipios.map((m) => ({ id: m.id, nome: m.nome, regiaoNome: m.regiao.nome }));
 }
 
 export async function getCandidatosPorCargo(cargoId: string) {
@@ -1347,6 +1364,70 @@ function normalizar(texto: string) {
     .toLowerCase();
 }
 
+// O LIKE do SQLite só ignora caixa em ASCII: "chicão" não encontra "CHICÃO"
+// (os nomes do TSE vêm em maiúsculas acentuadas). Normalizamos a coluna no
+// próprio banco — upper() + replace() das acentuadas — para a busca ser
+// insensível a caixa E a acentos sem carregar a tabela inteira em memória.
+const ACENTOS: [string, string][] = [
+  ["á", "A"], ["à", "A"], ["â", "A"], ["ã", "A"], ["ä", "A"],
+  ["Á", "A"], ["À", "A"], ["Â", "A"], ["Ã", "A"], ["Ä", "A"],
+  ["é", "E"], ["è", "E"], ["ê", "E"], ["ë", "E"],
+  ["É", "E"], ["È", "E"], ["Ê", "E"], ["Ë", "E"],
+  ["í", "I"], ["ì", "I"], ["î", "I"], ["ï", "I"],
+  ["Í", "I"], ["Ì", "I"], ["Î", "I"], ["Ï", "I"],
+  ["ó", "O"], ["ò", "O"], ["ô", "O"], ["õ", "O"], ["ö", "O"],
+  ["Ó", "O"], ["Ò", "O"], ["Ô", "O"], ["Õ", "O"], ["Ö", "O"],
+  ["ú", "U"], ["ù", "U"], ["û", "U"], ["ü", "U"],
+  ["Ú", "U"], ["Ù", "U"], ["Û", "U"], ["Ü", "U"],
+  ["ç", "C"], ["Ç", "C"],
+];
+
+function colunaSemAcento(coluna: string) {
+  let expr = `upper(coalesce(${coluna}, ''))`;
+  for (const [de, para] of ACENTOS) expr = `replace(${expr}, '${de}', '${para}')`;
+  return expr;
+}
+
+// Ids de candidatos cujo nome de urna ou nome civil contém o termo (sem
+// diferenciar caixa/acento), mais recentes primeiro.
+export async function buscarCandidatoIds(termo: string, limite: number) {
+  const alvo = `%${normalizar(termo).toUpperCase()}%`;
+  const numero = /^\d+$/.test(termo.trim()) ? Number(termo.trim()) : null;
+  const sql = `
+    SELECT c.id FROM Candidato c
+    JOIN Cargo g ON c.cargoId = g.id
+    JOIN Eleicao e ON g.eleicaoId = e.id
+    WHERE ${colunaSemAcento("c.nome")} LIKE ?
+       OR ${colunaSemAcento("c.nomeCompleto")} LIKE ?
+       ${numero !== null ? "OR c.numero = ?" : ""}
+    ORDER BY e.ano DESC
+    LIMIT ?`;
+  const params = numero !== null ? [alvo, alvo, numero, limite] : [alvo, alvo, limite];
+  const linhas = await prisma.$queryRawUnsafe<{ id: string }[]>(sql, ...params);
+  return linhas.map((l) => l.id);
+}
+
+// Busca leve para autocompletes (meta de campanha, relatórios).
+export async function buscarCandidatosLeve(termo: string, limite = 12) {
+  const ids = await buscarCandidatoIds(termo, limite);
+  const candidatos = await prisma.candidato.findMany({
+    where: { id: { in: ids } },
+    include: { partido: true, cargo: { include: { eleicao: true, municipio: true } } },
+  });
+  const ordem = new Map(ids.map((id, i) => [id, i]));
+  return candidatos
+    .sort((a, b) => (ordem.get(a.id) ?? 0) - (ordem.get(b.id) ?? 0))
+    .map((c) => ({
+      id: c.id,
+      nome: c.nome,
+      numero: c.numero,
+      partido: c.partido.sigla,
+      cargo: c.cargo.nome,
+      municipio: c.cargo.municipio?.nome ?? "PA",
+      ano: c.cargo.eleicao.ano,
+    }));
+}
+
 export async function buscarTudo(query: string) {
   const termo = query.trim();
   if (!termo) return { candidatos: [], municipios: [], regioes: [], partidos: [] };
@@ -1354,24 +1435,17 @@ export async function buscarTudo(query: string) {
   const termoNormalizado = normalizar(termo);
   const numero = /^\d+$/.test(termo) ? Number(termo) : undefined;
 
-  // Filtro no banco (contains cobre a imensa maioria; a normalização de
-  // acentos refina o resultado) — carregar 100k candidatos com resultados
-  // estourava a memória do container.
+  // Filtro no banco pela busca sem acentos (buscarCandidatoIds) — carregar
+  // 100k candidatos com resultados estourava a memória do container.
+  const idsCandidatos = await buscarCandidatoIds(termo, 200);
   const [candidatosBrutos, todosMunicipios, todasRegioes, todosPartidos] = await Promise.all([
     prisma.candidato.findMany({
-      where: {
-        OR: [
-          { nome: { contains: termo } },
-          { nomeCompleto: { contains: termo } },
-          ...(numero !== undefined ? [{ numero }] : []),
-        ],
-      },
+      where: { id: { in: idsCandidatos } },
       include: {
         partido: true,
         cargo: { include: { municipio: true } },
         resultados: true,
       },
-      take: 200,
     }),
     prisma.municipio.findMany({ include: { regiao: true } }),
     prisma.regiao.findMany(),
@@ -1379,12 +1453,6 @@ export async function buscarTudo(query: string) {
   ]);
 
   const candidatos = candidatosBrutos
-    .filter(
-      (c) =>
-        normalizar(c.nome).includes(termoNormalizado) ||
-        (c.nomeCompleto && normalizar(c.nomeCompleto).includes(termoNormalizado)) ||
-        c.numero === numero
-    )
     .map((c) => ({
       ...c,
       totalVotos: c.resultados.reduce((sum, r) => sum + r.votos, 0),

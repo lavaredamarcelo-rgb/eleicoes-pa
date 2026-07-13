@@ -16,7 +16,7 @@ type Sugestao = {
 
 // Busca em TODOS os candidatos do sistema (qualquer cargo/ano) — permite,
 // por exemplo, achar um vereador que vai disputar deputado estadual.
-export function BuscaCandidatoMeta({ base }: { base: string }) {
+export function BuscaCandidatoMeta({ base, modo }: { base: string; modo: string }) {
   const router = useRouter();
   const [termo, setTermo] = useState("");
   const [sugestoes, setSugestoes] = useState<Sugestao[]>([]);
@@ -62,7 +62,9 @@ export function BuscaCandidatoMeta({ base }: { base: string }) {
             <button
               key={s.id}
               onClick={() =>
-                router.push(`/simulacoes?sim=meta&candidato=${s.id}&base=${base}#simuladores`)
+                router.push(
+                  `/simulacoes?sim=meta&candidato=${s.id}&base=${base}&modo=${modo}#simuladores`
+                )
               }
               className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-left text-sm transition-colors hover:border-neutral-600"
             >

@@ -5,9 +5,7 @@ import { useRouter } from "next/navigation";
 export const SIMULACOES = [
   { chave: "projecao", rotulo: "Projeção de votos" },
   { chave: "segundo-turno", rotulo: "2º turno" },
-  { chave: "federacao", rotulo: "Federação" },
   { chave: "transferencia", rotulo: "Transferência de votos" },
-  { chave: "chapa", rotulo: "Cenário de chapa" },
   { chave: "comparecimento", rotulo: "Comparecimento e QE" },
   { chave: "meta", rotulo: "Meta por município" },
 ] as const;

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 
-export function ExcluirUsuarioBotao({ acao, nome }: { acao: () => Promise<void>; nome: string }) {
+export function BotaoExcluir({ acao, nome }: { acao: () => Promise<void>; nome: string }) {
   const [confirmando, setConfirmando] = useState(false);
   const [pendente, startTransition] = useTransition();
 

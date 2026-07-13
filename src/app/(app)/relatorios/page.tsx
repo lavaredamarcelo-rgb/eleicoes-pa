@@ -1,6 +1,8 @@
 import { FileText, KeyRound } from "lucide-react";
 import { CardLink } from "@/components/CardLink";
 import { NovoRelatorio } from "@/components/NovoRelatorio";
+import { BotaoExcluir } from "@/components/BotaoExcluir";
+import { excluirRelatorio } from "@/app/actions/relatorios";
 import { relatoriosDisponiveis } from "@/lib/relatorios";
 import { prisma } from "@/lib/prisma";
 import { verifySession } from "@/lib/dal";
@@ -72,18 +74,23 @@ export default async function RelatoriosPage() {
         </h2>
         {historico.length > 0 ? (
           historico.map((r) => (
-            <CardLink key={r.id} href={`/relatorios/${r.id}`}>
-              <div className="flex min-w-0 items-center gap-3">
-                <FileText size={16} className="shrink-0 text-amber-400" />
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{r.titulo}</p>
-                  <p className="text-xs text-neutral-500">
-                    {TIPO_ROTULO[r.tipo] ?? r.tipo} ·{" "}
-                    {new Date(r.createdAt).toLocaleString("pt-BR")}
-                  </p>
-                </div>
+            <div key={r.id} className="flex items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <CardLink href={`/relatorios/${r.id}`}>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <FileText size={16} className="shrink-0 text-amber-400" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{r.titulo}</p>
+                      <p className="text-xs text-neutral-500">
+                        {TIPO_ROTULO[r.tipo] ?? r.tipo} ·{" "}
+                        {new Date(r.createdAt).toLocaleString("pt-BR")}
+                      </p>
+                    </div>
+                  </div>
+                </CardLink>
               </div>
-            </CardLink>
+              <BotaoExcluir acao={excluirRelatorio.bind(null, r.id)} nome={r.titulo} />
+            </div>
           ))
         ) : (
           <p className="rounded-xl border border-dashed border-neutral-700 bg-neutral-900/50 px-4 py-6 text-center text-sm text-neutral-500">

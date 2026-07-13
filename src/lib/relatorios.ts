@@ -1,4 +1,5 @@
 import "server-only";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { votosDecisivos } from "@/lib/turnos";
 import { getFiliacaoAtual, getMunicipioFicha, getEleitosDoMunicipio } from "@/lib/data";
@@ -224,11 +225,18 @@ async function dadosMunicipio(municipioId: string) {
   };
 }
 
-async function dadosAno(ano: number) {
+async function dadosAno(ano: number, municipioId?: string) {
   const eleicao = await prisma.eleicao.findFirst({ where: { ano } });
   if (!eleicao) return null;
   const referencia = eleicao.tipo === "MUNICIPAL" ? "Vereador" : "Deputado Estadual";
   const majoritario = eleicao.tipo === "MUNICIPAL" ? "Prefeito" : "Governador";
+
+  const municipio = municipioId
+    ? await prisma.municipio.findUnique({ where: { id: municipioId } })
+    : null;
+
+  // Com município escolhido, o recorte considera só os votos dados NELE.
+  const filtroMunicipio = municipio ? Prisma.sql`AND r.municipioId = ${municipio.id}` : Prisma.empty;
 
   const porPartido = await prisma.$queryRaw<{ sigla: string; votos: bigint; eleitos: bigint }[]>`
     SELECT p.sigla as sigla, SUM(r.votos) as votos,
@@ -238,9 +246,15 @@ async function dadosAno(ano: number) {
     JOIN Cargo g ON c.cargoId = g.id
     JOIN Eleicao e ON g.eleicaoId = e.id
     JOIN Partido p ON c.partidoId = p.id
-    WHERE e.ano = ${ano} AND g.nome = ${referencia} AND r.turno = 1
+    WHERE e.ano = ${ano} AND g.nome = ${referencia} AND r.turno = 1 ${filtroMunicipio}
     GROUP BY p.sigla ORDER BY votos DESC
   `;
+  // No recorte municipal de eleição MUNICIPAL, só o prefeito da cidade; o
+  // governador é estadual e continua o mesmo em qualquer recorte.
+  const filtroCargoMunicipio =
+    municipio && eleicao.tipo === "MUNICIPAL"
+      ? Prisma.sql`AND g.municipioId = ${municipio.id}`
+      : Prisma.empty;
   const majoritarios = await prisma.$queryRaw<{ nome: string; sigla: string; abrangencia: string | null }[]>`
     SELECT c.nome as nome, p.sigla as sigla, m.nome as abrangencia
     FROM Candidato c
@@ -248,14 +262,18 @@ async function dadosAno(ano: number) {
     JOIN Eleicao e ON g.eleicaoId = e.id
     JOIN Partido p ON c.partidoId = p.id
     LEFT JOIN Municipio m ON g.municipioId = m.id
-    WHERE e.ano = ${ano} AND g.nome = ${majoritario} AND c.eleito = 1
+    WHERE e.ano = ${ano} AND g.nome = ${majoritario} AND c.eleito = 1 ${filtroCargoMunicipio}
   `;
-  const aptos = await prisma.eleitorado.aggregate({ where: { ano }, _sum: { total: true } });
+  const aptos = await prisma.eleitorado.aggregate({
+    where: { ano, ...(municipio ? { municipioId: municipio.id } : {}) },
+    _sum: { total: true },
+  });
   const votosValidos = porPartido.reduce((s, p) => s + Number(p.votos), 0);
 
-  // Prefeituras por partido (municipal); no estadual, o governador eleito.
+  // Prefeituras por partido (municipal estadual-inteiro); nome do eleito nos
+  // demais casos (governador, ou o prefeito da cidade no recorte municipal).
   const chefiaExecutivo =
-    eleicao.tipo === "MUNICIPAL"
+    eleicao.tipo === "MUNICIPAL" && !municipio
       ? Object.entries(
           majoritarios.reduce<Record<string, number>>((acc, m) => {
             acc[m.sigla] = (acc[m.sigla] ?? 0) + 1;
@@ -264,11 +282,12 @@ async function dadosAno(ano: number) {
         )
           .map(([sigla, prefeituras]) => ({ sigla, prefeituras }))
           .sort((a, b) => b.prefeituras - a.prefeituras)
-      : majoritarios.map((m) => ({ governadorEleito: m.nome, partido: m.sigla }));
+      : majoritarios.map((m) => ({ nomeEleito: m.nome, partido: m.sigla }));
 
   return {
     ano,
     tipo: eleicao.tipo,
+    municipioNome: municipio?.nome ?? null,
     cargoProporcionalReferencia: referencia,
     votosValidosProporcional: votosValidos,
     eleitoresAptos: aptos._sum.total,
@@ -558,14 +577,15 @@ function padraoComparativo(
   const execLinhas = (d: NonNullable<Awaited<ReturnType<typeof dadosAno>>>) =>
     d.chefiaExecutivo
       .map((c) =>
-        "prefeituras" in c ? `${c.sigla}: ${c.prefeituras}` : `${c.governadorEleito} (${c.partido})`
+        "prefeituras" in c ? `${c.sigla}: ${c.prefeituras}` : `${c.nomeEleito} (${c.partido})`
       )
       .slice(0, 12)
       .join(" · ");
 
+  const recorte = a.municipioNome ? ` — ${a.municipioNome}` : "";
   return {
-    titulo: `Comparativo ${a.ano} × ${b.ano}`,
-    resumo: `Em ${a.ano} (${a.tipo === "MUNICIPAL" ? "municipal" : "estadual"}), o cargo proporcional de referência (${a.cargoProporcionalReferencia}) somou ${f(a.votosValidosProporcional)} votos nominais para ${f(a.eleitoresAptos)} eleitores aptos (${pct(a.votosValidosProporcional, a.eleitoresAptos ?? 0)}); em ${b.ano}, ${f(b.votosValidosProporcional)} votos para ${f(b.eleitoresAptos)} aptos (${pct(b.votosValidosProporcional, b.eleitoresAptos ?? 0)}).${mesmoTipo ? "" : " Atenção: as eleições são de tipos diferentes (municipal × estadual), então os cargos comparados não são os mesmos."}`,
+    titulo: `Comparativo ${a.ano} × ${b.ano}${recorte}`,
+    resumo: `${a.municipioNome ? `Recorte: votos dados no município de ${a.municipioNome}. ` : ""}Em ${a.ano} (${a.tipo === "MUNICIPAL" ? "municipal" : "estadual"}), o cargo proporcional de referência (${a.cargoProporcionalReferencia}) somou ${f(a.votosValidosProporcional)} votos nominais para ${f(a.eleitoresAptos)} eleitores aptos (${pct(a.votosValidosProporcional, a.eleitoresAptos ?? 0)}); em ${b.ano}, ${f(b.votosValidosProporcional)} votos para ${f(b.eleitoresAptos)} aptos (${pct(b.votosValidosProporcional, b.eleitoresAptos ?? 0)}).${mesmoTipo ? "" : " Atenção: as eleições são de tipos diferentes (municipal × estadual), então os cargos comparados não são os mesmos."}`,
     secoes: [
       {
         titulo: "Números gerais",
@@ -713,9 +733,10 @@ export async function gerarRelatorio(opts: {
     case "comparativo": {
       const anoA = Number(params.anoA);
       const anoB = Number(params.anoB);
-      const [a, b] = await Promise.all([dadosAno(anoA), dadosAno(anoB)]);
+      const municipioId = params.municipioId || undefined;
+      const [a, b] = await Promise.all([dadosAno(anoA, municipioId), dadosAno(anoB, municipioId)]);
       if (!a || !b) throw new Error("Eleição não encontrada.");
-      pedido = `Comparativo entre as eleições de ${anoA} e ${anoB} no Pará: participação, força dos partidos, mudanças de cadeiras e o que a variação indica.`;
+      pedido = `Comparativo entre as eleições de ${anoA} e ${anoB} ${a.municipioNome ? `no município de ${a.municipioNome} (PA)` : "no Pará"}: participação, força dos partidos, mudanças de cadeiras e o que a variação indica.`;
       dados = { eleicaoA: a, eleicaoB: b };
       if (!usarIA) conteudoPadrao = padraoComparativo(a, b);
       break;

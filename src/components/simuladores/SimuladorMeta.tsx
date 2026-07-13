@@ -89,7 +89,7 @@ export function SimuladorMeta({ distribuicao }: { distribuicao: Distribuicao }) 
               value={distribuicao.base}
               onChange={(e) =>
                 router.push(
-                  `/simulacoes?sim=meta&candidato=${distribuicao.id}&base=${e.target.value}#simuladores`
+                  `/simulacoes?sim=meta&candidato=${distribuicao.id}&base=${e.target.value}&modo=meta#simuladores`
                 )
               }
               className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100"

@@ -73,6 +73,7 @@ export function NovoRelatorio({
   const [municipioId, setMunicipioId] = useState("");
   const [anoA, setAnoA] = useState("");
   const [anoB, setAnoB] = useState("");
+  const [municipioComparativo, setMunicipioComparativo] = useState("");
   const [pedidoLivre, setPedidoLivre] = useState("");
 
   useEffect(() => {
@@ -97,7 +98,9 @@ export function NovoRelatorio({
       case "municipio":
         return municipioId ? { municipioId } : null;
       case "comparativo":
-        return anoA && anoB && anoA !== anoB ? { anoA, anoB } : null;
+        return anoA && anoB && anoA !== anoB
+          ? { anoA, anoB, ...(municipioComparativo ? { municipioId: municipioComparativo } : {}) }
+          : null;
       case "livre":
         return pedidoLivre.trim().length >= 10 ? { pedido: pedidoLivre.trim() } : null;
     }
@@ -245,27 +248,46 @@ export function NovoRelatorio({
       )}
 
       {tipo === "comparativo" && (
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { rotulo: "Eleição A", valor: anoA, setar: setAnoA },
-            { rotulo: "Eleição B", valor: anoB, setar: setAnoB },
-          ].map((sel) => (
-            <div key={sel.rotulo}>
-              <label className="mb-1 block text-xs text-neutral-500">{sel.rotulo}</label>
-              <select
-                value={sel.valor}
-                onChange={(e) => sel.setar(e.target.value)}
-                className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-100"
-              >
-                <option value="">Escolha…</option>
-                {anos.map((a) => (
-                  <option key={a.ano} value={a.ano}>
-                    {a.ano} ({a.tipo === "MUNICIPAL" ? "municipal" : "estadual"})
-                  </option>
-                ))}
-              </select>
-            </div>
-          ))}
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { rotulo: "Eleição A", valor: anoA, setar: setAnoA },
+              { rotulo: "Eleição B", valor: anoB, setar: setAnoB },
+            ].map((sel) => (
+              <div key={sel.rotulo}>
+                <label className="mb-1 block text-xs text-neutral-500">{sel.rotulo}</label>
+                <select
+                  value={sel.valor}
+                  onChange={(e) => sel.setar(e.target.value)}
+                  className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-100"
+                >
+                  <option value="">Escolha…</option>
+                  {anos.map((a) => (
+                    <option key={a.ano} value={a.ano}>
+                      {a.ano} ({a.tipo === "MUNICIPAL" ? "municipal" : "estadual"})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-neutral-500">
+              Recorte de município (opcional) — compara só os votos dados nele
+            </label>
+            <select
+              value={municipioComparativo}
+              onChange={(e) => setMunicipioComparativo(e.target.value)}
+              className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-100"
+            >
+              <option value="">Todo o Pará</option>
+              {municipios.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.nome}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       )}
 

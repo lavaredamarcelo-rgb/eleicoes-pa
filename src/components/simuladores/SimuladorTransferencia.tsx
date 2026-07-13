@@ -9,8 +9,12 @@ type Candidato = {
   numero: number;
   partidoId: string;
   partidoSigla: string;
+  eleito: boolean;
   votos: number;
 };
+
+// Nas disputas proporcionais, quem não se elegeu fica na ordem de suplência.
+const situacao = (c: Candidato) => (c.eleito ? "ELEITO" : "suplente");
 type Partido = { partidoId: string; sigla: string; votos: number };
 
 // "E se o candidato X desistir e apoiar Y?" — parte dos votos de X migra
@@ -85,7 +89,7 @@ export function SimuladorTransferencia({
             <option value="">Escolha…</option>
             {candidatos.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.nome} ({c.partidoSigla} · {c.votos.toLocaleString("pt-BR")})
+                {c.nome} ({c.partidoSigla} · {c.votos.toLocaleString("pt-BR")}) — {situacao(c)}
               </option>
             ))}
           </select>
@@ -102,7 +106,7 @@ export function SimuladorTransferencia({
               .filter((c) => c.id !== origemId)
               .map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.nome} ({c.partidoSigla} · {c.votos.toLocaleString("pt-BR")})
+                  {c.nome} ({c.partidoSigla} · {c.votos.toLocaleString("pt-BR")}) — {situacao(c)}
                 </option>
               ))}
           </select>
