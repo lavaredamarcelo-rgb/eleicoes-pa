@@ -41,10 +41,7 @@ export default async function InicioPage() {
         <StatCard label="Eleitos com mandato" value={<CountUp value={eleitosComMandato} />} />
       </section>
 
-      <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <CalendarioEleitoral />
-        <NoticiasTSE />
-      </section>
+      <CalendarioEleitoral />
 
       <CardLink href="/mapa" className="bg-gradient-to-r from-amber-950/60 to-neutral-900">
         <div className="flex items-center gap-3">
@@ -77,6 +74,8 @@ export default async function InicioPage() {
           pontos={votosPorAno.map((p) => ({ rotulo: String(p.ano), valor: p.total }))}
         />
       </section>
+
+      <NoticiasTSE />
     </div>
   );
 }
