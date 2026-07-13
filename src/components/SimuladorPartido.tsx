@@ -28,6 +28,13 @@ export function SimuladorPartido({
   candidatoInicialId?: string;
 }) {
   const [overrides, setOverrides] = useState<Map<string, OverridePartido>>(new Map());
+  // Candidatos fictícios: entram no cálculo como se disputassem a eleição
+  // (somam nos votos válidos, no quociente e concorrem às cadeiras).
+  const [ficticios, setFicticios] = useState<CandidatoSimulacao[]>([]);
+  const [fNome, setFNome] = useState("");
+  const [fPartido, setFPartido] = useState("");
+  const [fVotos, setFVotos] = useState("");
+  const [vagasSimuladas, setVagasSimuladas] = useState(vagas);
   const [candidatoSelecionado, setCandidatoSelecionado] = useState(
     candidatoInicialId && candidatos.some((c) => c.id === candidatoInicialId)
       ? candidatoInicialId
@@ -54,12 +61,37 @@ export function SimuladorPartido({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const resultado = useMemo(
-    () => calcularSimulacao(candidatos, vagas, overrides, partidoById),
-    [candidatos, vagas, overrides, partidoById]
+  const todosCandidatos = useMemo(
+    () => [...candidatos, ...ficticios],
+    [candidatos, ficticios]
   );
 
-  const simulacaoAtiva = overrides.size > 0;
+  const resultado = useMemo(
+    () => calcularSimulacao(todosCandidatos, vagasSimuladas, overrides, partidoById),
+    [todosCandidatos, vagasSimuladas, overrides, partidoById]
+  );
+
+  const ficticioIds = useMemo(() => new Set(ficticios.map((f) => f.id)), [ficticios]);
+  const simulacaoAtiva = overrides.size > 0 || ficticios.length > 0 || vagasSimuladas !== vagas;
+
+  function adicionarFicticio() {
+    const votosNum = Number(fVotos.replace(/\D/g, ""));
+    if (!fNome.trim() || !fPartido || !Number.isFinite(votosNum) || votosNum <= 0) return;
+    const partido = partidoById.get(fPartido);
+    setFicticios((prev) => [
+      ...prev,
+      {
+        id: `ficticio-${Date.now()}`,
+        nome: fNome.trim().toUpperCase(),
+        numero: 0,
+        votos: votosNum,
+        partidoId: fPartido,
+        partidoSigla: partido?.sigla ?? "?",
+      },
+    ]);
+    setFNome("");
+    setFVotos("");
+  }
 
   // Quadro da casa: cadeiras oficiais de hoje (por partido da urna) versus
   // as cadeiras do cenário simulado, com o saldo destacado.
@@ -107,10 +139,11 @@ export function SimuladorPartido({
               trocou: c.partidoIdEfetivo !== c.partidoId,
               partidoOrigem: c.partidoSigla,
               entra: candidatoById.get(c.id)?.situacaoOriginal !== "eleito",
+              ficticio: ficticioIds.has(c.id),
             })),
         }))
         .sort((a, b) => b.eleitos.length - a.eleitos.length),
-    [resultado.partidos, candidatoById]
+    [resultado.partidos, candidatoById, ficticioIds]
   );
 
   const quemSai = useMemo(
@@ -231,6 +264,94 @@ export function SimuladorPartido({
             </span>
           </div>
         </div>
+
+        <div className="flex flex-col gap-2 rounded-lg border border-sky-900/50 bg-sky-950/10 p-3">
+          <p className="text-xs font-medium text-sky-300">
+            Candidato fictício — invente um nome, escolha o partido e estime os votos
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              type="text"
+              value={fNome}
+              onChange={(e) => setFNome(e.target.value)}
+              placeholder="Nome do candidato fictício"
+              className="flex-1 rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100"
+            />
+            <select
+              value={fPartido}
+              onChange={(e) => setFPartido(e.target.value)}
+              className="rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100"
+            >
+              <option value="">Partido…</option>
+              {partidos.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.sigla}
+                </option>
+              ))}
+            </select>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              value={fVotos}
+              onChange={(e) => setFVotos(e.target.value)}
+              placeholder="Votos"
+              className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 sm:w-28"
+            />
+            <button
+              onClick={adicionarFicticio}
+              disabled={!fNome.trim() || !fPartido || !fVotos}
+              className="rounded-lg bg-sky-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-700 disabled:opacity-40"
+            >
+              Adicionar
+            </button>
+          </div>
+          {ficticios.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {ficticios.map((f) => (
+                <span
+                  key={f.id}
+                  className="flex items-center gap-1.5 rounded-full bg-neutral-900 px-2.5 py-1 text-xs"
+                >
+                  {f.nome} ({f.partidoSigla} · {f.votos.toLocaleString("pt-BR")})
+                  <button
+                    onClick={() => setFicticios((prev) => prev.filter((x) => x.id !== f.id))}
+                    className="text-neutral-500 hover:text-red-400"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between rounded-lg bg-neutral-900 px-3 py-2">
+          <label className="text-xs text-neutral-500">
+            Vagas em disputa{" "}
+            {vagasSimuladas !== vagas && (
+              <span className="text-amber-400">(real: {vagas})</span>
+            )}
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={1}
+              max={99}
+              value={vagasSimuladas}
+              onChange={(e) => setVagasSimuladas(Math.max(1, Number(e.target.value) || vagas))}
+              className="w-20 rounded-lg border border-neutral-700 bg-neutral-950 px-2 py-1.5 text-center text-sm font-semibold text-amber-400"
+            />
+            {vagasSimuladas !== vagas && (
+              <button
+                onClick={() => setVagasSimuladas(vagas)}
+                className="text-xs text-neutral-500 underline hover:text-neutral-300"
+              >
+                restaurar
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {simulacaoAtiva && (
@@ -271,7 +392,11 @@ export function SimuladorPartido({
               );
             })}
             <button
-              onClick={() => setOverrides(new Map())}
+              onClick={() => {
+                setOverrides(new Map());
+                setFicticios([]);
+                setVagasSimuladas(vagas);
+              }}
               className="self-start text-xs text-neutral-500 underline hover:text-neutral-300"
             >
               Limpar simulação
@@ -326,7 +451,7 @@ export function SimuladorPartido({
           <div className="flex flex-col gap-2">
             <p className="text-xs font-medium text-neutral-500">
               Eleitos no cenário simulado ({eleitosSimulados.reduce((s, g) => s + g.eleitos.length, 0)}
-              {" "}de {vagas} vagas)
+              {" "}de {vagasSimuladas} vagas)
             </p>
             {eleitosSimulados.map((g) => (
               <div key={g.partidoId} className="rounded-lg bg-neutral-900 px-3 py-2">
@@ -349,10 +474,16 @@ export function SimuladorPartido({
                             veio do {c.partidoOrigem}
                           </span>
                         )}
-                        {c.entra && (
-                          <span className="rounded-full bg-emerald-900 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-200">
-                            ENTRA
+                        {c.ficticio ? (
+                          <span className="rounded-full bg-sky-950 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300">
+                            FICTÍCIO
                           </span>
+                        ) : (
+                          c.entra && (
+                            <span className="rounded-full bg-emerald-900 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-200">
+                              ENTRA
+                            </span>
+                          )
                         )}
                       </span>
                       <span className="text-neutral-400">{c.votos.toLocaleString("pt-BR")}</span>

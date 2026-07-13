@@ -2,6 +2,8 @@ import { Map } from "lucide-react";
 import { CardLink } from "@/components/CardLink";
 import { CountUp } from "@/components/CountUp";
 import { DisputasPorAno } from "@/components/DisputasPorAno";
+import { CalendarioEleitoral } from "@/components/CalendarioEleitoral";
+import { NoticiasTSE } from "@/components/NoticiasTSE";
 import { GraficoBarras } from "@/components/GraficoBarras";
 import {
   getHierarquiaDisputas,
@@ -37,6 +39,11 @@ export default async function InicioPage() {
         />
         <StatCard label="Municípios" value={<CountUp value={totalMunicipios} />} />
         <StatCard label="Eleitos com mandato" value={<CountUp value={eleitosComMandato} />} />
+      </section>
+
+      <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <CalendarioEleitoral />
+        <NoticiasTSE />
       </section>
 
       <CardLink href="/mapa" className="bg-gradient-to-r from-amber-950/60 to-neutral-900">

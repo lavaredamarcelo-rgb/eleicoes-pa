@@ -1,6 +1,7 @@
 import { verifySession } from "@/lib/dal";
 import { logout } from "@/app/actions/auth";
 import { TabBar } from "@/components/TabBar";
+import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { Sidebar } from "@/components/Sidebar";
 import { PageTransition } from "@/components/PageTransition";
 import { Settings, Search } from "lucide-react";
@@ -25,11 +26,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           style={{ paddingTop: "env(safe-area-inset-top)" }}
         >
           <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-4 py-3 lg:max-w-5xl lg:px-8">
-            <div>
-              <p className="text-sm font-semibold">Eleições PA</p>
+            <div className="flex items-center gap-2">
+              <BotaoVoltar />
+              <div>
+                <p className="text-sm font-semibold">Eleições PA</p>
               <p className="text-xs text-neutral-500">
                 {session.nome} · {ROLE_LABEL[session.role] ?? session.role}
               </p>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <Link

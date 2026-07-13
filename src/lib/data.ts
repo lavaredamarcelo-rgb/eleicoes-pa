@@ -634,6 +634,60 @@ export async function getCandidato(id: string) {
   });
 }
 
+// Eleitos de um partido agrupados por eleição (ano) e cargo — permite
+// comparar, p.ex., os deputados eleitos pela sigla em 2018 e em 2022.
+export async function getEleitosDoPartidoPorEleicao(partidoId: string) {
+  const eleitos = await prisma.candidato.findMany({
+    where: { partidoId, eleito: true },
+    include: {
+      cargo: { include: { eleicao: true, municipio: true } },
+      resultados: true,
+    },
+  });
+
+  const porAno = new Map<
+    number,
+    Map<string, { id: string; nome: string; abrangencia: string | null; votos: number }[]>
+  >();
+  for (const c of eleitos) {
+    const ano = c.cargo.eleicao.ano;
+    let cargos = porAno.get(ano);
+    if (!cargos) {
+      cargos = new Map();
+      porAno.set(ano, cargos);
+    }
+    let lista = cargos.get(c.cargo.nome);
+    if (!lista) {
+      lista = [];
+      cargos.set(c.cargo.nome, lista);
+    }
+    lista.push({
+      id: c.id,
+      nome: c.nome,
+      abrangencia: c.cargo.municipio?.nome ?? null,
+      votos: votosDecisivos(c.resultados),
+    });
+  }
+
+  const ordemCargos = ["Governador", "Senador", "Deputado Federal", "Deputado Estadual", "Prefeito", "Vereador"];
+  return Array.from(porAno.entries())
+    .sort((a, b) => b[0] - a[0])
+    .map(([ano, cargos]) => ({
+      ano,
+      cargos: Array.from(cargos.entries())
+        .sort((a, b) => {
+          const ia = ordemCargos.indexOf(a[0]);
+          const ib = ordemCargos.indexOf(b[0]);
+          return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+        })
+        .map(([cargoNome, lista]) => ({
+          cargoNome,
+          eleitos: lista.sort((a, b) => b.votos - a.votos),
+        })),
+      totalEleitos: Array.from(cargos.values()).reduce((s, l) => s + l.length, 0),
+    }));
+}
+
 // Filiação atual da pessoa: a troca de partido mais recente registrada em
 // QUALQUER das candidaturas dela (as trocas não alteram o partido da urna).
 export async function getFiliacaoAtual(candidatoIds: string[]) {

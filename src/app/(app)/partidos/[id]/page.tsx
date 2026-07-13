@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { CardLink } from "@/components/CardLink";
 import { GraficoBarras } from "@/components/GraficoBarras";
-import { getPartido } from "@/lib/data";
+import Link from "next/link";
+import { getPartido, getEleitosDoPartidoPorEleicao } from "@/lib/data";
 
 const LIMITE_CANDIDATOS = 24;
 
@@ -13,6 +14,7 @@ export default async function PartidoDetailPage({
   const { id } = await params;
   const partido = await getPartido(id);
   if (!partido) notFound();
+  const eleitosPorEleicao = await getEleitosDoPartidoPorEleicao(id);
 
   const figuras = partido.figurasNotaveis
     ? partido.figurasNotaveis.split(",").map((s) => s.trim()).filter(Boolean)
@@ -119,6 +121,53 @@ export default async function PartidoDetailPage({
               .filter((d) => d.candidatos > 0)
               .map((d) => ({ rotulo: String(d.ano), valor: d.eleitos }))}
           />
+        </section>
+      )}
+
+      {eleitosPorEleicao.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-neutral-400">
+            Eleitos por eleição — abra os anos para comparar
+          </h2>
+          {eleitosPorEleicao.map((e) => (
+            <details key={e.ano} className="group">
+              <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 transition-colors duration-150 hover:border-neutral-700 hover:bg-neutral-800">
+                <span className="font-medium">{e.ano}</span>
+                <span className="text-xs text-neutral-500">
+                  {e.totalEleitos} eleito{e.totalEleitos !== 1 ? "s" : ""}
+                </span>
+              </summary>
+              <div className="mt-2 flex flex-col gap-2">
+                {e.cargos.map((g) => (
+                  <details key={g.cargoNome} className="rounded-xl border border-neutral-800/70 bg-neutral-900/60">
+                    <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-2.5">
+                      <span className="text-sm">{g.cargoNome}</span>
+                      <span className="text-xs text-neutral-500">{g.eleitos.length}</span>
+                    </summary>
+                    <div className="flex max-h-80 flex-col gap-1 overflow-y-auto px-3 pb-3">
+                      {g.eleitos.map((c) => (
+                        <Link
+                          key={c.id}
+                          href={`/candidatos/${c.id}`}
+                          className="flex items-center justify-between rounded-lg bg-neutral-950 px-3 py-1.5 text-sm transition-colors hover:bg-neutral-800"
+                        >
+                          <span className="min-w-0 truncate">
+                            {c.nome}
+                            {c.abrangencia && (
+                              <span className="text-xs text-neutral-500"> · {c.abrangencia}</span>
+                            )}
+                          </span>
+                          <span className="ml-2 shrink-0 text-xs font-semibold text-amber-400">
+                            {c.votos.toLocaleString("pt-BR")}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </details>
+          ))}
         </section>
       )}
 
