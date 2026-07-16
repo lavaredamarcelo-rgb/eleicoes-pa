@@ -167,6 +167,11 @@ export default async function QuocienteDetailPage({
             vagas={resultado.cargo.vagas}
             quocienteEleitoral={resultado.quocienteEleitoral}
             candidatoInicialId={candidatoInicialId}
+            votosLegenda={Object.fromEntries(
+              resultado.partidos
+                .filter((p) => p.votosLegenda > 0)
+                .map((p) => [p.partidoId, p.votosLegenda])
+            )}
           />
         </div>
       </div>

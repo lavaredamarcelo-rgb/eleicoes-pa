@@ -68,7 +68,10 @@ export function calcularSimulacao(
   candidatos: CandidatoSimulacao[],
   vagas: number,
   overrides: Map<string, OverridePartido>,
-  partidoById: Map<string, PartidoRef>
+  partidoById: Map<string, PartidoRef>,
+  // Votos de legenda por partido: entram nos válidos, no quociente e no
+  // total do partido (como no cálculo oficial), mesmo em cenário simulado.
+  votosLegenda?: Record<string, number>
 ) {
   const efetivos = candidatos.map((c) => {
     const o = overrides.get(c.id);
@@ -83,7 +86,8 @@ export function calcularSimulacao(
     };
   });
 
-  const votosValidos = efetivos.reduce((s, c) => s + c.votosEfetivos, 0);
+  const votosLegendaTotal = Object.values(votosLegenda ?? {}).reduce((s, v) => s + v, 0);
+  const votosValidos = efetivos.reduce((s, c) => s + c.votosEfetivos, 0) + votosLegendaTotal;
   const quocienteEleitoral = vagas > 0 ? Math.floor(votosValidos / vagas) : 0;
 
   const porPartido = new Map<
@@ -98,6 +102,20 @@ export function calcularSimulacao(
     }
     entry.votos += c.votosEfetivos;
     entry.candidatos.push(c);
+  }
+  for (const [partidoId, votos] of Object.entries(votosLegenda ?? {})) {
+    if (votos <= 0) continue;
+    let entry = porPartido.get(partidoId);
+    if (!entry) {
+      entry = {
+        partidoId,
+        sigla: partidoById.get(partidoId)?.sigla ?? "?",
+        votos: 0,
+        candidatos: [],
+      };
+      porPartido.set(partidoId, entry);
+    }
+    entry.votos += votos;
   }
 
   const vagasFinais = distribuirVagas(

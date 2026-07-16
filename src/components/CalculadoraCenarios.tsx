@@ -10,11 +10,13 @@ export function CalculadoraCenarios({
 }: {
   vagasIniciais?: number;
   votosValidosIniciais?: number;
-  projecao?: { ano: number; votosValidos: number };
+  projecao?: { ano: number; votosValidos: number; eleitoresAptos: number };
   rotuloReferencia?: string;
 } = {}) {
   const [vagas, setVagas] = useState(vagasIniciais ?? 10);
   const [votosValidos, setVotosValidos] = useState(votosValidosIniciais ?? 100000);
+  const [baseProjecao, setBaseProjecao] = useState<"ano" | "validos" | "aptos">("validos");
+  const [pctBase, setPctBase] = useState(100);
 
   const [entidade, setEntidade] = useState<"candidato" | "partido">("candidato");
   const [votosAtuais, setVotosAtuais] = useState(5000);
@@ -35,7 +37,17 @@ export function CalculadoraCenarios({
   // Quociente partidário (art. 107): vagas diretas do partido com esse total.
   const vagasPartido =
     quocienteEleitoral > 0 ? Math.min(vagas, Math.floor(votosProjetados / quocienteEleitoral)) : 0;
-  const usandoProjecao = projecao !== undefined && votosValidos === projecao.votosValidos;
+
+  // Base escolhida para preencher os votos válidos, com percentual de
+  // comparecimento (ex.: 70% dos aptos simula as abstenções).
+  const valorBase =
+    baseProjecao === "ano"
+      ? votosValidosIniciais ?? 0
+      : baseProjecao === "validos"
+        ? projecao?.votosValidos ?? 0
+        : projecao?.eleitoresAptos ?? 0;
+  const valorCalculado = Math.round(valorBase * (pctBase / 100));
+  const usandoProjecao = valorCalculado > 0 && votosValidos === valorCalculado;
 
   return (
     <div className="flex flex-col gap-6">
@@ -71,19 +83,63 @@ export function CalculadoraCenarios({
         </div>
 
         {projecao && (
-          <button
-            onClick={() => setVotosValidos(projecao.votosValidos)}
-            disabled={usandoProjecao}
-            className={`self-start rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-              usandoProjecao
-                ? "border-emerald-900 bg-emerald-950/30 text-emerald-300"
-                : "border-amber-800 bg-amber-950/30 text-amber-300 hover:border-amber-600"
-            }`}
-          >
-            {usandoProjecao
-              ? `✓ Usando a projeção de ${projecao.ano} (${projecao.votosValidos.toLocaleString("pt-BR")} votos válidos)`
-              : `Aplicar votos válidos projetados para ${projecao.ano}: ${projecao.votosValidos.toLocaleString("pt-BR")}`}
-          </button>
+          <div className="flex flex-col gap-2 rounded-lg border border-amber-900/50 bg-amber-950/10 p-3">
+            <p className="text-xs font-medium text-amber-300">
+              Preencher os votos válidos a partir de uma base
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <div className="flex-1">
+                <label className="mb-1 block text-xs text-neutral-500">Base</label>
+                <select
+                  value={baseProjecao}
+                  onChange={(e) => setBaseProjecao(e.target.value as "ano" | "validos" | "aptos")}
+                  className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100"
+                >
+                  {votosValidosIniciais !== undefined && (
+                    <option value="ano">
+                      Votos válidos da eleição base ({(votosValidosIniciais ?? 0).toLocaleString("pt-BR")})
+                    </option>
+                  )}
+                  <option value="validos">
+                    Projeção de votos válidos {projecao.ano} ({projecao.votosValidos.toLocaleString("pt-BR")})
+                  </option>
+                  <option value="aptos">
+                    Projeção de eleitores aptos {projecao.ano} ({projecao.eleitoresAptos.toLocaleString("pt-BR")})
+                  </option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-neutral-500">
+                  % da base (ex.: 70 simula abstenção)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={pctBase}
+                  onChange={(e) => setPctBase(Math.min(100, Math.max(1, Number(e.target.value))))}
+                  className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 sm:w-24"
+                />
+              </div>
+              <button
+                onClick={() => setVotosValidos(valorCalculado)}
+                disabled={usandoProjecao || valorCalculado <= 0}
+                className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+                  usandoProjecao
+                    ? "border-emerald-900 bg-emerald-950/30 text-emerald-300"
+                    : "border-amber-800 bg-amber-950/30 text-amber-300 hover:border-amber-600"
+                }`}
+              >
+                {usandoProjecao
+                  ? "✓ Aplicado"
+                  : `Aplicar ${valorCalculado.toLocaleString("pt-BR")}`}
+              </button>
+            </div>
+            <p className="text-[11px] text-neutral-600">
+              {pctBase}% de {valorBase.toLocaleString("pt-BR")} ={" "}
+              {valorCalculado.toLocaleString("pt-BR")} votos válidos no cenário.
+            </p>
+          </div>
         )}
 
         <div className="rounded-lg border border-amber-900 bg-amber-950/20 px-4 py-3">

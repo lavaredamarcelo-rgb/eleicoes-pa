@@ -12,6 +12,7 @@ const TIPO_ROTULO: Record<string, string> = {
   partido: "Partido",
   municipio: "Município",
   comparativo: "Comparativo",
+  cenario: "Cenário simulado",
   livre: "Pedido livre",
 };
 

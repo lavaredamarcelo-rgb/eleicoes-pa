@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { PdfDownloadLink } from "./PdfDownloadLink";
+import { useRouter } from "next/navigation";
+import { FileDown, FileText } from "lucide-react";
 import { CandidatoCombobox } from "./CandidatoCombobox";
 import {
   calcularSimulacao,
@@ -19,6 +20,7 @@ export function SimuladorPartido({
   vagas,
   quocienteEleitoral,
   candidatoInicialId,
+  votosLegenda,
 }: {
   cargoId: string;
   candidatos: (CandidatoSimulacao & { situacaoOriginal: "eleito" | "suplente" })[];
@@ -26,7 +28,10 @@ export function SimuladorPartido({
   vagas: number;
   quocienteEleitoral: number;
   candidatoInicialId?: string;
+  // Votos de legenda por partido — entram no quociente como no cálculo oficial.
+  votosLegenda?: Record<string, number>;
 }) {
+  const router = useRouter();
   const [overrides, setOverrides] = useState<Map<string, OverridePartido>>(new Map());
   // Candidatos fictícios: entram no cálculo como se disputassem a eleição
   // (somam nos votos válidos, no quociente e concorrem às cadeiras).
@@ -67,8 +72,8 @@ export function SimuladorPartido({
   );
 
   const resultado = useMemo(
-    () => calcularSimulacao(todosCandidatos, vagasSimuladas, overrides, partidoById),
-    [todosCandidatos, vagasSimuladas, overrides, partidoById]
+    () => calcularSimulacao(todosCandidatos, vagasSimuladas, overrides, partidoById, votosLegenda),
+    [todosCandidatos, vagasSimuladas, overrides, partidoById, votosLegenda]
   );
 
   const ficticioIds = useMemo(() => new Set(ficticios.map((f) => f.id)), [ficticios]);
@@ -188,13 +193,72 @@ export function SimuladorPartido({
     });
   }
 
-  const primeiroOverrideId = Array.from(overrides.keys())[0];
-  const primeiroOverride = primeiroOverrideId ? overrides.get(primeiroOverrideId) : undefined;
-  const pdfHref = primeiroOverrideId
-    ? `/api/pdf/simulacao/${cargoId}?candidato=${primeiroOverrideId}${
-        primeiroOverride?.partidoId ? `&partido=${primeiroOverride.partidoId}` : ""
-      }${primeiroOverride?.percentual ? `&percentual=${primeiroOverride.percentual}` : ""}`
-    : null;
+  const [gerandoPdf, setGerandoPdf] = useState(false);
+  const [salvandoRelatorio, setSalvandoRelatorio] = useState(false);
+  const [erroExport, setErroExport] = useState<string | null>(null);
+
+  // O cenário completo (várias trocas + fictícios + vagas alteradas) não
+  // cabe em uma URL, então PDF e relatório recebem o cenário por POST e o
+  // servidor recalcula tudo a partir dos dados oficiais.
+  function montarPayload() {
+    return {
+      cargoId,
+      vagas: vagasSimuladas,
+      overrides: Array.from(overrides.entries()).map(([candidatoId, o]) => ({
+        candidatoId,
+        partidoId: o.partidoId,
+        percentual: o.percentual,
+      })),
+      ficticios: ficticios.map((f) => ({ nome: f.nome, partidoId: f.partidoId, votos: f.votos })),
+    };
+  }
+
+  async function baixarPdfCenario() {
+    if (gerandoPdf) return;
+    setGerandoPdf(true);
+    setErroExport(null);
+    try {
+      const resp = await fetch("/api/pdf/cenario", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(montarPayload()),
+      });
+      if (!resp.ok) throw new Error("Falha ao gerar o PDF do cenário.");
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "cenario-simulado.pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setErroExport(e instanceof Error ? e.message : "Falha ao gerar o PDF.");
+    } finally {
+      setGerandoPdf(false);
+    }
+  }
+
+  async function salvarRelatorio() {
+    if (salvandoRelatorio) return;
+    setSalvandoRelatorio(true);
+    setErroExport(null);
+    try {
+      const resp = await fetch("/api/relatorios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tipo: "cenario",
+          params: { dados: JSON.stringify(montarPayload()) },
+        }),
+      });
+      const d = await resp.json();
+      if (!resp.ok) throw new Error(d.error ?? "Falha ao salvar o relatório.");
+      router.push(`/relatorios/${d.id}`);
+    } catch (e) {
+      setErroExport(e instanceof Error ? e.message : "Falha ao salvar o relatório.");
+      setSalvandoRelatorio(false);
+    }
+  }
 
   return (
     <section className="flex flex-col gap-3 rounded-xl border border-orange-900/50 bg-orange-950/10 p-4">
@@ -551,7 +615,29 @@ export function SimuladorPartido({
             )}
           </div>
 
-          {pdfHref && <PdfDownloadLink href={pdfHref} label="Baixar PDF desta simulação" />}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={baixarPdfCenario}
+              disabled={gerandoPdf}
+              className="flex items-center gap-1.5 rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-xs font-medium text-neutral-300 transition-colors hover:border-neutral-500 disabled:opacity-40"
+            >
+              <FileDown size={13} />
+              {gerandoPdf ? "Gerando PDF…" : "Baixar PDF do cenário"}
+            </button>
+            <button
+              onClick={salvarRelatorio}
+              disabled={salvandoRelatorio}
+              className="flex items-center gap-1.5 rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-xs font-medium text-neutral-300 transition-colors hover:border-neutral-500 disabled:opacity-40"
+            >
+              <FileText size={13} />
+              {salvandoRelatorio ? "Salvando…" : "Salvar nos Relatórios"}
+            </button>
+          </div>
+          {erroExport && (
+            <p className="rounded-lg border border-red-900 bg-red-950/40 px-3 py-2 text-xs text-red-300">
+              {erroExport}
+            </p>
+          )}
         </>
       )}
     </section>

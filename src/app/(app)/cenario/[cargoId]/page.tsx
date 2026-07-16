@@ -119,6 +119,11 @@ export default async function CenarioDetailPage({
             partidos={partidos}
             vagas={resultado.cargo.vagas}
             quocienteEleitoral={resultado.quocienteEleitoral}
+            votosLegenda={Object.fromEntries(
+              resultado.partidos
+                .filter((p) => p.votosLegenda > 0)
+                .map((p) => [p.partidoId, p.votosLegenda])
+            )}
           />
         </section>
       </div>

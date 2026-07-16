@@ -11,12 +11,19 @@ export function SeletorCargoSimulacao({
   cargos,
   selecionado,
   sim,
+  basePath,
 }: {
   cargos: CargoOpcao[];
   selecionado?: string;
-  sim: string;
+  sim?: string;
+  // Com basePath, navega para `${basePath}?cargo=...` (ex.: /criar-cenario).
+  basePath?: string;
 }) {
   const router = useRouter();
+  const destino = (cargoId: string) =>
+    basePath
+      ? `${basePath}?cargo=${cargoId}`
+      : `/simulacoes?sim=${sim}&cargo=${cargoId}#simuladores`;
 
   const grupos = new Map<string, CargoOpcao[]>();
   for (const c of cargos) {
@@ -32,7 +39,7 @@ export function SeletorCargoSimulacao({
       <select
         value={selecionado ?? ""}
         onChange={(e) => {
-          if (e.target.value) router.push(`/simulacoes?sim=${sim}&cargo=${e.target.value}#simuladores`);
+          if (e.target.value) router.push(destino(e.target.value));
         }}
         className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm text-neutral-100"
       >

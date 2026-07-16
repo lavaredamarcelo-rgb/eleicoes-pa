@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifySession } from "@/lib/dal";
 import { gerarRelatorio, type TipoRelatorio } from "@/lib/relatorios";
 
-const TIPOS: TipoRelatorio[] = ["candidato", "partido", "municipio", "comparativo", "livre"];
+const TIPOS: TipoRelatorio[] = ["candidato", "partido", "municipio", "comparativo", "cenario", "livre"];
 
 // A geração consulta a API do Claude e pode levar dezenas de segundos.
 export const maxDuration = 120;

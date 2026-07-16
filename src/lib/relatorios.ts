@@ -8,7 +8,7 @@ import { getFiliacaoAtual, getMunicipioFicha, getEleitosDoMunicipio } from "@/li
 // (somente leitura, nunca a tabela Resultado inteira), enviamos à API do
 // Claude e guardamos o resultado estruturado para reexibição e PDF.
 
-export type TipoRelatorio = "candidato" | "partido" | "municipio" | "comparativo" | "livre";
+export type TipoRelatorio = "candidato" | "partido" | "municipio" | "comparativo" | "cenario" | "livre";
 
 export type ConteudoRelatorio = {
   titulo: string;
@@ -739,6 +739,23 @@ export async function gerarRelatorio(opts: {
       pedido = `Comparativo entre as eleições de ${anoA} e ${anoB} ${a.municipioNome ? `no município de ${a.municipioNome} (PA)` : "no Pará"}: participação, força dos partidos, mudanças de cadeiras e o que a variação indica.`;
       dados = { eleicaoA: a, eleicaoB: b };
       if (!usarIA) conteudoPadrao = padraoComparativo(a, b);
+      break;
+    }
+    case "cenario": {
+      // Cenário simulado vindo do simulador — sempre determinístico (as
+      // tabelas já são o produto final; IA não acrescentaria dados).
+      const { calcularCenarioServidor, conteudoRelatorioCenario } = await import("@/lib/cenario");
+      let payload;
+      try {
+        payload = JSON.parse(params.dados ?? "");
+      } catch {
+        throw new Error("Cenário inválido.");
+      }
+      const calc = await calcularCenarioServidor(payload);
+      if (!calc) throw new Error("Cargo do cenário não encontrado.");
+      pedido = `Cenário simulado — ${calc.cargo.nome} ${calc.cargo.ano}`;
+      dados = null;
+      conteudoPadrao = conteudoRelatorioCenario(calc);
       break;
     }
     case "livre": {

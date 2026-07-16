@@ -35,7 +35,16 @@ export function RelatorioSimulacao({
 
   const candidatoAlvo = candidatosBase.find((c) => c.id === candidatoId);
   const overrides = new Map([[candidatoId, { partidoId: novoPartidoId, percentual }]]);
-  const simulado = calcularSimulacao(candidatosBase, resultado.cargo.vagas, overrides, partidoById);
+  const votosLegenda = Object.fromEntries(
+    resultado.partidos.filter((p) => p.votosLegenda > 0).map((p) => [p.partidoId, p.votosLegenda])
+  );
+  const simulado = calcularSimulacao(
+    candidatosBase,
+    resultado.cargo.vagas,
+    overrides,
+    partidoById,
+    votosLegenda
+  );
 
   const partidoOrigemSigla = candidatoAlvo?.partidoSigla ?? "";
   const partidoDestinoSigla = novoPartidoId
