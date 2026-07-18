@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
-import { getDadosSimulacaoCargo } from "@/lib/data";
+import { getDadosSimulacaoCargo, getReferenciaisViabilidade } from "@/lib/data";
 import {
   calcularSimulacao,
   type CandidatoSimulacao,
@@ -218,6 +218,89 @@ export async function calcularCenarioServidor(payload: CenarioPayload) {
 }
 
 export type CenarioCalculado = NonNullable<Awaited<ReturnType<typeof calcularCenarioServidor>>>;
+
+// Estudo fictício de viabilidade da distribuição manual: insere o pretenso
+// candidato na disputa base com o total alimentado e compara com o QE e a
+// linha de corte das eleições passadas e da projeção da próxima.
+export async function estudoViabilidadeServidor(
+  cargoId: string,
+  partidoId: string,
+  nome: string,
+  total: number
+) {
+  const [dados, referenciais, partidos, legendaLinhas] = await Promise.all([
+    getDadosSimulacaoCargo(cargoId),
+    getReferenciaisViabilidade(cargoId),
+    prisma.partido.findMany({ select: { id: true, sigla: true, nome: true } }),
+    prisma.votoLegenda.findMany({ where: { cargoId, turno: 1 } }),
+  ]);
+  if (!dados || !referenciais || dados.tipoApuracao !== "PROPORCIONAL") return null;
+
+  const partidoById = new Map(partidos.map((p) => [p.id, p]));
+  if (!partidoById.has(partidoId)) return null;
+  const votosLegenda: Record<string, number> = {};
+  for (const vl of legendaLinhas) {
+    votosLegenda[vl.partidoId] = (votosLegenda[vl.partidoId] ?? 0) + vl.votos;
+  }
+
+  const resultado = calcularSimulacao(
+    [
+      ...dados.candidatos,
+      {
+        id: "estudo-manual",
+        nome: nome.toUpperCase(),
+        numero: 0,
+        votos: total,
+        partidoId,
+        partidoSigla: partidoById.get(partidoId)?.sigla ?? "?",
+      },
+    ],
+    dados.vagas,
+    new Map(),
+    partidoById,
+    votosLegenda
+  );
+  const situacao = resultado.situacao.get("estudo-manual");
+
+  const comparar = (r: { qe: number; corte: number }) =>
+    total >= r.qe
+      ? "Atingiria o QE sozinho"
+      : total >= r.corte
+        ? "Acima da linha de corte"
+        : `Abaixo do corte (faltam ${(r.corte - total).toLocaleString("pt-BR")})`;
+
+  return {
+    rotulo: `${dados.cargoNome} · ${dados.municipioNome ?? "PA"} · ${dados.ano}`,
+    sigla: partidoById.get(partidoId)?.sigla ?? "?",
+    eleito: situacao?.situacao === "eleito",
+    ordemSuplencia: situacao?.ordemSuplencia ?? null,
+    qeSimulado: resultado.quocienteEleitoral,
+    cadeirasPartido:
+      resultado.partidos.find((p) => p.partidoId === partidoId)?.quocientePartidario ?? 0,
+    linhas: [
+      ...referenciais.referencias.map((r) => ({
+        rotulo: String(r.ano),
+        qe: r.qe,
+        corte: r.corte,
+        veredicto: comparar(r),
+      })),
+      ...(referenciais.projecao
+        ? [
+            {
+              rotulo: `${referenciais.projecao.ano} (projeção)`,
+              qe: referenciais.projecao.qe,
+              corte: referenciais.projecao.corte,
+              veredicto: comparar(referenciais.projecao),
+            },
+          ]
+        : []),
+    ],
+  };
+}
+
+export type EstudoViabilidadeCalculado = NonNullable<
+  Awaited<ReturnType<typeof estudoViabilidadeServidor>>
+>;
 
 const f = (n: number) => n.toLocaleString("pt-BR");
 

@@ -606,6 +606,89 @@ export async function getDistribuicaoCandidato(candidatoId: string) {
   };
 }
 
+// Referenciais históricos de viabilidade para um cargo: em cada eleição do
+// mesmo cargo/recorte, o quociente eleitoral e a "linha de corte" (menor
+// votação nominal entre os eleitos), mais a projeção para a próxima
+// eleição (escala pelo crescimento do eleitorado). Base do estudo fictício
+// de viabilidade da distribuição manual de votos.
+export async function getReferenciaisViabilidade(cargoId: string) {
+  const cargo = await prisma.cargo.findUnique({
+    where: { id: cargoId },
+    include: { eleicao: true, municipio: true },
+  });
+  if (!cargo) return null;
+
+  const irmaos = await prisma.cargo.findMany({
+    where: { nome: cargo.nome, municipioId: cargo.municipioId },
+    include: { eleicao: true },
+  });
+
+  const referencias: { ano: number; vagas: number; validos: number; qe: number; corte: number }[] = [];
+  for (const c of irmaos) {
+    const [nominais, legenda, corteLinha] = await Promise.all([
+      prisma.resultado.aggregate({
+        where: { candidato: { cargoId: c.id }, turno: 1 },
+        _sum: { votos: true },
+      }),
+      prisma.votoLegenda.aggregate({ where: { cargoId: c.id, turno: 1 }, _sum: { votos: true } }),
+      prisma.$queryRaw<{ corte: bigint | null }[]>`
+        SELECT MIN(t.v) as corte FROM (
+          SELECT SUM(r.votos) as v
+          FROM Resultado r
+          JOIN Candidato ca ON r.candidatoId = ca.id
+          WHERE ca.cargoId = ${c.id} AND ca.eleito = 1 AND r.turno = 1
+          GROUP BY ca.id
+        ) t
+      `,
+    ]);
+    const validos = (nominais._sum.votos ?? 0) + (legenda._sum.votos ?? 0);
+    if (validos === 0) continue;
+    referencias.push({
+      ano: c.eleicao.ano,
+      vagas: c.vagas,
+      validos,
+      qe: c.vagas > 0 ? Math.floor(validos / c.vagas) : 0,
+      corte: Number(corteLinha[0]?.corte ?? 0),
+    });
+  }
+  referencias.sort((a, b) => a.ano - b.ano);
+
+  // Projeção da próxima eleição: escala o último ano pelo crescimento do
+  // eleitorado apto (comparecimento e proporção de válidos constantes).
+  const ultimo = referencias[referencias.length - 1];
+  let projecao: { ano: number; vagas: number; validos: number; qe: number; corte: number } | null =
+    null;
+  if (ultimo) {
+    const [projecoes, aptosUltimo] = await Promise.all([
+      getEleitoradoProjecao(),
+      getEleitoresCargo(cargo.municipioId, ultimo.ano),
+    ]);
+    const entradas = cargo.municipioId
+      ? [projecoes.get(cargo.municipioId)].filter((e) => e !== undefined)
+      : Array.from(projecoes.values());
+    const aptosProjetados = entradas.reduce((s, e) => s + e.projecao, 0);
+    const anoProjecao = entradas.reduce((max, e) => Math.max(max, e.anoProjecao), 0);
+    if (aptosProjetados > 0 && anoProjecao > 0 && aptosUltimo && aptosUltimo.eleitores > 0) {
+      const fator = aptosProjetados / aptosUltimo.eleitores;
+      const validosProjetados = Math.round(ultimo.validos * fator);
+      projecao = {
+        ano: anoProjecao,
+        vagas: ultimo.vagas,
+        validos: validosProjetados,
+        qe: ultimo.vagas > 0 ? Math.floor(validosProjetados / ultimo.vagas) : 0,
+        corte: Math.round(ultimo.corte * fator),
+      };
+    }
+  }
+
+  return {
+    cargoNome: cargo.nome,
+    municipioNome: cargo.municipio?.nome ?? null,
+    referencias,
+    projecao,
+  };
+}
+
 // Lista enxuta de municípios (com região) para a distribuição manual de
 // votos no simulador de meta.
 export async function getMunicipiosParaMeta() {

@@ -9,7 +9,6 @@ import { SimuladorTransferencia } from "@/components/simuladores/SimuladorTransf
 import { SimuladorComparecimento } from "@/components/simuladores/SimuladorComparecimento";
 import { SimuladorMeta } from "@/components/simuladores/SimuladorMeta";
 import { SimuladorProjecaoPercentual } from "@/components/simuladores/SimuladorProjecaoPercentual";
-import { SimuladorMetaManual } from "@/components/simuladores/SimuladorMetaManual";
 import { BuscaCandidatoMeta } from "@/components/simuladores/BuscaCandidatoMeta";
 import {
   getCargosParaSimulacao,
@@ -18,7 +17,6 @@ import {
   getDistribuicaoMeta,
   getEleitoradoProjecao,
   getHierarquiaCargos,
-  getMunicipiosParaMeta,
   type BaseMeta,
 } from "@/lib/data";
 
@@ -187,7 +185,6 @@ async function SecaoComparecimento({ cargoId }: { cargoId?: string }) {
 const MODOS_META = [
   { chave: "percentual", rotulo: "Projeção percentual", precisaCandidato: true },
   { chave: "meta", rotulo: "Meta de votos", precisaCandidato: true },
-  { chave: "manual", rotulo: "Distribuição manual", precisaCandidato: false },
 ] as const;
 
 async function SecaoMeta({
@@ -201,17 +198,11 @@ async function SecaoMeta({
 }) {
   const baseEscolhida: BaseMeta =
     base === "partido" || base === "eleitorado" ? base : "candidato";
-  const modoEscolhido =
-    modo === "meta" || modo === "manual" || modo === "percentual"
-      ? modo
-      : candidatoId
-        ? "percentual"
-        : "manual";
+  const modoEscolhido = modo === "meta" ? "meta" : "percentual";
 
-  const [distribuicaoCandidato, distribuicaoMeta, municipios] = await Promise.all([
+  const [distribuicaoCandidato, distribuicaoMeta] = await Promise.all([
     candidatoId && modoEscolhido !== "meta" ? getDistribuicaoCandidato(candidatoId) : null,
     candidatoId && modoEscolhido === "meta" ? getDistribuicaoMeta(candidatoId, baseEscolhida) : null,
-    modoEscolhido === "manual" ? getMunicipiosParaMeta() : null,
   ]);
 
   return (
@@ -253,28 +244,17 @@ async function SecaoMeta({
           <SimuladorProjecaoPercentual distribuicao={distribuicaoCandidato} />
         ) : (
           <p className="text-sm text-neutral-500">
-            Busque e escolha um candidato acima para projetar a votação dele, ou use a
-            distribuição manual para montar um cenário do zero.
+            Busque e escolha um candidato acima para projetar a votação dele. Para montar uma
+            distribuição manual de votos (candidato fictício), use a aba{" "}
+            <Link href="/criar-cenario" className="text-amber-400 underline hover:text-amber-300">
+              Criar Cenário
+            </Link>
+            .
           </p>
         ))}
 
       {modoEscolhido === "meta" && distribuicaoMeta && (
         <SimuladorMeta distribuicao={distribuicaoMeta} />
-      )}
-
-      {modoEscolhido === "manual" && municipios && (
-        <SimuladorMetaManual
-          key={candidatoId ?? "zero"}
-          municipios={municipios}
-          nomeInicial={distribuicaoCandidato?.nome}
-          votosIniciais={
-            distribuicaoCandidato
-              ? Object.fromEntries(
-                  distribuicaoCandidato.municipios.map((m) => [m.municipioNome, m.votos])
-                )
-              : undefined
-          }
-        />
       )}
     </div>
   );

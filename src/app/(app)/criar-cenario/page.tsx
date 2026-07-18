@@ -1,14 +1,28 @@
+import Link from "next/link";
 import { SeletorCargoSimulacao } from "@/components/simuladores/SeletorCargoSimulacao";
+import { SimuladorMetaManual } from "@/components/simuladores/SimuladorMetaManual";
 import { CriadorCenario } from "@/components/CriadorCenario";
-import { getCargosParaSimulacao, getDadosSimulacaoCargo, getPartidos } from "@/lib/data";
+import {
+  getCargosParaSimulacao,
+  getDadosSimulacaoCargo,
+  getMunicipiosParaMeta,
+  getPartidos,
+  getReferenciaisViabilidade,
+} from "@/lib/data";
 import { prisma } from "@/lib/prisma";
+
+const MODOS = [
+  { chave: "chapa", rotulo: "Trocar chapa de partido" },
+  { chave: "meta", rotulo: "Meta por município (manual)" },
+] as const;
 
 export default async function CriarCenarioPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cargo?: string }>;
+  searchParams: Promise<{ cargo?: string; modo?: string }>;
 }) {
-  const { cargo: cargoId } = await searchParams;
+  const { cargo: cargoId, modo: modoParam } = await searchParams;
+  const modo = modoParam === "meta" ? "meta" : "chapa";
   const cargos = await getCargosParaSimulacao({ tipoApuracao: "PROPORCIONAL" });
   const dados = cargoId ? await getDadosSimulacaoCargo(cargoId) : null;
 
@@ -23,14 +37,24 @@ export default async function CriarCenarioPage({
     votosLegenda[vl.partidoId] = (votosLegenda[vl.partidoId] ?? 0) + vl.votos;
   }
 
+  const [municipios, referenciais] =
+    dados && modo === "meta"
+      ? await Promise.all([getMunicipiosParaMeta(), getReferenciaisViabilidade(dados.cargoId)])
+      : [null, null];
+
+  const rotuloDisputa = dados
+    ? `${dados.cargoNome} · ${dados.municipioNome ?? "PA"} · ${dados.ano}`
+    : "";
+
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-lg font-semibold">Criar Cenário</h1>
         <p className="text-sm text-neutral-500">
           Monte um cenário eleitoral completo a partir de uma eleição real: troque os nomes de um
-          partido inteiro (misturando pessoas reais e fictícias), acompanhe a quota de gênero e
-          planeje a convenção partidária. Nada aqui altera os dados oficiais.
+          partido inteiro (misturando pessoas reais e fictícias), acompanhe a quota de gênero,
+          planeje a convenção partidária ou distribua votos município a município com estudo de
+          viabilidade. Nada aqui altera os dados oficiais.
         </p>
       </div>
 
@@ -51,16 +75,54 @@ export default async function CriarCenarioPage({
       <SeletorCargoSimulacao cargos={cargos} selecionado={cargoId} basePath="/criar-cenario" />
 
       {dados ? (
-        <CriadorCenario
-          key={dados.cargoId}
-          cargoId={dados.cargoId}
-          rotulo={`${dados.cargoNome} · ${dados.municipioNome ?? "PA"} · ${dados.ano}`}
-          candidatos={dados.candidatos}
-          partidos={partidos}
-          vagas={dados.vagas}
-          quocienteOficial={dados.quocienteEleitoral}
-          votosLegenda={votosLegenda}
-        />
+        <>
+          <div className="flex flex-wrap gap-2">
+            {MODOS.map((m) => (
+              <Link
+                key={m.chave}
+                href={`/criar-cenario?cargo=${dados.cargoId}&modo=${m.chave}`}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  modo === m.chave
+                    ? "bg-amber-400 text-neutral-950"
+                    : "border border-neutral-800 bg-neutral-900 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200"
+                }`}
+              >
+                {m.rotulo}
+              </Link>
+            ))}
+          </div>
+
+          {modo === "chapa" ? (
+            <CriadorCenario
+              key={dados.cargoId}
+              cargoId={dados.cargoId}
+              rotulo={rotuloDisputa}
+              candidatos={dados.candidatos}
+              partidos={partidos}
+              vagas={dados.vagas}
+              quocienteOficial={dados.quocienteEleitoral}
+              votosLegenda={votosLegenda}
+            />
+          ) : (
+            municipios &&
+            referenciais && (
+              <SimuladorMetaManual
+                key={dados.cargoId}
+                municipios={municipios}
+                estudo={{
+                  cargoId: dados.cargoId,
+                  rotulo: rotuloDisputa,
+                  vagas: dados.vagas,
+                  candidatos: dados.candidatos,
+                  partidos,
+                  votosLegenda,
+                  referencias: referenciais.referencias,
+                  projecao: referenciais.projecao,
+                }}
+              />
+            )
+          )}
+        </>
       ) : (
         <p className="text-sm text-neutral-500">
           Escolha acima a disputa que servirá de base para o cenário (ex.: Deputado Estadual 2022).

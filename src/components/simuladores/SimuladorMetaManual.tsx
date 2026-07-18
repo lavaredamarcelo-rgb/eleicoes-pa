@@ -2,23 +2,43 @@
 
 import { useMemo, useState } from "react";
 import { FileDown, Search } from "lucide-react";
+import { calcularSimulacao, type CandidatoSimulacao } from "@/lib/simulacaoPartido";
 
 type MunicipioOpcao = { id: string; nome: string; regiaoNome: string };
+
+type Referencial = { ano: number; vagas: number; validos: number; qe: number; corte: number };
+
+// Dados da disputa base para o estudo fictício de viabilidade (Criar Cenário).
+export type EstudoViabilidade = {
+  cargoId: string;
+  rotulo: string;
+  vagas: number;
+  candidatos: CandidatoSimulacao[];
+  partidos: { id: string; sigla: string; nome: string }[];
+  votosLegenda: Record<string, number>;
+  referencias: Referencial[];
+  projecao: Referencial | null;
+};
 
 // Cenário montado à mão: o usuário dá um nome ao pretenso candidato (mesmo
 // quem nunca disputou) e alimenta os votos município a município. O resumo
 // mostra o total e a leitura por região, e o PDF documenta a distribuição.
+// Com `estudo`, compara o total com as eleições passadas e com a projeção
+// da próxima eleição — projeção FICTÍCIA, só para observar o panorama.
 export function SimuladorMetaManual({
   municipios,
   nomeInicial,
   votosIniciais,
+  estudo,
 }: {
   municipios: MunicipioOpcao[];
   nomeInicial?: string;
   votosIniciais?: Record<string, number>; // nome do município → votos
+  estudo?: EstudoViabilidade;
 }) {
   const [nome, setNome] = useState(nomeInicial ?? "");
   const [filtro, setFiltro] = useState("");
+  const [partidoEstudo, setPartidoEstudo] = useState("");
   const [gerandoPdf, setGerandoPdf] = useState(false);
   const [votos, setVotos] = useState<Record<string, number>>(() => {
     if (!votosIniciais) return {};
@@ -63,6 +83,57 @@ export function SimuladorMetaManual({
     });
   }
 
+  // Estudo de viabilidade: insere o pretenso candidato na disputa base com
+  // o total alimentado e recalcula quociente e cadeiras (com legenda).
+  const viabilidade = useMemo(() => {
+    if (!estudo || !partidoEstudo || total <= 0) return null;
+    const partidoById = new Map(estudo.partidos.map((p) => [p.id, p]));
+    const ficticio: CandidatoSimulacao = {
+      id: "estudo-manual",
+      nome: (nome.trim() || "PRETENSO CANDIDATO").toUpperCase(),
+      numero: 0,
+      votos: total,
+      partidoId: partidoEstudo,
+      partidoSigla: partidoById.get(partidoEstudo)?.sigla ?? "?",
+    };
+    const resultado = calcularSimulacao(
+      [...estudo.candidatos, ficticio],
+      estudo.vagas,
+      new Map(),
+      partidoById,
+      estudo.votosLegenda
+    );
+    const situacao = resultado.situacao.get("estudo-manual");
+    return {
+      sigla: ficticio.partidoSigla,
+      eleito: situacao?.situacao === "eleito",
+      ordemSuplencia: situacao?.ordemSuplencia ?? null,
+      qeSimulado: resultado.quocienteEleitoral,
+      cadeirasPartido:
+        resultado.partidos.find((p) => p.partidoId === partidoEstudo)?.quocientePartidario ?? 0,
+    };
+  }, [estudo, partidoEstudo, total, nome]);
+
+  const linhasReferencia = useMemo(() => {
+    if (!estudo || total <= 0) return [];
+    const veredicto = (r: Referencial) =>
+      total >= r.qe
+        ? "Atingiria o QE sozinho"
+        : total >= r.corte
+          ? "Acima da linha de corte"
+          : `Abaixo do corte (faltam ${(r.corte - total).toLocaleString("pt-BR")})`;
+    const linhas = estudo.referencias.map((r) => ({ ...r, rotulo: String(r.ano), veredicto: veredicto(r), ok: total >= r.corte }));
+    if (estudo.projecao) {
+      linhas.push({
+        ...estudo.projecao,
+        rotulo: `${estudo.projecao.ano} (projeção)`,
+        veredicto: veredicto(estudo.projecao),
+        ok: total >= estudo.projecao.corte,
+      });
+    }
+    return linhas;
+  }, [estudo, total]);
+
   async function baixarPdf() {
     if (gerandoPdf || total === 0) return;
     setGerandoPdf(true);
@@ -73,7 +144,13 @@ export function SimuladorMetaManual({
       const resp = await fetch("/api/pdf/meta-manual", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome: nome.trim() || "Pretenso candidato", itens }),
+        body: JSON.stringify({
+          nome: nome.trim() || "Pretenso candidato",
+          itens,
+          ...(estudo && partidoEstudo
+            ? { cargoId: estudo.cargoId, partidoId: partidoEstudo }
+            : {}),
+        }),
       });
       if (!resp.ok) throw new Error("Falha ao gerar o PDF.");
       const blob = await resp.blob();
@@ -133,6 +210,102 @@ export function SimuladorMetaManual({
           </div>
         </div>
       </div>
+
+      {estudo && (
+        <div className="flex flex-col gap-3 rounded-xl border border-violet-900/50 bg-violet-950/10 p-4">
+          <div>
+            <p className="text-sm font-medium text-violet-300">
+              Estudo de viabilidade — projeção fictícia
+            </p>
+            <p className="text-xs text-neutral-500">
+              Compara o total alimentado com as eleições passadas de {estudo.rotulo} e com a
+              projeção da próxima eleição. É uma observação hipotética, não uma previsão: os
+              votos dos demais candidatos e o quociente mudam a cada eleição.
+            </p>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs text-neutral-500">
+              Partido do pretenso candidato (para simular a disputa)
+            </label>
+            <select
+              value={partidoEstudo}
+              onChange={(e) => setPartidoEstudo(e.target.value)}
+              className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100"
+            >
+              <option value="">Escolha…</option>
+              {estudo.partidos.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.sigla}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {total <= 0 ? (
+            <p className="text-xs text-neutral-600">
+              Alimente votos nos municípios abaixo para ver o estudo.
+            </p>
+          ) : (
+            <>
+              {viabilidade && (
+                <div
+                  className={`rounded-lg border px-4 py-3 text-sm ${
+                    viabilidade.eleito
+                      ? "border-emerald-900 bg-emerald-950/30 text-emerald-200"
+                      : "border-neutral-800 bg-neutral-950 text-neutral-300"
+                  }`}
+                >
+                  <p className="font-medium">
+                    {viabilidade.eleito
+                      ? `✓ Na disputa base, com ${total.toLocaleString("pt-BR")} votos pelo ${viabilidade.sigla}, o pretenso candidato SERIA ELEITO neste cenário fictício.`
+                      : `Na disputa base, com ${total.toLocaleString("pt-BR")} votos pelo ${viabilidade.sigla}, ficaria como ${viabilidade.ordemSuplencia}º suplente neste cenário fictício.`}
+                  </p>
+                  <p className="mt-1 text-xs text-neutral-500">
+                    O partido ficaria com {viabilidade.cadeirasPartido} cadeira(s) · QE do cenário:{" "}
+                    {viabilidade.qeSimulado.toLocaleString("pt-BR")} (os votos alimentados entram
+                    nos válidos)
+                  </p>
+                </div>
+              )}
+
+              {linhasReferencia.length > 0 && (
+                <div className="overflow-hidden rounded-lg border border-neutral-800">
+                  <div
+                    className="grid gap-2 border-b border-neutral-800 bg-neutral-950 px-3 py-2 text-[11px] font-medium uppercase tracking-wide text-neutral-500"
+                    style={{ gridTemplateColumns: "1.1fr 1fr 1fr 1.6fr" }}
+                  >
+                    <span>Eleição</span>
+                    <span className="text-right">QE</span>
+                    <span className="text-right">Linha de corte</span>
+                    <span className="text-right">Com seus {total.toLocaleString("pt-BR")} votos</span>
+                  </div>
+                  {linhasReferencia.map((l) => (
+                    <div
+                      key={l.rotulo}
+                      className="grid gap-2 border-b border-neutral-800/50 bg-neutral-900 px-3 py-2 text-xs last:border-0"
+                      style={{ gridTemplateColumns: "1.1fr 1fr 1fr 1.6fr" }}
+                    >
+                      <span className="text-neutral-300">{l.rotulo}</span>
+                      <span className="text-right text-neutral-500">{l.qe.toLocaleString("pt-BR")}</span>
+                      <span className="text-right text-neutral-500">{l.corte.toLocaleString("pt-BR")}</span>
+                      <span className={`text-right ${l.ok ? "text-emerald-400" : "text-red-400"}`}>
+                        {l.veredicto}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="text-[11px] text-neutral-600">
+                Linha de corte = menor votação nominal entre os eleitos daquele ano. A projeção
+                escala o último ano pelo crescimento do eleitorado. Passar do corte não garante
+                eleição (depende do desempenho do partido no quociente), assim como ficar abaixo
+                não impede (vagas por sobras) — use como panorama.
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
       {porRegiao.length > 0 && (
         <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900">

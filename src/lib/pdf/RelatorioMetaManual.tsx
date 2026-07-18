@@ -1,12 +1,21 @@
 import { Text, View } from "@react-pdf/renderer";
 import { ReportShell, StatBox, SectionTitle, TableHeader, TableRow } from "./ReportShell";
 import { styles } from "./styles";
+import type { EstudoViabilidadeCalculado } from "@/lib/cenario";
 
 export type ItemMetaManual = { municipio: string; regiao: string; votos: number };
 
 const f = (n: number) => n.toLocaleString("pt-BR");
 
-export function RelatorioMetaManual({ nome, itens }: { nome: string; itens: ItemMetaManual[] }) {
+export function RelatorioMetaManual({
+  nome,
+  itens,
+  estudo,
+}: {
+  nome: string;
+  itens: ItemMetaManual[];
+  estudo?: EstudoViabilidadeCalculado | null;
+}) {
   const total = itens.reduce((s, i) => s + i.votos, 0);
 
   const porRegiao = new Map<string, number>();
@@ -58,6 +67,33 @@ export function RelatorioMetaManual({ nome, itens }: { nome: string; itens: Item
           />
         ))}
       </View>
+
+      {estudo && (
+        <>
+          <SectionTitle>Estudo de viabilidade — PROJEÇÃO FICTÍCIA</SectionTitle>
+          <Text style={styles.subtitle}>
+            Observação hipotética sobre a disputa base ({estudo.rotulo}): inserindo {nome} pelo{" "}
+            {estudo.sigla} com {f(total)} votos,{" "}
+            {estudo.eleito
+              ? "o pretenso candidato SERIA ELEITO neste cenário"
+              : `ficaria como ${estudo.ordemSuplencia}º suplente neste cenário`}
+            . O partido ficaria com {estudo.cadeirasPartido} cadeira(s) e o quociente eleitoral do
+            cenário seria {f(estudo.qeSimulado)}.
+          </Text>
+          <View style={styles.table}>
+            <TableHeader columns={["Eleição", "QE", "Linha de corte", `Com ${f(total)} votos`]} />
+            {estudo.linhas.map((l) => (
+              <TableRow key={l.rotulo} cells={[l.rotulo, f(l.qe), f(l.corte), l.veredicto]} />
+            ))}
+          </View>
+          <Text style={styles.subtitle}>
+            Linha de corte = menor votação nominal entre os eleitos do ano; a projeção escala o
+            último ano pelo crescimento do eleitorado. Este estudo é uma projeção fictícia para
+            observação de panorama — NÃO é previsão: o quociente e os votos dos concorrentes mudam
+            a cada eleição, e a eleição depende do desempenho do partido (quociente e sobras).
+          </Text>
+        </>
+      )}
 
       <Text style={styles.subtitle}>
         Distribuição hipotética montada à mão — não representa resultado oficial de eleição.
