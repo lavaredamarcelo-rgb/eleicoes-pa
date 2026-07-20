@@ -1,10 +1,23 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { FileDown, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { FileDown, FolderOpen, Save, Search, Shuffle } from "lucide-react";
 import { calcularSimulacao, type CandidatoSimulacao } from "@/lib/simulacaoPartido";
+import { salvarCenarioMeta, excluirCenarioMeta } from "@/app/actions/cenarios";
+import { BotaoExcluir } from "@/components/BotaoExcluir";
 
-type MunicipioOpcao = { id: string; nome: string; regiaoNome: string };
+type MunicipioOpcao = { id: string; nome: string; regiaoNome: string; eleitores: number };
+
+type CenarioSalvo = {
+  id: string;
+  titulo: string;
+  candidatoNome: string;
+  partidoId: string | null;
+  votos: Record<string, number>;
+  total: number;
+  atualizadoEm: string;
+};
 
 type Referencial = { ano: number; vagas: number; validos: number; qe: number; corte: number };
 
@@ -30,16 +43,29 @@ export function SimuladorMetaManual({
   nomeInicial,
   votosIniciais,
   estudo,
+  cenariosSalvos,
 }: {
   municipios: MunicipioOpcao[];
   nomeInicial?: string;
   votosIniciais?: Record<string, number>; // nome do município → votos
   estudo?: EstudoViabilidade;
+  cenariosSalvos?: CenarioSalvo[];
 }) {
+  const router = useRouter();
   const [nome, setNome] = useState(nomeInicial ?? "");
   const [filtro, setFiltro] = useState("");
   const [partidoEstudo, setPartidoEstudo] = useState("");
   const [gerandoPdf, setGerandoPdf] = useState(false);
+  // Distribuição automática a partir de um total.
+  const [totalDistribuir, setTotalDistribuir] = useState("");
+  const [modoDistribuicao, setModoDistribuicao] = useState<
+    "proporcional" | "proporcional-aleatoria" | "aleatoria"
+  >("proporcional-aleatoria");
+  // Cenários salvos (convenções).
+  const [cenarioAberto, setCenarioAberto] = useState<string | null>(null);
+  const [titulo, setTitulo] = useState("");
+  const [salvando, setSalvando] = useState(false);
+  const [msgCenario, setMsgCenario] = useState<string | null>(null);
   const [votos, setVotos] = useState<Record<string, number>>(() => {
     if (!votosIniciais) return {};
     const porNome: Record<string, number> = {};
@@ -81,6 +107,71 @@ export function SimuladorMetaManual({
       else delete novo[id];
       return novo;
     });
+  }
+
+  // Distribui um total pelos 144 municípios. "Proporcional" segue o
+  // eleitorado; a variação aleatória (±60%) simula desempenhos desiguais;
+  // "aleatória" ignora o eleitorado por completo.
+  function distribuirTotal() {
+    const alvo = Math.round(Number(totalDistribuir.replace(/\D/g, "")));
+    if (!Number.isFinite(alvo) || alvo <= 0) return;
+    const pesos = municipios.map((m) => {
+      const base =
+        modoDistribuicao === "aleatoria" ? Math.random() + 0.02 : Math.max(1, m.eleitores);
+      const fator =
+        modoDistribuicao === "proporcional-aleatoria" ? 0.4 + Math.random() * 1.2 : 1;
+      return { id: m.id, peso: base * fator };
+    });
+    const soma = pesos.reduce((s, p) => s + p.peso, 0);
+    const novo: Record<string, number> = {};
+    let acumulado = 0;
+    for (const p of pesos) {
+      const v = Math.round((alvo * p.peso) / soma);
+      if (v > 0) {
+        novo[p.id] = v;
+        acumulado += v;
+      }
+    }
+    // A sobra do arredondamento vai para o município de maior peso, para o
+    // total fechar exatamente no valor pedido.
+    const diferenca = alvo - acumulado;
+    if (diferenca !== 0) {
+      const maior = [...pesos].sort((a, b) => b.peso - a.peso)[0];
+      novo[maior.id] = Math.max(0, (novo[maior.id] ?? 0) + diferenca);
+    }
+    setVotos(novo);
+  }
+
+  function abrirCenario(c: CenarioSalvo) {
+    setCenarioAberto(c.id);
+    setTitulo(c.titulo);
+    setNome(c.candidatoNome);
+    setPartidoEstudo(c.partidoId ?? "");
+    setVotos({ ...c.votos });
+    setMsgCenario(null);
+  }
+
+  async function salvarCenario(comoNovo: boolean) {
+    if (salvando || !estudo) return;
+    setSalvando(true);
+    setMsgCenario(null);
+    try {
+      const { id } = await salvarCenarioMeta({
+        id: comoNovo ? undefined : cenarioAberto ?? undefined,
+        cargoId: estudo.cargoId,
+        titulo,
+        candidatoNome: nome,
+        partidoId: partidoEstudo || undefined,
+        votos,
+      });
+      setCenarioAberto(id);
+      setMsgCenario("✓ Cenário salvo.");
+      router.refresh();
+    } catch (e) {
+      setMsgCenario(e instanceof Error ? e.message : "Falha ao salvar o cenário.");
+    } finally {
+      setSalvando(false);
+    }
   }
 
   // Estudo de viabilidade: insere o pretenso candidato na disputa base com
@@ -167,6 +258,101 @@ export function SimuladorMetaManual({
 
   return (
     <div className="flex flex-col gap-4">
+      {estudo && (
+        <div className="flex flex-col gap-3 rounded-xl border border-amber-900/40 bg-amber-950/10 p-4">
+          <p className="text-sm font-medium text-amber-300">
+            Cenários salvos — planeje as convenções ({(cenariosSalvos ?? []).length})
+          </p>
+          {(cenariosSalvos ?? []).length > 0 ? (
+            <div className="flex flex-col gap-1.5">
+              {(cenariosSalvos ?? []).map((c) => (
+                <div
+                  key={c.id}
+                  className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 ${
+                    cenarioAberto === c.id
+                      ? "border-amber-700 bg-amber-950/30"
+                      : "border-neutral-800 bg-neutral-900"
+                  }`}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-neutral-200">{c.titulo}</p>
+                    <p className="text-xs text-neutral-500">
+                      {c.candidatoNome} · {c.total.toLocaleString("pt-BR")} votos ·{" "}
+                      {c.atualizadoEm}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <button
+                      onClick={() => abrirCenario(c)}
+                      className="flex items-center gap-1 rounded-lg border border-neutral-700 px-2 py-1 text-xs text-neutral-300 transition-colors hover:border-neutral-500"
+                    >
+                      <FolderOpen size={12} />
+                      Abrir
+                    </button>
+                    <BotaoExcluir
+                      nome={c.titulo}
+                      acao={async () => {
+                        await excluirCenarioMeta(c.id);
+                        if (cenarioAberto === c.id) setCenarioAberto(null);
+                        router.refresh();
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-neutral-600">
+              Nenhum cenário salvo para esta disputa ainda — monte a distribuição abaixo, dê um
+              título e salve.
+            </p>
+          )}
+
+          <div className="flex flex-col gap-2 border-t border-amber-900/30 pt-3 sm:flex-row sm:items-end">
+            <div className="flex-1">
+              <label className="mb-1 block text-xs text-neutral-500">
+                Título do cenário (ex.: Convenção de Santarém — chapa A)
+              </label>
+              <input
+                type="text"
+                value={titulo}
+                onChange={(e) => setTitulo(e.target.value)}
+                placeholder="Dê um nome para reencontrar depois…"
+                className="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100"
+              />
+            </div>
+            <button
+              onClick={() => salvarCenario(false)}
+              disabled={salvando || !titulo.trim() || total === 0}
+              className="flex items-center justify-center gap-1.5 rounded-lg bg-amber-400 px-3 py-2 text-xs font-semibold text-neutral-950 transition-opacity disabled:opacity-40"
+            >
+              <Save size={13} />
+              {salvando ? "Salvando…" : cenarioAberto ? "Atualizar cenário" : "Salvar cenário"}
+            </button>
+            {cenarioAberto && (
+              <button
+                onClick={() => salvarCenario(true)}
+                disabled={salvando || !titulo.trim() || total === 0}
+                className="rounded-lg border border-amber-800 px-3 py-2 text-xs font-medium text-amber-300 transition-colors hover:border-amber-600 disabled:opacity-40"
+              >
+                Salvar como novo
+              </button>
+            )}
+          </div>
+          {msgCenario && (
+            <p
+              className={`rounded-lg px-3 py-2 text-xs ${
+                msgCenario.startsWith("✓")
+                  ? "border border-emerald-900 bg-emerald-950/30 text-emerald-300"
+                  : "border border-red-900 bg-red-950/40 text-red-300"
+              }`}
+            >
+              {msgCenario}
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
@@ -331,6 +517,47 @@ export function SimuladorMetaManual({
       )}
 
       <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900">
+        <div className="flex flex-col gap-2 border-b border-neutral-800 bg-sky-950/10 p-3">
+          <p className="text-xs font-medium text-sky-300">
+            <Shuffle size={12} className="mr-1 inline" />
+            Distribuição automática — informe o total e o sistema espalha pelos {municipios.length}{" "}
+            municípios (depois ajuste à mão o que quiser)
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              type="number"
+              min={1}
+              value={totalDistribuir}
+              onChange={(e) => setTotalDistribuir(e.target.value)}
+              placeholder="Total de votos (ex.: 120000)"
+              className="flex-1 rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100"
+            />
+            <select
+              value={modoDistribuicao}
+              onChange={(e) =>
+                setModoDistribuicao(
+                  e.target.value as "proporcional" | "proporcional-aleatoria" | "aleatoria"
+                )
+              }
+              className="rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100"
+            >
+              <option value="proporcional">Proporcional ao eleitorado</option>
+              <option value="proporcional-aleatoria">Proporcional com variação aleatória</option>
+              <option value="aleatoria">Totalmente aleatória</option>
+            </select>
+            <button
+              onClick={distribuirTotal}
+              disabled={!totalDistribuir || Number(totalDistribuir) <= 0}
+              className="rounded-lg bg-sky-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-700 disabled:opacity-40"
+            >
+              Distribuir
+            </button>
+          </div>
+          <p className="text-[11px] text-neutral-600">
+            A distribuição substitui os votos já digitados. Clique em Distribuir de novo para
+            sortear outra combinação com o mesmo total.
+          </p>
+        </div>
         <div className="border-b border-neutral-800 p-3">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-600" />

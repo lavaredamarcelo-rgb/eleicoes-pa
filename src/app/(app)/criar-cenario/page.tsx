@@ -10,6 +10,7 @@ import {
   getReferenciaisViabilidade,
 } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
+import { verifySession } from "@/lib/dal";
 
 const MODOS = [
   { chave: "chapa", rotulo: "Trocar chapa de partido" },
@@ -37,10 +38,18 @@ export default async function CriarCenarioPage({
     votosLegenda[vl.partidoId] = (votosLegenda[vl.partidoId] ?? 0) + vl.votos;
   }
 
-  const [municipios, referenciais] =
+  const session = await verifySession();
+  const [municipios, referenciais, cenariosSalvos] =
     dados && modo === "meta"
-      ? await Promise.all([getMunicipiosParaMeta(), getReferenciaisViabilidade(dados.cargoId)])
-      : [null, null];
+      ? await Promise.all([
+          getMunicipiosParaMeta(),
+          getReferenciaisViabilidade(dados.cargoId),
+          prisma.cenarioMeta.findMany({
+            where: { userId: String(session.userId), cargoId: dados.cargoId },
+            orderBy: { updatedAt: "desc" },
+          }),
+        ])
+      : [null, null, null];
 
   const rotuloDisputa = dados
     ? `${dados.cargoNome} · ${dados.municipioNome ?? "PA"} · ${dados.ano}`
@@ -119,6 +128,18 @@ export default async function CriarCenarioPage({
                   referencias: referenciais.referencias,
                   projecao: referenciais.projecao,
                 }}
+                cenariosSalvos={(cenariosSalvos ?? []).map((c) => {
+                  const votos = JSON.parse(c.votos) as Record<string, number>;
+                  return {
+                    id: c.id,
+                    titulo: c.titulo,
+                    candidatoNome: c.candidatoNome,
+                    partidoId: c.partidoId,
+                    votos,
+                    total: Object.values(votos).reduce((s, v) => s + v, 0),
+                    atualizadoEm: c.updatedAt.toLocaleString("pt-BR"),
+                  };
+                })}
               />
             )
           )}

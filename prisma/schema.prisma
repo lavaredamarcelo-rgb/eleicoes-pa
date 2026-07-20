@@ -54,6 +54,7 @@ model User {
   criados           User[]             @relation("UsuariosCriados")
   favoritosApuracao ApuracaoFavorito[]
   relatorios        Relatorio[]
+  cenariosMeta      CenarioMeta[]
   createdAt         DateTime           @default(now())
 }
 
@@ -97,6 +98,7 @@ model Cargo {
   municipio    Municipio?    @relation(fields: [municipioId], references: [id])
   candidatos   Candidato[]
   votosLegenda VotoLegenda[]
+  cenariosMeta CenarioMeta[]
 }
 
 model Partido {
@@ -282,4 +284,22 @@ model ConfigSistema {
   chave        String   @id
   valor        String
   atualizadoEm DateTime @updatedAt
+}
+
+// Cenário salvo da meta por município (Criar Cenário): a distribuição
+// manual de votos de um pretenso candidato, guardada para as convenções
+// municipais — cada organizador cria e alimenta seus cenários possíveis.
+model CenarioMeta {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  cargoId       String
+  cargo         Cargo    @relation(fields: [cargoId], references: [id])
+  titulo        String
+  candidatoNome String
+  partidoId     String?
+  // JSON { municipioId: votos }
+  votos         String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

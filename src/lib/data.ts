@@ -689,14 +689,19 @@ export async function getReferenciaisViabilidade(cargoId: string) {
   };
 }
 
-// Lista enxuta de municípios (com região) para a distribuição manual de
-// votos no simulador de meta.
+// Lista enxuta de municípios (com região e eleitorado mais recente) para a
+// distribuição manual de votos no simulador de meta.
 export async function getMunicipiosParaMeta() {
   const municipios = await prisma.municipio.findMany({
-    include: { regiao: true },
+    include: { regiao: true, eleitorado: true },
     orderBy: { nome: "asc" },
   });
-  return municipios.map((m) => ({ id: m.id, nome: m.nome, regiaoNome: m.regiao.nome }));
+  return municipios.map((m) => ({
+    id: m.id,
+    nome: m.nome,
+    regiaoNome: m.regiao.nome,
+    eleitores: eleitoresMaisRecentes(m.eleitorado).eleitores,
+  }));
 }
 
 export async function getCandidatosPorCargo(cargoId: string) {
