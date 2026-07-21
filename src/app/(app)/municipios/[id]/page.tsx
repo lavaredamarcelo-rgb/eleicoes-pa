@@ -128,6 +128,14 @@ export default async function MunicipioDetailPage({
               </Link>
             )}
           </div>
+          {(eleitos.vereadorSubJudice || eleitos.vereadorObsJudicial) && (
+            <p className="rounded-lg border border-violet-900/60 bg-violet-950/20 px-3 py-2 text-xs text-violet-300">
+              ⚖️{" "}
+              {eleitos.vereadorSubJudice
+                ? "Disputa sub judice — totalização suspensa pela Justiça Eleitoral; os números podem mudar."
+                : eleitos.vereadorObsJudicial}
+            </p>
+          )}
           {eleitos.vereadores.map((v, i) => (
             <CardLink key={v.id} href={`/candidatos/${v.id}`}>
               <div className="flex items-center gap-3">

@@ -1131,6 +1131,9 @@ export async function getEleitosDoMunicipio(municipioId: string) {
       .sort((a, b) => b.votos - a.votos),
     cargoVereadorId: vereadorCargo?.id ?? null,
     cargoPrefeitoId: prefeitoCargo?.id ?? null,
+    // Indicativo de disputa que passou (ou está) sub judice na JE.
+    vereadorSubJudice: vereadorCargo?.subJudice ?? false,
+    vereadorObsJudicial: vereadorCargo?.obsJudicial ?? null,
   };
 }
 

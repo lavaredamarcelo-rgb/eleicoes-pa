@@ -3,6 +3,7 @@ import { RadioTower } from "lucide-react";
 import { verifySession } from "@/lib/dal";
 import { getEleicoes } from "@/lib/data";
 import { ImportacaoTseForm } from "@/components/ImportacaoTseForm";
+import { BotaoCorrigirSubJudice } from "@/components/BotaoCorrigirSubJudice";
 
 export default async function ImportacaoPage() {
   const session = await verifySession();
@@ -22,6 +23,8 @@ export default async function ImportacaoPage() {
       </div>
 
       <ImportacaoTseForm eleicoes={eleicoes} />
+
+      <BotaoCorrigirSubJudice />
 
       <section className="flex flex-col gap-3 rounded-xl border border-neutral-800 bg-neutral-900 p-4">
         <div className="flex items-center gap-2">

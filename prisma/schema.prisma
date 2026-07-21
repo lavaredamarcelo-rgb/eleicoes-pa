@@ -96,6 +96,11 @@ model Cargo {
   eleicao      Eleicao       @relation(fields: [eleicaoId], references: [id])
   municipioId  String?
   municipio    Municipio?    @relation(fields: [municipioId], references: [id])
+  // Disputa sub judice: totalização suspensa/pendente por decisão da
+  // Justiça Eleitoral — exibida com um indicativo nas telas.
+  subJudice    Boolean       @default(false)
+  // Nota judicial (ex.: "Retotalizada em 24/09/2025 por decisão da JE").
+  obsJudicial  String?
   candidatos   Candidato[]
   votosLegenda VotoLegenda[]
   cenariosMeta CenarioMeta[]

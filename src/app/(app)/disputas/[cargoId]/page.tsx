@@ -64,6 +64,15 @@ export default async function DisputaMunicipioPage({
         <p className="text-sm text-neutral-500">{municipio ? municipio.nome : "Pará (estadual)"}</p>
       </div>
 
+      {(cargo.subJudice || cargo.obsJudicial) && (
+        <p className="rounded-lg border border-violet-900/60 bg-violet-950/20 px-3 py-2 text-xs text-violet-300">
+          ⚖️{" "}
+          {cargo.subJudice
+            ? "Disputa sub judice — totalização suspensa pela Justiça Eleitoral; os números podem mudar."
+            : cargo.obsJudicial}
+        </p>
+      )}
+
       {porTurno.map(({ turno, ranking, total }) => (
         <section key={turno} className="flex flex-col gap-2">
           <h2 className="text-sm font-medium text-neutral-400">
