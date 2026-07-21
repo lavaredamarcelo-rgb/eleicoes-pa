@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import mapaData from "@/data/pa-mapa.json";
 
@@ -63,19 +63,52 @@ export function MapaParaense({
   const [tooltipPos, setTooltipPos] = useState<{ left: number; top: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  function handleMouseMove(e: React.MouseEvent<SVGSVGElement>) {
+  // Telas de toque (sem mouse): o 1º toque mostra as informações e o 2º
+  // toque — no mesmo município ou no botão do balão — abre os detalhes,
+  // reproduzindo o "passar o mouse" do computador.
+  const [temHover, setTemHover] = useState(true);
+  useEffect(() => {
+    setTemHover(window.matchMedia("(hover: hover)").matches);
+  }, []);
+
+  function posicionarTooltip(clientX: number, clientY: number) {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
     const tooltipW = 190;
-    const tooltipH = 96;
+    const tooltipH = temHover ? 96 : 130;
     const offset = 16;
     let left = x + offset;
     let top = y + offset;
     if (left + tooltipW > rect.width) left = x - tooltipW - offset;
     if (top + tooltipH > rect.height) top = y - tooltipH - offset;
     setTooltipPos({ left: Math.max(4, left), top: Math.max(4, top) });
+  }
+
+  function handleMouseMove(e: React.MouseEvent<SVGSVGElement>) {
+    if (!temHover) return;
+    posicionarTooltip(e.clientX, e.clientY);
+  }
+
+  function navegar(m: MunicipioMapa) {
+    router.push(
+      m.linkCargoId ? `/disputas/${m.linkCargoId}?municipio=${m.id}` : `/municipios/${m.id}`
+    );
+  }
+
+  function handleToque(m: MunicipioMapa, e: React.MouseEvent) {
+    if (temHover) {
+      // Com mouse, o clique abre direto (o tooltip já apareceu no hover).
+      navegar(m);
+      return;
+    }
+    if (hover?.id === m.id) {
+      navegar(m);
+      return;
+    }
+    setHover(m);
+    posicionarTooltip(e.clientX, e.clientY);
   }
 
   const totalPorRegiao = useMemo(() => {
@@ -152,15 +185,11 @@ export function MapaParaense({
                 stroke={isHover ? "#f8fafc" : "#0a0a0a"}
                 strokeWidth={isHover ? 2 : 0.5}
                 className="cursor-pointer transition-[fill,stroke] duration-150"
-                onMouseEnter={() => setHover(m)}
-                onMouseLeave={() => setHover((h) => (h?.id === m.id ? null : h))}
-                onClick={() =>
-                  router.push(
-                    m.linkCargoId
-                      ? `/disputas/${m.linkCargoId}?municipio=${m.id}`
-                      : `/municipios/${m.id}`
-                  )
+                onMouseEnter={temHover ? () => setHover(m) : undefined}
+                onMouseLeave={
+                  temHover ? () => setHover((h) => (h?.id === m.id ? null : h)) : undefined
                 }
+                onClick={(e) => handleToque(m, e)}
               />
             );
           })}
@@ -168,9 +197,20 @@ export function MapaParaense({
 
         {hover && tooltipPos && (
           <div
-            className="pointer-events-none absolute rounded-lg border border-neutral-700 bg-neutral-900/95 px-3 py-2 text-xs shadow-lg backdrop-blur"
+            className={`absolute rounded-lg border border-neutral-700 bg-neutral-900/95 px-3 py-2 text-xs shadow-lg backdrop-blur ${
+              temHover ? "pointer-events-none" : ""
+            }`}
             style={{ left: tooltipPos.left, top: tooltipPos.top }}
           >
+            {!temHover && (
+              <button
+                onClick={() => setHover(null)}
+                aria-label="Fechar"
+                className="absolute right-1.5 top-1 text-neutral-500 hover:text-neutral-200"
+              >
+                ×
+              </button>
+            )}
             <p className="font-semibold text-neutral-100">{hover.nome}</p>
             <p className="text-neutral-400">{hover.regiaoNome}</p>
             {hover.eleitorado ? (
@@ -209,6 +249,14 @@ export function MapaParaense({
                 Prefeito: {hover.prefeito.nome} ({hover.prefeito.partido} · {hover.prefeito.ano})
               </p>
             )}
+            {!temHover && (
+              <button
+                onClick={() => navegar(hover)}
+                className="mt-1.5 w-full rounded-md bg-amber-400 px-2 py-1.5 text-center text-xs font-semibold text-neutral-950"
+              >
+                Ver detalhes →
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -226,9 +274,13 @@ export function MapaParaense({
       </div>
 
       <p className="text-center text-xs text-neutral-600">
-        {comVotos
-          ? "Toque em um município para ver todos os candidatos desse cargo nele. Cor mais clara = mais votos."
-          : "Toque em um município para ver os detalhes. Cor mais clara = mais eleitores (projeção)."}
+        {temHover
+          ? comVotos
+            ? "Passe o mouse para ver as informações e clique para abrir a disputa no município. Cor mais clara = mais votos."
+            : "Passe o mouse para ver as informações e clique para abrir os detalhes. Cor mais clara = mais eleitores (projeção)."
+          : comVotos
+            ? "Toque em um município para ver as informações; toque de novo (ou em Ver detalhes) para abrir a disputa nele. Cor mais clara = mais votos."
+            : "Toque em um município para ver as informações; toque de novo (ou em Ver detalhes) para abrir os detalhes. Cor mais clara = mais eleitores (projeção)."}
       </p>
     </div>
   );
