@@ -10,7 +10,7 @@ export function CalculadoraCenarios({
 }: {
   vagasIniciais?: number;
   votosValidosIniciais?: number;
-  projecao?: { ano: number; votosValidos: number; eleitoresAptos: number };
+  projecao?: { ano: number; votosValidos: number; eleitoresAptos: number; aptosOficiais?: boolean };
   rotuloReferencia?: string;
 } = {}) {
   const [vagas, setVagas] = useState(vagasIniciais ?? 10);
@@ -101,10 +101,16 @@ export function CalculadoraCenarios({
                     </option>
                   )}
                   <option value="validos">
-                    Projeção de votos válidos {projecao.ano} ({projecao.votosValidos.toLocaleString("pt-BR")})
+                    {projecao.aptosOficiais
+                      ? `Votos válidos ${projecao.ano} estimados sobre o eleitorado oficial`
+                      : `Projeção de votos válidos ${projecao.ano}`}{" "}
+                    ({projecao.votosValidos.toLocaleString("pt-BR")})
                   </option>
                   <option value="aptos">
-                    Projeção de eleitores aptos {projecao.ano} ({projecao.eleitoresAptos.toLocaleString("pt-BR")})
+                    {projecao.aptosOficiais
+                      ? `Eleitores aptos ${projecao.ano} — oficial TSE`
+                      : `Projeção de eleitores aptos ${projecao.ano}`}{" "}
+                    ({projecao.eleitoresAptos.toLocaleString("pt-BR")})
                   </option>
                 </select>
               </div>

@@ -298,7 +298,9 @@ export async function getEleitoradoEstadoPorAno() {
     const [ultimoAno, ultimoTotal] = anos[anos.length - 1];
     const anosSpan = ultimoAno - primeiroAno;
     const taxaAnual = anosSpan > 0 && primeiroTotal > 0 ? Math.pow(ultimoTotal / primeiroTotal, 1 / anosSpan) - 1 : 0;
-    const anoProjecao = proximaEleicao(ultimoAno);
+    // Com o eleitorado oficial do ano da eleição corrente já publicado,
+    // a série termina no dado real — sem ponto projetado.
+    const anoProjecao = ultimoAno >= new Date().getFullYear() ? ultimoAno : proximaEleicao(ultimoAno);
     if (anoProjecao > ultimoAno) {
       const projecao = Math.round(ultimoTotal * Math.pow(1 + taxaAnual, anoProjecao - ultimoAno));
       pontos.push({ ano: anoProjecao, total: projecao, projetado: true });
@@ -1421,8 +1423,13 @@ export async function getEleitoradoProjecao() {
 
   const resultado = new Map<
     string,
-    { ultimoAno: number; ultimoTotal: number; anoProjecao: number; projecao: number }
+    { ultimoAno: number; ultimoTotal: number; anoProjecao: number; projecao: number; oficial: boolean }
   >();
+
+  // Se o TSE já publicou o eleitorado do próprio ano da eleição corrente
+  // (ex.: o apto oficial de 2026 sai em julho de 2026), o alvo é esse ano
+  // e o número é o oficial — sem projeção.
+  const anoCorrente = new Date().getFullYear();
 
   for (const [municipioId, lista] of porMunicipio) {
     const primeiro = lista[0];
@@ -1430,7 +1437,7 @@ export async function getEleitoradoProjecao() {
     const anos = ultimo.ano - primeiro.ano;
     const taxaAnual =
       anos > 0 && primeiro.total > 0 ? Math.pow(ultimo.total / primeiro.total, 1 / anos) - 1 : 0;
-    const anoProjecao = proximaEleicao(ultimo.ano);
+    const anoProjecao = ultimo.ano >= anoCorrente ? ultimo.ano : proximaEleicao(ultimo.ano);
     const anosAteProjecao = Math.max(0, anoProjecao - ultimo.ano);
     const projecao = Math.round(ultimo.total * Math.pow(1 + taxaAnual, anosAteProjecao));
     resultado.set(municipioId, {
@@ -1438,6 +1445,7 @@ export async function getEleitoradoProjecao() {
       ultimoTotal: ultimo.total,
       anoProjecao,
       projecao,
+      oficial: anosAteProjecao === 0,
     });
   }
 

@@ -94,10 +94,12 @@ async function SecaoProjecao({ cargoId }: { cargoId?: string }) {
   const cargos = await getCargosParaSimulacao({ tipoApuracao: "PROPORCIONAL" });
   const dados = cargoId ? await getDadosSimulacaoCargo(cargoId) : null;
 
-  // Projeções para a próxima eleição no recorte do cargo: eleitorado apto
-  // projetado e votos válidos projetados (aptos × proporção válidos/aptos
-  // observada na disputa escolhida).
-  let projecao: { ano: number; votosValidos: number; eleitoresAptos: number } | undefined;
+  // Próxima eleição no recorte do cargo: eleitorado apto (oficial do TSE,
+  // quando já publicado; senão projetado) e votos válidos estimados
+  // (aptos × proporção válidos/aptos observada na disputa escolhida).
+  let projecao:
+    | { ano: number; votosValidos: number; eleitoresAptos: number; aptosOficiais: boolean }
+    | undefined;
   if (dados?.eleitores && dados.eleitores.eleitores > 0) {
     const projecoes = await getEleitoradoProjecao();
     const entradas = dados.municipioId
@@ -110,6 +112,7 @@ async function SecaoProjecao({ cargoId }: { cargoId?: string }) {
         ano: anoProjecao,
         votosValidos: Math.round(aptosProjetados * (dados.votosValidos / dados.eleitores.eleitores)),
         eleitoresAptos: aptosProjetados,
+        aptosOficiais: entradas.every((e) => e.oficial),
       };
     }
   }
