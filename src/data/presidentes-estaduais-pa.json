@@ -1,0 +1,314 @@
+[
+ {
+  "sigla": "AGIR",
+  "numero": 36,
+  "presidente": "José Teófilo De Almeida Gomes",
+  "vigente": false,
+  "inicio": "30/01/2016",
+  "orgao": "Órgão Definitivo"
+ },
+ {
+  "sigla": "AVANTE",
+  "numero": 70,
+  "presidente": "Wescley Tomaz Silva Aguiar",
+  "vigente": false,
+  "inicio": "01/01/2026",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "CIDADANIA",
+  "numero": 23,
+  "presidente": "Daniel Pantoja Estumano",
+  "vigente": true,
+  "inicio": "26/06/2026",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "DC",
+  "numero": 27,
+  "presidente": "Breno Mesquita Da Rosa",
+  "vigente": true,
+  "inicio": "25/06/2026",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "DEM",
+  "numero": 98,
+  "presidente": "Hélio Leite Da Silva",
+  "vigente": false,
+  "inicio": "25/04/2019",
+  "orgao": "Órgão Definitivo"
+ },
+ {
+  "sigla": "DEMOCRATA",
+  "numero": 35,
+  "presidente": "Paulo Sezar Moraes Rodrigues",
+  "vigente": true,
+  "inicio": "21/07/2026",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "MDB",
+  "numero": 15,
+  "presidente": "Jader Fontenelle Barbalho Filho",
+  "vigente": true,
+  "inicio": "25/08/2023",
+  "orgao": "Órgão Definitivo"
+ },
+ {
+  "sigla": "MISSÃO",
+  "numero": 14,
+  "presidente": "Samuel Pantoja Da Silva",
+  "vigente": true,
+  "inicio": "08/04/2026",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "MOBILIZA",
+  "numero": 33,
+  "presidente": "Mariana Chaves Fascio Marinho",
+  "vigente": true,
+  "inicio": "23/02/2026",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "NOVO",
+  "numero": 30,
+  "presidente": "Fábio Ricardo Da Silva",
+  "vigente": true,
+  "inicio": "01/01/2026",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "PATRIOTA",
+  "numero": 51,
+  "presidente": "Osvaldo Rabelo De Melo Junior",
+  "vigente": false,
+  "inicio": "18/07/2022",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "PCB",
+  "numero": 21,
+  "presidente": "Marcos André Menezes Da Silva",
+  "vigente": false,
+  "inicio": "06/06/2014",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "PCDOB",
+  "numero": 65,
+  "presidente": "Jorge Luiz Guimarães Panzera",
+  "vigente": false,
+  "inicio": "29/02/2016",
+  "orgao": "Órgão Definitivo"
+ },
+ {
+  "sigla": "PCO",
+  "numero": 29,
+  "presidente": "Victor Assis Da Silva",
+  "vigente": true,
+  "inicio": "08/05/2026",
+  "orgao": "Órgão Definitivo"
+ },
+ {
+  "sigla": "PDT",
+  "numero": 12,
+  "presidente": "Giovanni Correa Queiroz",
+  "vigente": false,
+  "inicio": "19/11/2016",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "PHS",
+  "numero": 31,
+  "presidente": "Igor Wander Centeno Normando",
+  "vigente": false,
+  "inicio": "11/10/2018",
+  "orgao": "Órgão Definitivo"
+ },
+ {
+  "sigla": "PL",
+  "numero": 22,
+  "presidente": "Joaquim Passarinho Pinto De Souza Porto",
+  "vigente": true,
+  "inicio": "12/05/2026",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "PODE",
+  "numero": 20,
+  "presidente": "Jose Da Cruz Marinho",
+  "vigente": true,
+  "inicio": "01/01/2026",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "PP",
+  "numero": 11,
+  "presidente": "Jose Renato Ogawa Rodrigues",
+  "vigente": true,
+  "inicio": "18/08/2023",
+  "orgao": "Órgão Definitivo"
+ },
+ {
+  "sigla": "PPL",
+  "numero": 54,
+  "presidente": "Leny May Da Silva Campelo",
+  "vigente": false,
+  "inicio": "18/03/2019",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "PRD",
+  "numero": 25,
+  "presidente": "Enok Jerffeson Galvao Da Silva",
+  "vigente": true,
+  "inicio": "09/04/2026",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "PROS",
+  "numero": 90,
+  "presidente": "Shirley Helena Rolim De Souza",
+  "vigente": false,
+  "inicio": "01/08/2022",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "PRP",
+  "numero": 99,
+  "presidente": "Fernando Antonio Rodrigues Coimbra",
+  "vigente": false,
+  "inicio": "13/03/2018",
+  "orgao": "Órgão Definitivo"
+ },
+ {
+  "sigla": "PRTB",
+  "numero": 28,
+  "presidente": "Marcelo Pinto Pedroso",
+  "vigente": true,
+  "inicio": "27/07/2026",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "PSB",
+  "numero": 40,
+  "presidente": "Andreia Brito Gonçalves Siqueira",
+  "vigente": true,
+  "inicio": "29/03/2026",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "PSC",
+  "numero": 97,
+  "presidente": "Evanilza Da Cruz Marinho Maciel",
+  "vigente": false,
+  "inicio": "09/03/2022",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "PSD",
+  "numero": 55,
+  "presidente": "João Ferrari Júnior",
+  "vigente": true,
+  "inicio": "03/05/2023",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "PSDB",
+  "numero": 45,
+  "presidente": "Nilson Pinto De Oliveira",
+  "vigente": true,
+  "inicio": "18/12/2025",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "PSL",
+  "numero": 17,
+  "presidente": "Celso Sabino De Oliveira",
+  "vigente": false,
+  "inicio": "22/12/2021",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "PSOL",
+  "numero": 50,
+  "presidente": "Araceli Maria Pereira Lemos",
+  "vigente": true,
+  "inicio": "30/10/2023",
+  "orgao": "Órgão Definitivo"
+ },
+ {
+  "sigla": "PSTU",
+  "numero": 16,
+  "presidente": "Daniele De Brito Schusterschitz",
+  "vigente": true,
+  "inicio": "25/08/2025",
+  "orgao": "Órgão Definitivo"
+ },
+ {
+  "sigla": "PT",
+  "numero": 13,
+  "presidente": "Jose Roberto Oliveira Faro",
+  "vigente": true,
+  "inicio": "16/09/2025",
+  "orgao": "Órgão Definitivo"
+ },
+ {
+  "sigla": "PTB",
+  "numero": 96,
+  "presidente": "Márcio Desidério Teixeira Miranda",
+  "vigente": false,
+  "inicio": "25/08/2023",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "PV",
+  "numero": 43,
+  "presidente": "Marcelo Danilo Silva Alho Correa",
+  "vigente": true,
+  "inicio": "08/04/2025",
+  "orgao": "Órgão Definitivo"
+ },
+ {
+  "sigla": "REDE",
+  "numero": 18,
+  "presidente": "Ursula Vidal Santiago De Mendonça",
+  "vigente": false,
+  "inicio": "26/04/2017",
+  "orgao": "Órgão Definitivo"
+ },
+ {
+  "sigla": "REPUBLICANOS",
+  "numero": 10,
+  "presidente": "Evandro Garla Pereira Da Silva",
+  "vigente": true,
+  "inicio": "13/04/2026",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "SOLIDARIEDADE",
+  "numero": 77,
+  "presidente": "Jose Raimundo De Oliveira",
+  "vigente": true,
+  "inicio": "01/04/2026",
+  "orgao": "Órgão Provisório"
+ },
+ {
+  "sigla": "UNIÃO",
+  "numero": 44,
+  "presidente": "Francisco Das Chagas Silva Melo Filho",
+  "vigente": true,
+  "inicio": "05/03/2026",
+  "orgao": "Comissão Interventora"
+ },
+ {
+  "sigla": "UP",
+  "numero": 80,
+  "presidente": "Carlos Edisio Torres Leite",
+  "vigente": true,
+  "inicio": "02/11/2025",
+  "orgao": "Órgão Definitivo"
+ }
+]
