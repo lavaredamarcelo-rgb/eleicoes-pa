@@ -269,3 +269,133 @@ export async function calcularMajoritario(cargoId: string) {
       turnos.length === 1 && decisivo.percentualLider > 0 && decisivo.percentualLider <= 50,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Quociente PREVISTO para a próxima eleição de um cargo proporcional:
+// duas estimativas de votos válidos (escala do eleitorado e comparecimento
+// médio histórico) e a decomposição completa das vagas — diretas pelo
+// quociente partidário e sobras rodada a rodada (art. 109).
+
+import {
+  getEleitoradoProjecao,
+  getEleitoresCargo,
+  getReferenciaisViabilidade,
+} from "@/lib/data";
+
+export async function calcularQuocienteProjetado(cargoBaseId: string) {
+  const base = await calcularQuocienteEleitoral(cargoBaseId);
+  if (!base) return null;
+  const municipioId = base.cargo.municipioId ?? null;
+  const anoBase = base.cargo.eleicao.ano;
+
+  const [projecoes, aptosBase, referenciais] = await Promise.all([
+    getEleitoradoProjecao(),
+    getEleitoresCargo(municipioId, anoBase),
+    getReferenciaisViabilidade(cargoBaseId),
+  ]);
+  const entradas = municipioId
+    ? [projecoes.get(municipioId)].filter((e) => e !== undefined)
+    : Array.from(projecoes.values());
+  const aptosAlvo = entradas.reduce((s, e) => s + e.projecao, 0);
+  const anoAlvo = entradas.reduce((max, e) => Math.max(max, e.anoProjecao), 0);
+  const aptosOficiais = entradas.length > 0 && entradas.every((e) => e.oficial);
+  if (!aptosBase || aptosBase.eleitores <= 0 || aptosAlvo <= 0 || anoAlvo <= anoBase) return null;
+
+  const fator = aptosAlvo / aptosBase.eleitores;
+  const vagas = base.cargo.vagas;
+
+  // Estimativa A — votos válidos da base escalados pelo eleitorado.
+  const validosEleitorado = Math.round(base.votosValidos * fator);
+  const qeEleitorado = vagas > 0 ? Math.floor(validosEleitorado / vagas) : 0;
+
+  // Estimativa B — comparecimento válido médio (válidos ÷ aptos) das
+  // eleições anteriores do mesmo cargo, aplicado ao eleitorado alvo.
+  const historico: { ano: number; validos: number; aptos: number; proporcao: number }[] = [];
+  for (const r of referenciais?.referencias ?? []) {
+    const aptosAno = await getEleitoresCargo(municipioId, r.ano);
+    if (aptosAno && aptosAno.eleitores > 0 && r.validos > 0) {
+      historico.push({
+        ano: r.ano,
+        validos: r.validos,
+        aptos: aptosAno.eleitores,
+        proporcao: r.validos / aptosAno.eleitores,
+      });
+    }
+  }
+  const mediaComparecimento =
+    historico.length > 0
+      ? historico.reduce((s, h) => s + h.proporcao, 0) / historico.length
+      : 0;
+  const validosComparecimento = Math.round(aptosAlvo * mediaComparecimento);
+  const qeComparecimento =
+    vagas > 0 && validosComparecimento > 0 ? Math.floor(validosComparecimento / vagas) : 0;
+
+  // Vagas do cenário (estimativa A): diretas pelo QP e sobras rodada a
+  // rodada pela maior média, registrando quem leva cada uma.
+  const partidosProj = base.partidos
+    .map((p) => ({ partidoId: p.partidoId, sigla: p.sigla, votos: Math.round(p.votos * fator) }))
+    .filter((p) => p.votos > 0)
+    .sort((a, b) => b.votos - a.votos);
+
+  const qe = qeEleitorado;
+  const vagasAtuais = new Map<string, number>();
+  let somaDiretas = 0;
+  for (const p of partidosProj) {
+    const diretas = qe > 0 ? Math.floor(p.votos / qe) : 0;
+    vagasAtuais.set(p.partidoId, diretas);
+    somaDiretas += diretas;
+  }
+  const vagasSobras = Math.max(0, vagas - somaDiretas);
+
+  let elegiveis = partidosProj.filter((p) => qe > 0 && p.votos >= qe);
+  if (elegiveis.length === 0) elegiveis = partidosProj;
+  const rodadasSobras: { rodada: number; sigla: string; media: number }[] = [];
+  for (let rodada = 1; rodada <= vagasSobras; rodada++) {
+    let melhor: (typeof partidosProj)[number] | null = null;
+    let melhorMedia = -1;
+    for (const p of elegiveis) {
+      const media = p.votos / ((vagasAtuais.get(p.partidoId) ?? 0) + 1);
+      if (media > melhorMedia || (media === melhorMedia && p.votos > (melhor?.votos ?? -1))) {
+        melhorMedia = media;
+        melhor = p;
+      }
+    }
+    if (!melhor) break;
+    rodadasSobras.push({ rodada, sigla: melhor.sigla, media: Math.round(melhorMedia) });
+    vagasAtuais.set(melhor.partidoId, (vagasAtuais.get(melhor.partidoId) ?? 0) + 1);
+  }
+
+  const tabelaPartidos = partidosProj.map((p) => {
+    const total = vagasAtuais.get(p.partidoId) ?? 0;
+    const diretas = qe > 0 ? Math.floor(p.votos / qe) : 0;
+    return {
+      sigla: p.sigla,
+      votos: p.votos,
+      diretas,
+      sobras: total - diretas,
+      total,
+      faltamProximaVaga: qe > 0 ? qe - (p.votos % qe) : 0,
+    };
+  });
+
+  return {
+    cargoNome: base.cargo.nome,
+    municipioNome: base.cargo.municipio?.nome ?? null,
+    anoBase,
+    anoAlvo,
+    vagas,
+    aptosAlvo,
+    aptosOficiais,
+    fator,
+    estimativaEleitorado: { validos: validosEleitorado, qe: qeEleitorado },
+    estimativaComparecimento: {
+      validos: validosComparecimento,
+      qe: qeComparecimento,
+      media: mediaComparecimento,
+      historico,
+    },
+    partidos: tabelaPartidos,
+    vagasSobras,
+    rodadasSobras,
+  };
+}

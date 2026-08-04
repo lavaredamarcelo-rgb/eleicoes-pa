@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { calcularQuocienteEleitoral, calcularMajoritario } from "@/lib/eleitoral";
+import {
+  calcularQuocienteEleitoral,
+  calcularMajoritario,
+  calcularQuocienteProjetado,
+} from "@/lib/eleitoral";
 import { getPartidos, getEleitoresCargo } from "@/lib/data";
 import { SimuladorPartido } from "@/components/SimuladorPartido";
 import { PdfDownloadLink } from "@/components/PdfDownloadLink";
@@ -14,8 +18,18 @@ export default async function QuocienteDetailPage({
   params: Promise<{ cargoId: string }>;
   searchParams: Promise<{ candidato?: string }>;
 }) {
-  const { cargoId } = await params;
+  const { cargoId: cargoIdBruto } = await params;
+  const cargoId = decodeURIComponent(cargoIdBruto);
   const { candidato: candidatoInicialId } = await searchParams;
+
+  // Disputa projetada ("proj:<id>"): quociente PREVISTO para a próxima
+  // eleição, com duas estimativas de votos válidos e as sobras.
+  if (cargoId.startsWith("proj:")) {
+    const proj = await calcularQuocienteProjetado(cargoId.slice(5));
+    if (!proj) notFound();
+    return <QuocientePrevisto proj={proj} />;
+  }
+
   const cargo = await prisma.cargo.findUnique({ where: { id: cargoId }, include: { eleicao: true } });
   if (!cargo) notFound();
 
@@ -338,5 +352,145 @@ function VotosPorMunicipio({
         </details>
       ))}
     </section>
+  );
+}
+
+function QuocientePrevisto({
+  proj,
+}: {
+  proj: NonNullable<Awaited<ReturnType<typeof calcularQuocienteProjetado>>>;
+}) {
+  const f = (n: number) => n.toLocaleString("pt-BR");
+  const pctMedia = (proj.estimativaComparecimento.media * 100).toLocaleString("pt-BR", {
+    maximumFractionDigits: 1,
+  });
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+          Quociente previsto
+        </p>
+        <h1 className="text-lg font-semibold">
+          {proj.cargoNome} <span className="text-neutral-500">· {proj.anoAlvo} (projeção)</span>
+        </h1>
+        <p className="text-sm text-neutral-500">{proj.municipioNome ?? "Pará (estadual)"}</p>
+      </div>
+
+      <p className="rounded-lg border border-sky-900/60 bg-sky-950/20 px-3 py-2 text-xs text-sky-300">
+        🔮 Projeção sobre a base real de {proj.anoBase}, com{" "}
+        {f(proj.aptosAlvo)} eleitores aptos em {proj.anoAlvo}
+        {proj.aptosOficiais ? " (oficial TSE)" : " (projetados)"} · {proj.vagas} vagas. Números
+        hipotéticos — os votos reais dependerão dos candidatos e do comparecimento.
+      </p>
+
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="rounded-xl border border-amber-900 bg-amber-950/20 px-4 py-3">
+          <p className="text-xs text-amber-300">Estimativa 1 — votos válidos escalados pelo eleitorado</p>
+          <p className="text-2xl font-bold text-amber-300">QE {f(proj.estimativaEleitorado.qe)}</p>
+          <p className="mt-1 text-xs text-neutral-500">
+            {f(proj.estimativaEleitorado.validos)} votos válidos projetados ÷ {proj.vagas} vagas
+          </p>
+        </div>
+        <div className="rounded-xl border border-violet-900 bg-violet-950/20 px-4 py-3">
+          <p className="text-xs text-violet-300">
+            Estimativa 2 — comparecimento válido médio ({pctMedia}% dos aptos)
+          </p>
+          <p className="text-2xl font-bold text-violet-300">
+            QE {f(proj.estimativaComparecimento.qe)}
+          </p>
+          <p className="mt-1 text-xs text-neutral-500">
+            {f(proj.estimativaComparecimento.validos)} votos válidos estimados ÷ {proj.vagas} vagas
+          </p>
+        </div>
+      </section>
+
+      {proj.estimativaComparecimento.historico.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-neutral-400">
+            Comparecimento válido das eleições anteriores (base da média)
+          </h2>
+          <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900">
+            {proj.estimativaComparecimento.historico.map((h) => (
+              <div
+                key={h.ano}
+                className="grid gap-2 border-b border-neutral-800/50 px-4 py-2 text-xs last:border-0"
+                style={{ gridTemplateColumns: "1fr 1.4fr 1.4fr 1fr" }}
+              >
+                <span className="text-neutral-300">{h.ano}</span>
+                <span className="text-right text-neutral-500">{f(h.validos)} válidos</span>
+                <span className="text-right text-neutral-500">{f(h.aptos)} aptos</span>
+                <span className="text-right font-medium text-violet-300">
+                  {(h.proporcao * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-sm font-medium text-neutral-400">
+          Vagas previstas por partido (estimativa 1) — {proj.vagas - proj.vagasSobras} diretas pelo
+          QP + {proj.vagasSobras} por sobras
+        </h2>
+        <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900">
+          <div
+            className="grid gap-2 border-b border-neutral-800 px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-neutral-500"
+            style={{ gridTemplateColumns: "1fr 1.3fr 0.8fr 0.8fr 0.8fr 1.3fr" }}
+          >
+            <span>Partido</span>
+            <span className="text-right">Votos proj.</span>
+            <span className="text-right">Diretas</span>
+            <span className="text-right">Sobras</span>
+            <span className="text-right">Total</span>
+            <span className="text-right">Faltam p/ +1 direta</span>
+          </div>
+          {proj.partidos.map((p) => (
+            <div
+              key={p.sigla}
+              className={`grid gap-2 border-b border-neutral-800/50 px-4 py-2 text-xs last:border-0 ${
+                p.total > 0 ? "" : "opacity-60"
+              }`}
+              style={{ gridTemplateColumns: "1fr 1.3fr 0.8fr 0.8fr 0.8fr 1.3fr" }}
+            >
+              <span className="font-medium text-neutral-200">{p.sigla}</span>
+              <span className="text-right text-neutral-400">{f(p.votos)}</span>
+              <span className="text-right text-neutral-300">{p.diretas}</span>
+              <span className={`text-right ${p.sobras > 0 ? "text-emerald-400" : "text-neutral-500"}`}>
+                {p.sobras}
+              </span>
+              <span className="text-right font-semibold text-amber-400">{p.total}</span>
+              <span className="text-right text-neutral-500">{f(p.faltamProximaVaga)}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {proj.rodadasSobras.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-neutral-400">
+            Possibilidades de sobras — rodada a rodada (maior média, art. 109)
+          </h2>
+          <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900">
+            {proj.rodadasSobras.map((r) => (
+              <div
+                key={r.rodada}
+                className="grid gap-2 border-b border-neutral-800/50 px-4 py-2 text-xs last:border-0"
+                style={{ gridTemplateColumns: "1fr 1fr 1.5fr" }}
+              >
+                <span className="text-neutral-500">{r.rodada}ª sobra</span>
+                <span className="font-medium text-emerald-300">{r.sigla}</span>
+                <span className="text-right text-neutral-500">média {f(r.media)}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-neutral-600">
+            Só disputam as sobras os partidos que atingiram o quociente eleitoral (art. 109, §2º).
+            A média é votos ÷ (vagas já obtidas + 1), recalculada a cada rodada.
+          </p>
+        </section>
+      )}
+    </div>
   );
 }

@@ -35,7 +35,28 @@ export default async function SimulacoesPage({
 }) {
   const { sim: simParam, cargo: cargoId, candidato: candidatoId, base, modo } = await searchParams;
   const sim = simParam && simParam in DESCRICOES ? simParam : "projecao";
-  const anosQuociente = await getHierarquiaCargos();
+  const anosReais = await getHierarquiaCargos();
+
+  // Grupo extra no topo: quociente PREVISTO da próxima eleição para os
+  // cargos proporcionais estaduais do ano-base mais recente.
+  const anoBaseEstadual = anosReais.find((a) =>
+    a.cargos.some((c) => c.escopo === "estadual" && c.tipoApuracao === "PROPORCIONAL")
+  );
+  const anosQuociente = anoBaseEstadual
+    ? [
+        {
+          ano: anoBaseEstadual.ano + 4,
+          cargos: anoBaseEstadual.cargos
+            .filter((c) => c.escopo === "estadual" && c.tipoApuracao === "PROPORCIONAL" && c.cargoId)
+            .map((c) => ({
+              ...c,
+              cargoNome: `${c.cargoNome} (quociente previsto)`,
+              cargoId: `proj:${c.cargoId}`,
+            })),
+        },
+        ...anosReais,
+      ]
+    : anosReais;
 
   return (
     <div className="flex flex-col gap-6">
