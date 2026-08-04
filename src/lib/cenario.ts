@@ -1,6 +1,9 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
-import { getDadosSimulacaoCargo, getReferenciaisViabilidade } from "@/lib/data";
+import {
+  getDadosSimulacaoCargoOuProjetado,
+  getReferenciaisViabilidade,
+} from "@/lib/data";
 import {
   calcularSimulacao,
   type CandidatoSimulacao,
@@ -27,18 +30,14 @@ const generoValido = (g?: string): "F" | "M" | undefined =>
   g === "F" || g === "M" ? g : undefined;
 
 export async function calcularCenarioServidor(payload: CenarioPayload) {
-  const dados = await getDadosSimulacaoCargo(payload.cargoId);
-  if (!dados || dados.tipoApuracao !== "PROPORCIONAL") return null;
+  const carga = await getDadosSimulacaoCargoOuProjetado(payload.cargoId);
+  if (!carga || carga.dados.tipoApuracao !== "PROPORCIONAL") return null;
+  const { dados, votosLegenda, projetado, anoBase } = carga;
 
-  const [todosPartidos, legendaLinhas] = await Promise.all([
-    prisma.partido.findMany({ select: { id: true, sigla: true, nome: true } }),
-    prisma.votoLegenda.findMany({ where: { cargoId: payload.cargoId, turno: 1 } }),
-  ]);
+  const todosPartidos = await prisma.partido.findMany({
+    select: { id: true, sigla: true, nome: true },
+  });
   const partidoById = new Map(todosPartidos.map((p) => [p.id, p]));
-  const votosLegenda: Record<string, number> = {};
-  for (const vl of legendaLinhas) {
-    votosLegenda[vl.partidoId] = (votosLegenda[vl.partidoId] ?? 0) + vl.votos;
-  }
 
   // Substituições: o nome muda, os votos e o partido ficam (é a troca de
   // pessoas dentro da chapa, mantendo a força eleitoral de cada posição).
@@ -203,6 +202,8 @@ export async function calcularCenarioServidor(payload: CenarioPayload) {
       municipioNome: dados.municipioNome,
       vagasOficiais: dados.vagas,
     },
+    projetado,
+    anoBase,
     vagas,
     qeOficial: dados.quocienteEleitoral,
     qeSimulado: resultado.quocienteEleitoral,
@@ -228,20 +229,18 @@ export async function estudoViabilidadeServidor(
   nome: string,
   total: number
 ) {
-  const [dados, referenciais, partidos, legendaLinhas] = await Promise.all([
-    getDadosSimulacaoCargo(cargoId),
-    getReferenciaisViabilidade(cargoId),
+  const carga = await getDadosSimulacaoCargoOuProjetado(cargoId);
+  if (!carga || carga.dados.tipoApuracao !== "PROPORCIONAL") return null;
+  const { dados, votosLegenda } = carga;
+
+  const [referenciais, partidos] = await Promise.all([
+    getReferenciaisViabilidade(carga.baseCargoId),
     prisma.partido.findMany({ select: { id: true, sigla: true, nome: true } }),
-    prisma.votoLegenda.findMany({ where: { cargoId, turno: 1 } }),
   ]);
-  if (!dados || !referenciais || dados.tipoApuracao !== "PROPORCIONAL") return null;
+  if (!referenciais) return null;
 
   const partidoById = new Map(partidos.map((p) => [p.id, p]));
   if (!partidoById.has(partidoId)) return null;
-  const votosLegenda: Record<string, number> = {};
-  for (const vl of legendaLinhas) {
-    votosLegenda[vl.partidoId] = (votosLegenda[vl.partidoId] ?? 0) + vl.votos;
-  }
 
   const resultado = calcularSimulacao(
     [
@@ -381,8 +380,8 @@ export function conteudoRelatorioCenario(calc: CenarioCalculado): ConteudoRelato
   }
 
   return {
-    titulo: `Cenário simulado — ${calc.cargo.nome} · ${abrangencia} · ${calc.cargo.ano}`,
-    resumo: `Cenário hipotético sobre a eleição de ${calc.cargo.ano} (${calc.cargo.nome}, ${abrangencia}) com ${calc.mudancas.length} mudança(s). Quociente eleitoral: ${f(calc.qeOficial)} (oficial) → ${f(calc.qeSimulado)} (cenário), com ${f(calc.votosValidosSimulados)} votos válidos (nominais + legenda) para ${calc.vagas} vagas. Projeção hipotética — não altera os dados oficiais do sistema.`,
+    titulo: `Cenário simulado — ${calc.cargo.nome} · ${abrangencia} · ${calc.cargo.ano}${calc.projetado ? " (projeção)" : ""}`,
+    resumo: `Cenário hipotético sobre a ${calc.projetado ? `disputa PROJETADA de ${calc.cargo.ano} (base real de ${calc.anoBase}, votos escalados pelo eleitorado)` : `eleição de ${calc.cargo.ano}`} (${calc.cargo.nome}, ${abrangencia}) com ${calc.mudancas.length} mudança(s). Quociente eleitoral: ${f(calc.qeOficial)} (referência) → ${f(calc.qeSimulado)} (cenário), com ${f(calc.votosValidosSimulados)} votos válidos (nominais + legenda) para ${calc.vagas} vagas. Projeção hipotética — não altera os dados oficiais do sistema.`,
     secoes,
   };
 }

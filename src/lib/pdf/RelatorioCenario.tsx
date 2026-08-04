@@ -11,7 +11,7 @@ export function RelatorioCenario({ calc }: { calc: CenarioCalculado }) {
   return (
     <ReportShell
       title={`Cenário simulado — ${calc.cargo.nome}`}
-      subtitle={`${abrangencia} · eleição de ${calc.cargo.ano} · ${calc.vagas} vagas${calc.vagas !== calc.cargo.vagasOficiais ? ` (oficial: ${calc.cargo.vagasOficiais})` : ""}`}
+      subtitle={`${abrangencia} · ${calc.projetado ? `disputa projetada de ${calc.cargo.ano} (base real: ${calc.anoBase})` : `eleição de ${calc.cargo.ano}`} · ${calc.vagas} vagas${calc.vagas !== calc.cargo.vagasOficiais ? ` (oficial: ${calc.cargo.vagasOficiais})` : ""}`}
     >
       <View style={styles.statsRow}>
         <StatBox label="QE oficial" value={f(calc.qeOficial)} />

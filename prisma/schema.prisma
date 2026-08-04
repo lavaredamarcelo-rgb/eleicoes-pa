@@ -115,6 +115,11 @@ model Partido {
   // "Partidos Políticos". Podem ficar nulos quando não encontrados.
   presidenteNacional   String?
   presidenteEstadualPA String?
+  // Contatos e composição da executiva estadual vigente (SGIP/TSE).
+  telefoneEstadualPA   String?
+  emailEstadualPA      String?
+  // JSON [{cargo, nome, inicio}] — executiva estadual vigente no PA.
+  executivaEstadualPA  String?
   federacao            String?
   federacaoMembros     String?
   espectro             String?
@@ -128,6 +133,7 @@ model Partido {
   trocasComoOrigem     TrocaPartido[] @relation("TrocaPartidoOrigem")
   trocasComoDestino    TrocaPartido[] @relation("TrocaPartidoDestino")
   votosLegenda         VotoLegenda[]
+  direcoesMunicipais   DirecaoMunicipalPartido[]
 }
 
 model Candidato {
@@ -203,6 +209,7 @@ model Municipio {
   colegiosEleitorais ColegioEleitoral[]
   eleitorado         Eleitorado[]
   votosLegenda       VotoLegenda[]
+  direcoesPartidarias DirecaoMunicipalPartido[]
 
   @@unique([nome, regiaoId])
 }
@@ -307,4 +314,18 @@ model CenarioMeta {
   votos         String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// Presidência municipal vigente de cada partido (SGIP/TSE) — apoio às
+// convenções municipais; só registros com vigência atual são gravados.
+model DirecaoMunicipalPartido {
+  id          String    @id @default(cuid())
+  partidoId   String
+  partido     Partido   @relation(fields: [partidoId], references: [id])
+  municipioId String
+  municipio   Municipio @relation(fields: [municipioId], references: [id])
+  presidente  String
+  inicio      String?
+
+  @@unique([partidoId, municipioId])
 }

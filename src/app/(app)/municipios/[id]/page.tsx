@@ -4,6 +4,7 @@ import { School } from "lucide-react";
 import { CardLink } from "@/components/CardLink";
 import { PdfDownloadLink } from "@/components/PdfDownloadLink";
 import { getMunicipioFicha, getEleitosDoMunicipio, getLocaisDoMunicipio } from "@/lib/data";
+import { prisma } from "@/lib/prisma";
 
 export default async function MunicipioDetailPage({
   params,
@@ -13,9 +14,14 @@ export default async function MunicipioDetailPage({
   const { id } = await params;
   const municipio = await getMunicipioFicha(id);
   if (!municipio) notFound();
-  const [eleitos, locaisInfo] = await Promise.all([
+  const [eleitos, locaisInfo, direcoesPartidarias] = await Promise.all([
     getEleitosDoMunicipio(id),
     getLocaisDoMunicipio(id),
+    prisma.direcaoMunicipalPartido.findMany({
+      where: { municipioId: id },
+      include: { partido: true },
+      orderBy: { partido: { sigla: "asc" } },
+    }),
   ]);
   const { referencia, locais } = locaisInfo;
 
@@ -152,6 +158,39 @@ export default async function MunicipioDetailPage({
               </span>
             </CardLink>
           ))}
+        </section>
+      )}
+
+      {direcoesPartidarias.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-neutral-400">
+            Direções partidárias municipais vigentes ({direcoesPartidarias.length}) — SGIP/TSE
+          </h2>
+          <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900">
+            {direcoesPartidarias.map((d) => (
+              <div
+                key={d.id}
+                className="flex items-center justify-between gap-3 border-b border-neutral-800/50 px-4 py-2 text-sm last:border-0"
+              >
+                <Link
+                  href={`/partidos/${d.partidoId}`}
+                  className="shrink-0 font-medium text-amber-400 hover:underline"
+                >
+                  {d.partido.sigla}
+                </Link>
+                <span className="text-right text-neutral-300">
+                  {d.presidente}
+                  {d.inicio && (
+                    <span className="ml-2 text-xs text-neutral-600">desde {d.inicio}</span>
+                  )}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-neutral-600">
+            Presidentes dos órgãos municipais com vigência atual no SGIP — útil para o
+            planejamento das convenções municipais.
+          </p>
         </section>
       )}
 

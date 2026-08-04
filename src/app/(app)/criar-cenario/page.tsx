@@ -4,7 +4,7 @@ import { SimuladorMetaManual } from "@/components/simuladores/SimuladorMetaManua
 import { CriadorCenario } from "@/components/CriadorCenario";
 import {
   getCargosParaSimulacao,
-  getDadosSimulacaoCargo,
+  getDadosSimulacaoCargoOuProjetado,
   getMunicipiosParaMeta,
   getPartidos,
   getReferenciaisViabilidade,
@@ -24,35 +24,47 @@ export default async function CriarCenarioPage({
 }) {
   const { cargo: cargoId, modo: modoParam } = await searchParams;
   const modo = modoParam === "meta" ? "meta" : "chapa";
-  const cargos = await getCargosParaSimulacao({ tipoApuracao: "PROPORCIONAL" });
-  const dados = cargoId ? await getDadosSimulacaoCargo(cargoId) : null;
+  const cargosReais = await getCargosParaSimulacao({ tipoApuracao: "PROPORCIONAL" });
 
-  const [partidos, legendaLinhas] = dados
-    ? await Promise.all([
-        getPartidos(),
-        prisma.votoLegenda.findMany({ where: { cargoId: dados.cargoId, turno: 1 } }),
-      ])
-    : [[], []];
-  const votosLegenda: Record<string, number> = {};
-  for (const vl of legendaLinhas) {
-    votosLegenda[vl.partidoId] = (votosLegenda[vl.partidoId] ?? 0) + vl.votos;
-  }
+  // Disputas futuras: para cada cargo estadual do ano mais recente, uma
+  // entrada projetada ("proj:<id>") escalada pelo eleitorado da próxima
+  // eleição (oficial do TSE quando publicado) — ex.: Dep. Estadual 2026.
+  const anoEstadualMax = Math.max(
+    0,
+    ...cargosReais.filter((c) => !c.municipioNome).map((c) => c.ano)
+  );
+  const anoFuturo = anoEstadualMax % 2 === 0 ? anoEstadualMax + 4 : anoEstadualMax + 3;
+  const cargosFuturos = cargosReais
+    .filter((c) => !c.municipioNome && c.ano === anoEstadualMax)
+    .map((c) => ({
+      id: `proj:${c.id}`,
+      nome: `${c.nome} (projeção)`,
+      ano: anoFuturo,
+      municipioNome: null,
+    }));
+  const cargos = [...cargosFuturos, ...cargosReais];
+
+  const carga = cargoId ? await getDadosSimulacaoCargoOuProjetado(cargoId) : null;
+  const dados = carga?.dados ?? null;
+  const votosLegenda = carga?.votosLegenda ?? {};
+
+  const partidos = dados ? await getPartidos() : [];
 
   const session = await verifySession();
   const [municipios, referenciais, cenariosSalvos] =
-    dados && modo === "meta"
+    dados && carga && modo === "meta"
       ? await Promise.all([
           getMunicipiosParaMeta(),
-          getReferenciaisViabilidade(dados.cargoId),
+          getReferenciaisViabilidade(carga.baseCargoId),
           prisma.cenarioMeta.findMany({
-            where: { userId: String(session.userId), cargoId: dados.cargoId },
+            where: { userId: String(session.userId), cargoId: carga.baseCargoId },
             orderBy: { updatedAt: "desc" },
           }),
         ])
       : [null, null, null];
 
   const rotuloDisputa = dados
-    ? `${dados.cargoNome} · ${dados.municipioNome ?? "PA"} · ${dados.ano}`
+    ? `${dados.cargoNome} · ${dados.municipioNome ?? "PA"} · ${dados.ano}${carga?.projetado ? " (projeção)" : ""}`
     : "";
 
   return (
@@ -85,6 +97,15 @@ export default async function CriarCenarioPage({
 
       {dados ? (
         <>
+          {carga?.projetado && (
+            <p className="rounded-lg border border-sky-900/60 bg-sky-950/20 px-3 py-2 text-xs text-sky-300">
+              🔮 Disputa <strong>projetada para {dados.ano}</strong>: parte dos resultados reais de{" "}
+              {carga.anoBase} com os votos nominais e de legenda escalados pelo eleitorado{" "}
+              {dados.ano} (oficial do TSE). QE projetado:{" "}
+              {dados.quocienteEleitoral.toLocaleString("pt-BR")}. Troque nomes, partidos e votos à
+              vontade — é o seu cenário de {dados.ano}.
+            </p>
+          )}
           <div className="flex flex-wrap gap-2">
             {MODOS.map((m) => (
               <Link

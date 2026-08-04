@@ -489,6 +489,64 @@ export async function getDadosSimulacaoCargo(cargoId: string) {
   };
 }
 
+// Disputa real OU projetada para os simuladores de cenário. Ids com o
+// prefixo "proj:" viram uma disputa futura: os votos nominais e de legenda
+// da disputa base são escalados pelo crescimento do eleitorado até a
+// próxima eleição (oficial do TSE quando já publicado), e o quociente é
+// recalculado — ex.: "proj:<id do Dep. Estadual 2022>" = Dep. Estadual 2026.
+export async function getDadosSimulacaoCargoOuProjetado(id: string) {
+  const projetado = id.startsWith("proj:");
+  const baseId = projetado ? id.slice(5) : id;
+
+  const dados = await getDadosSimulacaoCargo(baseId);
+  if (!dados) return null;
+
+  const legendaLinhas = await prisma.votoLegenda.findMany({ where: { cargoId: baseId, turno: 1 } });
+  const votosLegenda: Record<string, number> = {};
+  for (const vl of legendaLinhas) {
+    votosLegenda[vl.partidoId] = (votosLegenda[vl.partidoId] ?? 0) + vl.votos;
+  }
+
+  if (!projetado) {
+    return { dados, votosLegenda, projetado: false as const, baseCargoId: baseId, anoBase: dados.ano };
+  }
+
+  const projecoes = await getEleitoradoProjecao();
+  const entradas = dados.municipioId
+    ? [projecoes.get(dados.municipioId)].filter((e) => e !== undefined)
+    : Array.from(projecoes.values());
+  const aptosAlvo = entradas.reduce((s, e) => s + e.projecao, 0);
+  const anoAlvo = entradas.reduce((max, e) => Math.max(max, e.anoProjecao), 0);
+  const aptosBase = dados.eleitores?.eleitores ?? 0;
+  if (aptosAlvo <= 0 || anoAlvo <= dados.ano || aptosBase <= 0) return null;
+
+  const fator = aptosAlvo / aptosBase;
+  const candidatos = dados.candidatos.map((c) => ({ ...c, votos: Math.round(c.votos * fator) }));
+  for (const partidoId of Object.keys(votosLegenda)) {
+    votosLegenda[partidoId] = Math.round(votosLegenda[partidoId] * fator);
+  }
+  const votosValidos =
+    candidatos.reduce((s, c) => s + c.votos, 0) +
+    Object.values(votosLegenda).reduce((s, v) => s + v, 0);
+  const quocienteEleitoral = dados.vagas > 0 ? Math.floor(votosValidos / dados.vagas) : 0;
+
+  return {
+    dados: {
+      ...dados,
+      cargoId: id,
+      ano: anoAlvo,
+      candidatos,
+      votosValidos,
+      quocienteEleitoral,
+      eleitores: { eleitores: aptosAlvo, ano: anoAlvo },
+    },
+    votosLegenda,
+    projetado: true as const,
+    baseCargoId: baseId,
+    anoBase: dados.ano,
+  };
+}
+
 // Distribuição para o simulador de meta de campanha. A base define os
 // PESOS por município: o perfil histórico do próprio candidato, o perfil
 // do partido dele na última eleição de Deputado Estadual (útil quando o

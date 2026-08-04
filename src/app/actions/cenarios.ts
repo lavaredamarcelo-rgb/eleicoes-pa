@@ -45,8 +45,13 @@ export async function salvarCenarioMeta(entrada: {
     }
     salvo = await prisma.cenarioMeta.update({ where: { id: entrada.id }, data: dados });
   } else {
+    // Disputas projetadas ("proj:<id>") gravam sobre o cargo base — o
+    // cenário é uma distribuição de votos por município, válida para ambos.
+    const cargoId = entrada.cargoId.startsWith("proj:")
+      ? entrada.cargoId.slice(5)
+      : entrada.cargoId;
     salvo = await prisma.cenarioMeta.create({
-      data: { ...dados, userId, cargoId: entrada.cargoId },
+      data: { ...dados, userId, cargoId },
     });
   }
 

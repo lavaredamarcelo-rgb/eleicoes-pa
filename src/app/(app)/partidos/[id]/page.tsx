@@ -51,7 +51,30 @@ export default async function PartidoDetailPage({
         <InfoCard label="Presidente estadual (PA)" value={partido.presidenteEstadualPA} />
         <InfoCard label="Espectro ideológico" value={partido.espectro} />
         <InfoCard label="Fundação" value={partido.fundacao ? String(partido.fundacao) : null} />
+        <InfoCard label="Telefone estadual (SGIP)" value={partido.telefoneEstadualPA} />
+        <InfoCard label="E-mail estadual (SGIP)" value={partido.emailEstadualPA} />
       </section>
+
+      {partido.executivaEstadualPA && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-neutral-400">
+            Direção estadual vigente (PA) — SGIP/TSE
+          </h2>
+          <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900">
+            {(JSON.parse(partido.executivaEstadualPA) as { cargo: string; nome: string }[]).map(
+              (m, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between gap-3 border-b border-neutral-800/50 px-4 py-2 text-sm last:border-0"
+                >
+                  <span className="text-xs text-neutral-500">{m.cargo}</span>
+                  <span className="text-right text-neutral-200">{m.nome}</span>
+                </div>
+              )
+            )}
+          </div>
+        </section>
+      )}
 
       {partido.federacao && partido.membrosFederacao.length > 0 && (
         <section className="rounded-xl border border-orange-900/50 bg-orange-950/10 px-4 py-3">

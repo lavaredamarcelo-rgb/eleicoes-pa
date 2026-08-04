@@ -1,0 +1,3841 @@
+[
+ {
+  "sigla": "AGIR",
+  "numero": 36,
+  "telefone": "-1",
+  "email": "shrs234@hotmail.com",
+  "membros": [
+   {
+    "cargo": "Presidente Da Comissão Diretora Provisória Regional",
+    "nome": "José Nildo Jacinto Da Silva",
+    "inicio": "21/05/2026"
+   },
+   {
+    "cargo": "Secretário Da Comissão Diretora Provisória Regional",
+    "nome": "Fabio Ronan Souza Santos",
+    "inicio": "09/02/2026"
+   },
+   {
+    "cargo": "Secretário-Geral Da Comissão Diretora Provisória Regional",
+    "nome": "Anderson Rolim De Souza",
+    "inicio": "09/02/2026"
+   },
+   {
+    "cargo": "Suplente Da Comissão Diretora Provisória Regional",
+    "nome": "Neldo Serra",
+    "inicio": "09/02/2026"
+   },
+   {
+    "cargo": "Tesoureiro Da Comissão Diretora Provisória Regional",
+    "nome": "Jordana Macedo De Souza",
+    "inicio": "09/02/2026"
+   },
+   {
+    "cargo": "Vice- Presidente Da Comissão Diretora Provisória Regional",
+    "nome": "Francisco Rodrigues Cardoso Alves",
+    "inicio": "21/05/2026"
+   }
+  ]
+ },
+ {
+  "sigla": "CIDADANIA",
+  "numero": 23,
+  "telefone": "-1",
+  "email": "dpestumano@hotmail.com",
+  "membros": [
+   {
+    "cargo": "Presidente",
+    "nome": "Daniel Pantoja Estumano",
+    "inicio": "26/06/2026"
+   },
+   {
+    "cargo": "Secretário-Geral",
+    "nome": "Uricelia De Oliveira Leão",
+    "inicio": "26/06/2026"
+   },
+   {
+    "cargo": "Tesoureiro",
+    "nome": "Cláudia De Fátima E Silva",
+    "inicio": "26/06/2026"
+   },
+   {
+    "cargo": "Vice-Presidente",
+    "nome": "Manoel Vera Cruz Dos Santos",
+    "inicio": "26/06/2026"
+   },
+   {
+    "cargo": "Vogal",
+    "nome": "Max Gonçalves Vasconcelos",
+    "inicio": "26/06/2026"
+   }
+  ]
+ },
+ {
+  "sigla": "DC",
+  "numero": 27,
+  "telefone": "-1",
+  "email": "brenomesquita2012@hotmail.com",
+  "membros": [
+   {
+    "cargo": "Presidente",
+    "nome": "Breno Mesquita Da Rosa",
+    "inicio": "25/06/2026"
+   },
+   {
+    "cargo": "Presidente Jovem",
+    "nome": "Carlos Wilker Silva De Sousa",
+    "inicio": "25/06/2026"
+   },
+   {
+    "cargo": "Presidente Mulher",
+    "nome": "Regiane Do Socorro Dos Santos Baia",
+    "inicio": "25/06/2026"
+   },
+   {
+    "cargo": "Primeiro Secretário",
+    "nome": "Mateus Nobre Barroso Soutinho",
+    "inicio": "25/06/2026"
+   },
+   {
+    "cargo": "Primeiro Tesoureiro",
+    "nome": "Ana Melka Moraes Aguiar",
+    "inicio": "25/06/2026"
+   },
+   {
+    "cargo": "Primeiro Vice-Presidente",
+    "nome": "Emanuel Guilherme Amaral Da Rocha",
+    "inicio": "25/06/2026"
+   },
+   {
+    "cargo": "Quarto Vice-Presidente",
+    "nome": "Vinicius David Craveiro Lopes",
+    "inicio": "25/06/2026"
+   },
+   {
+    "cargo": "Quinto Vice-Presidente",
+    "nome": "Maria Do Socorro Pessoa Do Nascimento",
+    "inicio": "25/06/2026"
+   },
+   {
+    "cargo": "Secretário-Geral",
+    "nome": "Gean Dias Ramalho",
+    "inicio": "25/06/2026"
+   },
+   {
+    "cargo": "Segundo Secretário",
+    "nome": "Domicio Souza Da Silva Filho",
+    "inicio": "25/06/2026"
+   },
+   {
+    "cargo": "Segundo Tesoureiro",
+    "nome": "Maria Trindade Santana De Araújo",
+    "inicio": "25/06/2026"
+   },
+   {
+    "cargo": "Segundo Vice-Presidente",
+    "nome": "Jefferson Cezar Brito Leite",
+    "inicio": "25/06/2026"
+   },
+   {
+    "cargo": "Terceiro Secretário",
+    "nome": "Romulo Ferreira Dos Santos",
+    "inicio": "25/06/2026"
+   },
+   {
+    "cargo": "Terceiro Vice-Presidente",
+    "nome": "Ana Marcelle Nobre Barroso Soutinho",
+    "inicio": "25/06/2026"
+   },
+   {
+    "cargo": "Tesoureiro-Geral",
+    "nome": "David Henrique De Sousa Guimarães",
+    "inicio": "25/06/2026"
+   }
+  ]
+ },
+ {
+  "sigla": "DEMOCRATA",
+  "numero": 35,
+  "telefone": "-1",
+  "email": "paulo.rodrigues20082009@gmail.com",
+  "membros": [
+   {
+    "cargo": "Presidente",
+    "nome": "Paulo Sezar Moraes Rodrigues",
+    "inicio": "21/07/2026"
+   },
+   {
+    "cargo": "Primeiro Suplente",
+    "nome": "Elienai Roberto Borges De Borges",
+    "inicio": "21/07/2026"
+   },
+   {
+    "cargo": "Primeiro Vice-Presidente",
+    "nome": "Simone Cristina Santos Souza",
+    "inicio": "21/07/2026"
+   },
+   {
+    "cargo": "Secretário-Geral",
+    "nome": "Barnabe Silas Negrao",
+    "inicio": "21/07/2026"
+   },
+   {
+    "cargo": "Segundo Vice-Presidente",
+    "nome": "Silvia Cristina Fernandes Oliveira",
+    "inicio": "21/07/2026"
+   },
+   {
+    "cargo": "Tesoureiro",
+    "nome": "Edlaine Guimaraes Santos Rodrigues",
+    "inicio": "21/07/2026"
+   }
+  ]
+ },
+ {
+  "sigla": "MDB",
+  "numero": 15,
+  "telefone": "-1",
+  "email": "pmdbpa@hotmail.com",
+  "membros": [
+   {
+    "cargo": "Delegado Da Convenção Estadual Titular",
+    "nome": "Jair Lopes Martins",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado Da Convenção Estadual Titular",
+    "nome": "Eduardo Alves Conti",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado Da Convenção Estadual Titular",
+    "nome": "João Cleber De Souza Torres",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Celio Marcos Cordeiro",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Josemira Raimunda Diniz Gadelha",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Adriana Andrade Oliveira",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Carlos Vinicios De Melo Vieira",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Helder Zahluth Barbalho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Keniston De Jesus Rego Braga",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Valmir Climaco De Aguiar",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Kamily Maria Ferreira Araujo",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Paulo Sergio Rodrigues Titan",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Jefferson Ferreira De Miranda",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Jader Fontenelle Barbalho Filho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Darci José Lermen",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Paulo Liberte Jasper",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Daniel Barbosa Santos",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "João Pereira Da Silva Neto",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "José Wilson Costa Araújo",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Jader Fontenelle Barbalho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Hana Ghassan Tuma",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Antonio Leocadio Dos Santos",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Ronie Rufino Da Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Mariana Azevedo De Sousa Marquez",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Wenderson Azevedo Chamon",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Marcus Leão Colares",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Iran Ataide De Lima",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Maria Nilma Silva Lima",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Pedro Paulo Gouvea Moraes",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Martinho Arnaldo Campos Carmona",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Antonio Augusto Figueiredo Athar",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Maria Lucimar Barata",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Jose Antonio Azevedo Leão",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Alexandre França Siqueira",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Eraldo Sorge Sebastião Pimenta",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Francisco Edinaldo Queiroz De Oliveira",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Elcione Therezinha Zahluth Barbalho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Heverton Dos Santos Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Andreia Serra Melo",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Wanderlan Augusto Brandão Quaresma",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Francisco Ferreira Freitas Neto",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Gilson De Oliveira Brandão",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Jaime Barbosa Da Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Renilce Conceição Nicodemos De Albuquerque",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Victor Correa Cassiano",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Lucidia Benitah De Abreu Batista",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "John Wayne Holanda Parente",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Jose Benito Priante Junior",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Delegado À Convenção Nacional",
+    "nome": "Maria Lucidalva Bezerra De Carvalho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Líder Do Partido Na Assembleia",
+    "nome": "José Wilson Costa Araújo",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Do Conselho De Ética",
+    "nome": "Nelson Oliveira Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Do Conselho De Ética",
+    "nome": "Ana Renata Brito De Sousa",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Do Conselho De Ética",
+    "nome": "Consuelo Pereira Wanderley",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Do Conselho De Ética",
+    "nome": "Maria Eugenia Marcos Rio",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Do Conselho De Ética",
+    "nome": "Maria Nilma Silva Lima",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Do Conselho De Ética",
+    "nome": "Jose Artur Guedes Tourinho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Do Conselho De Ética",
+    "nome": "Jardel Rodrigues Da Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Do Conselho Fiscal",
+    "nome": "Jose Antonio Lima De Souza",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Do Conselho Fiscal",
+    "nome": "Paulo Sergio De Melo Gomes",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Do Conselho Fiscal",
+    "nome": "Antonio Hamilton Bentes",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Do Conselho Fiscal",
+    "nome": "Edimar De Souza Gonçalves",
+    "inicio": "26/08/2023"
+   },
+   {
+    "cargo": "Membro Do Conselho Fiscal",
+    "nome": "Jaime Barbosa Da Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Marcia Ferreira Lopes",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Wilton Miranda De Lima",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Vanessa Gusmão Miranda",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Marcus Leão Colares",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Cosme Macedo Pereira",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Miguel Bernardo Da Costa Junior",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "João Da Cruz Teixeira De Souza",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Marcos De Lima Pinto",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Aelton Fonseca Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Francisco David Leite Rocha",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Elisangela Paiva Celestino",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Elizane Soares Da Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Getulio Brabo De Souza",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Edson Luis De Oliveira",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Maria Da Graça Medeiros Matos",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Antonio Augusto Figueiredo Athar",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Weder Makes Carneiro",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Leila Raquel Possimoser",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Paulo Elson Da Silva E Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Marco Antonio Machado Lima",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Floriano De Jesus Coelho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Suplente Do Diretório Estadual",
+    "nome": "Cleiton Anderson Ferreira Dias",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Paulo Sergio Rodrigues Titan",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Roberto Zahluth De Carvalho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Jose Nazareno Sanches Da Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Davi Xavier De Moraes",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Francisco Ferreira Freitas Neto",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Gilson De Oliveira Brandão",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "João Cleber De Souza Torres",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Luiziel Henderson Guedes De Oliveira",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Matheus Almeida Dos Santos",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Ronie Rufino Da Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "José Wilson Costa Araújo",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Alexandre França Siqueira",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Jefferson Ferreira De Miranda",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Valmir Climaco De Aguiar",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "John Wayne Holanda Parente",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Jose Villeigagnon Rabelo Oliveira",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Andreia Serra Melo",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Kamily Maria Ferreira Araujo",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Lourival Menezes Filho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Victor Correa Cassiano",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Elcione Therezinha Zahluth Barbalho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Mariana Azevedo De Sousa Marquez",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Adriana Andrade Oliveira",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Antonio Rocha",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Wanderlan Augusto Brandão Quaresma",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Josemira Raimunda Diniz Gadelha",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Helder Zahluth Barbalho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Jardel Vasconcelos Carmo",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Joselino Padilha",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Gelson Luiz Dill",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Antonio Leocadio Dos Santos",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Pedro Paulo Gouvea Moraes",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Alcineia Do Socorro Carmo Dos Santos",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Darci José Lermen",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Elieth De Fatima Da Silva Braga",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Jader Fontenelle Barbalho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Heverton Dos Santos Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Jader Fontenelle Barbalho Filho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Maria Lucidalva Bezerra De Carvalho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Valciney Ferreira Gomes",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Domingos Juvenil Nunes De Souza",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Paulo Liberte Jasper",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Francisco Edinaldo Queiroz De Oliveira",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Ann Clelia De Barros Pontes",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Jose Benito Priante Junior",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Renilce Conceição Nicodemos De Albuquerque",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Vicente De Paulo Ferreira De Oliveira",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Jose Antonio Azevedo Leão",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Wenderson Azevedo Chamon",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Wagne Costa Machado",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Jose Antonio Lima De Souza",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Eraldo Sorge Sebastião Pimenta",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Daniel Barbosa Santos",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Carlos Vinicios De Melo Vieira",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Iran Ataide De Lima",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Keniston De Jesus Rego Braga",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Hana Ghassan Tuma",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Eduardo Alves Conti",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Eduardo Sampaio Gomes Leite",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Martinho Arnaldo Campos Carmona",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Jair Lopes Martins",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Kelly Cristina Destro",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Parsifal De Jesus Pontes",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Claudia Do Socorro Pinheiro Neto",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Membro Titular Do Diretório Estadual",
+    "nome": "Osorio Adolfo Goés Nunes Souza",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Presidente",
+    "nome": "Jader Fontenelle Barbalho Filho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Primeiro Vice-Presidente",
+    "nome": "Jose Benito Priante Junior",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Secretário-Adjunto",
+    "nome": "Iran Ataide De Lima",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Secretário-Geral",
+    "nome": "Roberto Zahluth De Carvalho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Segundo Tesoureiro",
+    "nome": "Luiziel Henderson Guedes De Oliveira",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Segundo Vice-Presidente",
+    "nome": "Elcione Therezinha Zahluth Barbalho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente Da Comissão Executiva",
+    "nome": "Wenderson Azevedo Chamon",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente Da Comissão Executiva",
+    "nome": "Martinho Arnaldo Campos Carmona",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente Da Comissão Executiva",
+    "nome": "Eraldo Sorge Sebastião Pimenta",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente Da Executiva Estadual",
+    "nome": "Wanderlan Augusto Brandão Quaresma",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Conselho De Ética Estadual",
+    "nome": "Maria Lucimar Barata",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Conselho De Ética Estadual",
+    "nome": "Vilson Gonçalves",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Conselho De Ética Estadual",
+    "nome": "Adalberto Cavalcante Anequino",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Conselho De Ética Estadual",
+    "nome": "Joaquim Telmo De Brito Pinon",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Conselho De Ética Estadual",
+    "nome": "Adelar Pelegrini",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Elizane Soares Da Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Josefina Aleluia De Aquino Carmo",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Marco Antonio Machado Lima",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Vanessa Gusmão Miranda",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Antonio Rocha",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Jaime Da Silva Barbosa",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Cleiton Anderson Ferreira Dias",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Vicente De Paulo Ferreira De Oliveira",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Francisco David Leite Rocha",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Maria Nilma Silva Lima",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Joselino Padilha",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Paulo Henrique Da Silva Gomes",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Thiago Reis Pimentel",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Adriano Salomão Costa De Carvalho Filho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Wagne Costa Machado",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Washington Costa De Albuquerque",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Davi Xavier De Moraes",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Gelson Luiz Dill",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Jarbas Vasconcelos Do Carmo",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Jose Villeigagnon Rabelo Oliveira",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Maria Da Graça Medeiros Matos",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Wilton Miranda De Lima",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Vilson Gonçalves",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "João Da Cunha Rocha",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Marlene Da Silva Borges",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Lucineia Alves Da Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Jose Augusto Dias Da Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Marcos De Lima Pinto",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Parsifal De Jesus Pontes",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Carlos Edilson De Almeida Maneschy",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Alcineia Do Socorro Carmo Dos Santos",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Matheus Almeida Dos Santos",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Ursula Vidal Santiago De Mendonça",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Aelton Fonseca Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Leila Raquel Possimoser",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Marcia Ferreira Lopes",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Blenda Cecilia Alves Quaresma",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Roberto Zahluth De Carvalho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Jose Nazareno Sanches Da Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "João Da Cruz Teixeira De Souza",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Elisangela Paiva Celestino",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Claudia Do Socorro Pinheiro Neto",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Higor Gabriel Santos Costa",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Paulo Elson Da Silva E Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Thiago Farias Miranda",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Ana Paula Silva Gomes De Freitas",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Celsa Maria Gomes De Brito Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Miguel Bernardo Da Costa Junior",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Osorio Adolfo Goés Nunes Souza",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Getulio Brabo De Souza",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Maria Eugenia Marcos Rio",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Lourival Menezes Filho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Nicolau Euripedes Beltrão Pamplona",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Eduardo Sampaio Gomes Leite",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente De Delegado À Convenção Nacional",
+    "nome": "Kelly Cristina Destro",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente Do Conselho Fiscal Estadual",
+    "nome": "João Da Cunha Rocha",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente Do Conselho Fiscal Estadual",
+    "nome": "Antonio Mozart Cavalcante Filho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente Do Conselho Fiscal Estadual",
+    "nome": "Adriano Salomão Costa De Carvalho Filho",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Suplente Do Conselho Fiscal Estadual",
+    "nome": "Edson Luis De Oliveira",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Terceiro Vogal Da Executiva Estadual",
+    "nome": "Luiziel Henderson Guedes De Oliveira",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Tesoureiro",
+    "nome": "Jose Nazareno Sanches Da Silva",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Vogal Da Executiva Estadual",
+    "nome": "Hana Ghassan Tuma",
+    "inicio": "25/08/2023"
+   },
+   {
+    "cargo": "Vogal Da Executiva Estadual",
+    "nome": "Renilce Conceição Nicodemos De Albuquerque",
+    "inicio": "25/08/2023"
+   }
+  ]
+ },
+ {
+  "sigla": "MISSÃO",
+  "numero": 14,
+  "telefone": "-1",
+  "email": "falecom@missao.org.br",
+  "membros": [
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "John Robert Neres Da Silva",
+    "inicio": "08/04/2026"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Samuel Pantoja Da Silva",
+    "inicio": "08/04/2026"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Antonio Augusto Nogueira Neto",
+    "inicio": "08/04/2026"
+   },
+   {
+    "cargo": "Presidente",
+    "nome": "Samuel Pantoja Da Silva",
+    "inicio": "08/04/2026"
+   },
+   {
+    "cargo": "Primeiro Tesoureiro",
+    "nome": "Antonio Augusto Nogueira Neto",
+    "inicio": "08/04/2026"
+   },
+   {
+    "cargo": "Secretário-Geral",
+    "nome": "John Robert Neres Da Silva",
+    "inicio": "08/04/2026"
+   }
+  ]
+ },
+ {
+  "sigla": "MOBILIZA",
+  "numero": 33,
+  "telefone": "-1",
+  "email": "marianafascioadv@gmail.com",
+  "membros": [
+   {
+    "cargo": "Presidente",
+    "nome": "Mariana Chaves Fascio Marinho",
+    "inicio": "23/02/2026"
+   },
+   {
+    "cargo": "Secretário",
+    "nome": "Silvia De Brito Barbosa",
+    "inicio": "23/02/2026"
+   },
+   {
+    "cargo": "Tesoureiro",
+    "nome": "Mario Antonio Marques Fascio Filho",
+    "inicio": "23/02/2026"
+   },
+   {
+    "cargo": "Vice-Presidente",
+    "nome": "Saullo Henrique De Assis Chagas",
+    "inicio": "23/02/2026"
+   },
+   {
+    "cargo": "Vogal",
+    "nome": "Telson Soares Marinho",
+    "inicio": "23/02/2026"
+   }
+  ]
+ },
+ {
+  "sigla": "NOVO",
+  "numero": 30,
+  "telefone": "-1",
+  "email": "pa@novo.org.br",
+  "membros": [
+   {
+    "cargo": "Presidente",
+    "nome": "Fábio Ricardo Da Silva",
+    "inicio": "01/01/2026"
+   },
+   {
+    "cargo": "Secretario De Assuntos Institucionais E Legais",
+    "nome": "Acilon Himercírio Baptista Cavalcante",
+    "inicio": "01/01/2026"
+   },
+   {
+    "cargo": "Secretário Administrativo",
+    "nome": "George Silva Viana Araújo",
+    "inicio": "01/01/2026"
+   },
+   {
+    "cargo": "Secretário De Finanças",
+    "nome": "Max Carlos Sarmento De Castro",
+    "inicio": "25/02/2026"
+   },
+   {
+    "cargo": "Vice-Presidente",
+    "nome": "George Silva Viana Araújo",
+    "inicio": "01/01/2026"
+   }
+  ]
+ },
+ {
+  "sigla": "PCDOB",
+  "numero": 65,
+  "telefone": "-1",
+  "email": "pcdobpara@homail.com",
+  "membros": [
+   {
+    "cargo": "Membro Da Comissão De Controle",
+    "nome": "Marcos Casteli Panzera",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão De Controle",
+    "nome": "Jose Wanderley Barbosa Milhomem",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão De Controle",
+    "nome": "Aliete Dos Santos Quaresma",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão De Controle",
+    "nome": "Priscila Ribeiro Dos Santos",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão De Controle",
+    "nome": "Luiz Gonzaga Oliveira De Almeida",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Executiva",
+    "nome": "Cleiton Costa Brito",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Executiva",
+    "nome": "Francisco Wesley Batista Moreira",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Executiva",
+    "nome": "Aroldo Carneiro",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Executiva",
+    "nome": "Cleber Rezende Dos Santos",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Executiva",
+    "nome": "Marcia Pinheiro De Albuquerque Leal",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Cleiton Costa Brito",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Catarina Kátia Do Socorro Rodrigues Gomes",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Genivaldo Santos Correa Gil",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Antonia Trindade Valente Dos Santos",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Jorge Luiz Guimarães Panzera",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Sandra Maria Caminha Fonseca",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Marcia Pinheiro De Albuquerque Leal",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Leny May Da Silva Campêlo",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Ellana Fiama Souza Da Silva",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Vanderlei Maciel Pinheiro",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Aroldo Carneiro",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Erico De Albuquerque Leal",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Sidiclei Barros Miranda",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Cleber Rezende Dos Santos",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Jorge Lucas Gonçalves De Souza Das Neves",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Claudomiro Gregório Dos Santos Neto",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Francisco Wesley Batista Moreira",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Maíra Silva Nogueira",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Rodrigo Ferreira De Moraes",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Moises Alves De Souza",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Carla Quaresma Rodrigues",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Thiago Campelo De Figueiredo",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Luzia Canuto De Oliveira Pereira",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Eneida Canedo Guimarães Dos Santos",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Leila Márcia Silva Santos",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Lelio Costa Da Silva",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão Política",
+    "nome": "Jonh Carvalho De Souza",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Irã Pereira De Araujo",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Cleber Rezende Dos Santos",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Sandra Maria Caminha Fonseca",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Erico De Albuquerque Leal",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Lelio Costa Da Silva",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Jullianny Almeida Sales",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Leila Márcia Silva Santos",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Roberdam Henriques De Carvalho",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Eneida Canedo Guimarães Dos Santos",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Claudomiro Gregório Dos Santos Neto",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Nellyse Dantas De Souza",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Jone Carlos Ferreira Neves",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Darlan Hernanes Pereira Cordeiro",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Nivalda Helena Barata Do Amaral",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Priscila Ribeiro Dos Santos",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Rodrigo Ferreira De Moraes",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Jorge Lucas Gonçalves De Souza Das Neves",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Leny May Da Silva Campêlo",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Maria Soraya Ferraz De Lana",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Elisangela Oliveira Alves",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Jorge Santa Brigida Fernandes",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Lucas Batista Paixão Ferreira",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Marcos Casteli Panzera",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Telmiston Pereira Carvalho Filho Guajajara",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Jorge Luiz Guimarães Panzera",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Odalia Figueiredo Leal",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Elza Maria Araújo Nascimento",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Mailson Lima Nazare",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Jonh Carvalho De Souza",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Luiz Gonzaga Oliveira De Almeida",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Edval Bernardino Campos",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Francisco Corrêa De Farias Filho",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Esther Cristine Cruz Rocha",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Maíra Silva Nogueira",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Ellana Fiama Souza Da Silva",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Jose Wanderley Barbosa Milhomem",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Marcia Pinheiro De Albuquerque Leal",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Moises Alves De Souza",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Antonia Trindade Valente Dos Santos",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Vanderlei Maciel Pinheiro",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Taiza Naiana Da Silva Ferreira",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Catarina Kátia Do Socorro Rodrigues Gomes",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Victoria Luiza Santos De Oliveira",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Ronilson Sales Corrêa",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Thiago Campelo De Figueiredo",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Cleiton Costa Brito",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Francisco Wesley Batista Moreira",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Sidiclei Barros Miranda",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Genivaldo Santos Correa Gil",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Carla Quaresma Rodrigues",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Saulo Vieira Ribeiro",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Aliete Dos Santos Quaresma",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Luzia Canuto De Oliveira Pereira",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Membro Do Pleno",
+    "nome": "Karen Carolina Barbosa",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Presidente(A)",
+    "nome": "Cleber Rezende Dos Santos",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Secretária Da Mulher",
+    "nome": "Leila Márcia Silva Santos",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Secretário (A) De Comunicação",
+    "nome": "Aroldo Carneiro",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Secretário (A) De Finanças",
+    "nome": "Cleiton Costa Brito",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Secretário (A) De Formação E Propaganda",
+    "nome": "Edval Bernardino Campos",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Secretário (A) De Juventude",
+    "nome": "Ellana Fiama Souza Da Silva",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Secretário (A) De Movimentos Sociais",
+    "nome": "Vanderlei Maciel Pinheiro",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Secretário (A) De Mídia",
+    "nome": "Moises Alves De Souza",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Secretário (A) De Organização",
+    "nome": "Francisco Wesley Batista Moreira",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Secretário (A) De Planejamento",
+    "nome": "Erico De Albuquerque Leal",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Secretário (A) Sindical",
+    "nome": "Jorge Lucas Gonçalves De Souza Das Neves",
+    "inicio": "19/11/2025"
+   },
+   {
+    "cargo": "Vice-Presidente (A)",
+    "nome": "Sandra Maria Caminha Fonseca",
+    "inicio": "19/11/2025"
+   }
+  ]
+ },
+ {
+  "sigla": "PCO",
+  "numero": 29,
+  "telefone": "-1",
+  "email": "sorg@sorg.pco.org.br",
+  "membros": [
+   {
+    "cargo": "Presidente",
+    "nome": "Victor Assis Da Silva",
+    "inicio": "08/05/2026"
+   },
+   {
+    "cargo": "Tesoureiro",
+    "nome": "Renato Farac Galata",
+    "inicio": "08/05/2026"
+   }
+  ]
+ },
+ {
+  "sigla": "PDT",
+  "numero": 12,
+  "telefone": "-1",
+  "email": "pdtparasecretariageral@gmail.com",
+  "membros": [
+   {
+    "cargo": "Presidente Estadual",
+    "nome": "Giovanni Correa Queiroz",
+    "inicio": "24/04/2026"
+   },
+   {
+    "cargo": "Primeiro Vice-Presidente",
+    "nome": "Carlos Edilson De Almeida Maneschy",
+    "inicio": "24/04/2026"
+   },
+   {
+    "cargo": "Quarto Vice-Presidente",
+    "nome": "Luis Rodrigo Neves Teixeira",
+    "inicio": "24/04/2026"
+   },
+   {
+    "cargo": "Secretário (A) De Comunicação",
+    "nome": "Maria Da Penha Teixeira",
+    "inicio": "24/04/2026"
+   },
+   {
+    "cargo": "Secretário (A)-Adjunto (A)",
+    "nome": "André Tomaz Cardoso",
+    "inicio": "24/04/2026"
+   },
+   {
+    "cargo": "Secretário(A)-Geral",
+    "nome": "Michael Willyan Ferreira Corrêa",
+    "inicio": "24/04/2026"
+   },
+   {
+    "cargo": "Segundo Vice-Presidente",
+    "nome": "Állan Thiago De Sousa Corrêa",
+    "inicio": "24/04/2026"
+   },
+   {
+    "cargo": "Terceiro Vice-Presidente",
+    "nome": "Orlando Palheta Lobato",
+    "inicio": "24/04/2026"
+   },
+   {
+    "cargo": "Tesoureiro(A)",
+    "nome": "Admir Pombo Corrêa",
+    "inicio": "24/04/2026"
+   },
+   {
+    "cargo": "Tesoureiro(A)-Adjunto(A)",
+    "nome": "Marcos Antonio Da Silva Grande",
+    "inicio": "24/04/2026"
+   },
+   {
+    "cargo": "Vice-Presidente Estadual",
+    "nome": "Celso Sabino De Oliveira",
+    "inicio": "24/04/2026"
+   },
+   {
+    "cargo": "Vogal",
+    "nome": "Marly Magno Da Rocha Hayashi",
+    "inicio": "24/04/2026"
+   },
+   {
+    "cargo": "Vogal",
+    "nome": "Raquel Ferreira Viana",
+    "inicio": "24/04/2026"
+   },
+   {
+    "cargo": "Vogal",
+    "nome": "Carla Carolina Quemel De Andrade",
+    "inicio": "24/04/2026"
+   },
+   {
+    "cargo": "Vogal",
+    "nome": "Cilene Moreira Sabino De Oliveira",
+    "inicio": "24/04/2026"
+   }
+  ]
+ },
+ {
+  "sigla": "PL",
+  "numero": 22,
+  "telefone": "-1",
+  "email": "plpa22estadual@gmail.com",
+  "membros": [
+   {
+    "cargo": "Presidente",
+    "nome": "Joaquim Passarinho Pinto De Souza Porto",
+    "inicio": "12/05/2026"
+   },
+   {
+    "cargo": "Primeiro Vice-Presidente",
+    "nome": "Lenildo Mendes Dos Santos Sertão",
+    "inicio": "12/05/2026"
+   },
+   {
+    "cargo": "Secretário",
+    "nome": "Claudia Aparecida Felipe",
+    "inicio": "12/05/2026"
+   },
+   {
+    "cargo": "Secretário-Geral",
+    "nome": "Hugo Rogério Sarmanho Barra",
+    "inicio": "12/05/2026"
+   },
+   {
+    "cargo": "Segundo Vice-Presidente",
+    "nome": "Eder Mauro Cardoso Barra",
+    "inicio": "12/05/2026"
+   },
+   {
+    "cargo": "Suplente",
+    "nome": "Feliciano Costa Santos Neto",
+    "inicio": "12/05/2026"
+   },
+   {
+    "cargo": "Suplente",
+    "nome": "Mariza Almeida Sousa Mendonça",
+    "inicio": "12/05/2026"
+   },
+   {
+    "cargo": "Tesoureiro",
+    "nome": "Raimundo Alberto Pacheco Lima",
+    "inicio": "12/05/2026"
+   },
+   {
+    "cargo": "Vogal",
+    "nome": "Antonio João De Oliveira Santos",
+    "inicio": "12/05/2026"
+   },
+   {
+    "cargo": "Vogal",
+    "nome": "Antonio Carlos Cunha Sá",
+    "inicio": "12/05/2026"
+   },
+   {
+    "cargo": "Vogal",
+    "nome": "Neil Duarte De Souza",
+    "inicio": "12/05/2026"
+   }
+  ]
+ },
+ {
+  "sigla": "PODE",
+  "numero": 20,
+  "telefone": "-1",
+  "email": "pa@podemos.org.br",
+  "membros": [
+   {
+    "cargo": "Presidente",
+    "nome": "Jose Da Cruz Marinho",
+    "inicio": "01/01/2026"
+   },
+   {
+    "cargo": "Presidente Do Podemos Esporte",
+    "nome": "Jamieson Da Paz Leitte",
+    "inicio": "01/01/2026"
+   },
+   {
+    "cargo": "Presidente Do Podemos Jovem",
+    "nome": "Stephanie Kaylanne Lima De Paiva",
+    "inicio": "01/01/2026"
+   },
+   {
+    "cargo": "Presidente Do Podemos Mulher",
+    "nome": "Evanilza Da Cruz Marinho Maciel",
+    "inicio": "01/01/2026"
+   },
+   {
+    "cargo": "Primeiro Secretário",
+    "nome": "Julio Claudio Aquino Modesto",
+    "inicio": "01/01/2026"
+   },
+   {
+    "cargo": "Primeiro Vice-Presidente",
+    "nome": "Claudiomar Dias De Almeida",
+    "inicio": "01/01/2026"
+   },
+   {
+    "cargo": "Primeiro Vogal",
+    "nome": "Aline Daniel Melo Da Silva",
+    "inicio": "01/01/2026"
+   },
+   {
+    "cargo": "Secretário-Geral",
+    "nome": "Adalton Pamplona Da Silva",
+    "inicio": "01/01/2026"
+   },
+   {
+    "cargo": "Segundo Secretário",
+    "nome": "Efrain Nonato Silva De Sousa",
+    "inicio": "01/01/2026"
+   },
+   {
+    "cargo": "Segundo Vice-Presidente",
+    "nome": "Anderson Paulo Da Fonseca Costa",
+    "inicio": "01/01/2026"
+   },
+   {
+    "cargo": "Segundo Vogal",
+    "nome": "Jefferson Ely Vale De Lima",
+    "inicio": "01/01/2026"
+   },
+   {
+    "cargo": "Terceiro Secretário",
+    "nome": "Heridhiones De Sousa Moreira",
+    "inicio": "01/01/2026"
+   },
+   {
+    "cargo": "Terceiro Vice-Presidente",
+    "nome": "Alex Fabiano De Almeida Hage",
+    "inicio": "01/01/2026"
+   },
+   {
+    "cargo": "Tesoureiro",
+    "nome": "Joaquim Nonato Teixeira Da Silva",
+    "inicio": "01/01/2026"
+   },
+   {
+    "cargo": "Tesoureiro Adjunto",
+    "nome": "Ellen Cristiane Da Silva Moreira",
+    "inicio": "01/01/2026"
+   }
+  ]
+ },
+ {
+  "sigla": "PP",
+  "numero": 11,
+  "telefone": "-1",
+  "email": "ppdopa.gab@gmail.com",
+  "membros": [
+   {
+    "cargo": "Líder Do Partido Na Assembleia Legislativa",
+    "nome": "Antonio Gomes De Lima",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Membro",
+    "nome": "Ligia Carolina Vale Satlher De Lima",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Membro",
+    "nome": "Daniely Moreira Pimentel",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Membro",
+    "nome": "José Alfredo Silva Hage Júnior",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Membro",
+    "nome": "Majorri Cerqueira Da Silva Aquino Santiago",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Membro",
+    "nome": "Jose Miguel Silva Da Rocha",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Membro",
+    "nome": "Cleoson Souza Da Silva",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Membro",
+    "nome": "Irismar Nascimento Araujo Melo",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Membro",
+    "nome": "Lucia Monica Yumi Moroishi",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Membro",
+    "nome": "Jose Maria Tapajos",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Membro",
+    "nome": "Isaias Jose Silva Oliveira Neto",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Membro",
+    "nome": "Jose Adolfo Oliveira Da Mota",
+    "inicio": "11/12/2024"
+   },
+   {
+    "cargo": "Presidente",
+    "nome": "Jose Renato Ogawa Rodrigues",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Secretário",
+    "nome": "Leonardo Dutra Vale",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Secretário",
+    "nome": "Silvia Albertina Ferreira Abreu",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Secretário-Geral",
+    "nome": "Leila Pacheco Marques Gomes",
+    "inicio": "21/05/2024"
+   },
+   {
+    "cargo": "Suplente",
+    "nome": "Carlos Alberto De Sena Filho",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Suplente",
+    "nome": "Antonio Valcirlei Holanda De Souza",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Suplente",
+    "nome": "Lays Marques De Lima",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Suplente",
+    "nome": "Carlos Augusto De Lima Gouvea",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Suplente",
+    "nome": "Elizabeth De Nazare Godinho Teixeira",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Suplente",
+    "nome": "Manuele Cristina Lima Furtado",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Suplente",
+    "nome": "Braselino Carlos Da Assuncao Sousa Da Silva",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Suplente",
+    "nome": "Lidiane Dos Santos Rebelo",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Suplente",
+    "nome": "Silvio Mauro Rodrigues Mota",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Suplente",
+    "nome": "Jamilson Edmundo Da Costa Santos",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Suplente",
+    "nome": "Jose Maria Ferreira Da Silva",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Tesoureiro",
+    "nome": "Kelly Cristiane Silva Nantes Assayag",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Tesoureiro",
+    "nome": "Thiago Pereira Ramalho",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Tesoureiro-Geral",
+    "nome": "Kelvyn Martins Ogawa Rodrigues",
+    "inicio": "11/12/2024"
+   },
+   {
+    "cargo": "Vice-Presidente",
+    "nome": "Jose Lucio Ogawa Rodrigues",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Vice-Presidente",
+    "nome": "Cristiano Dutra Vale",
+    "inicio": "18/08/2023"
+   },
+   {
+    "cargo": "Vice-Presidente",
+    "nome": "Luiz Furtado Rebelo Filho",
+    "inicio": "18/08/2023"
+   }
+  ]
+ },
+ {
+  "sigla": "PRD",
+  "numero": 25,
+  "telefone": "-1",
+  "email": "galvaojefson@gmail.com",
+  "membros": [
+   {
+    "cargo": "Presidente",
+    "nome": "Enok Jerffeson Galvao Da Silva",
+    "inicio": "09/04/2026"
+   },
+   {
+    "cargo": "Primeiro(A) Secretário(A)",
+    "nome": "Joabes Pereira",
+    "inicio": "09/04/2026"
+   },
+   {
+    "cargo": "Primeiro(A) Secretário(A) Executivo(A)",
+    "nome": "Rosana Costa Soares",
+    "inicio": "09/04/2026"
+   },
+   {
+    "cargo": "Primeiro(A) Tesoureiro(A)",
+    "nome": "Allaf Pinheiro Weyl Correa",
+    "inicio": "09/04/2026"
+   },
+   {
+    "cargo": "Secretário(A) Executivo(A)",
+    "nome": "Marinês Batista Dos Santos Martins",
+    "inicio": "09/04/2026"
+   },
+   {
+    "cargo": "Secretário(A) Geral",
+    "nome": "Jackeline Macedo Cavaleiro De Macedo Maia",
+    "inicio": "09/04/2026"
+   },
+   {
+    "cargo": "Tesoureiro(A) Geral",
+    "nome": "George Rodrigo Mota De Oliveira",
+    "inicio": "09/04/2026"
+   },
+   {
+    "cargo": "Vice-Presidente",
+    "nome": "Jairo Pereira Dos Santos",
+    "inicio": "09/04/2026"
+   }
+  ]
+ },
+ {
+  "sigla": "PRTB",
+  "numero": 28,
+  "telefone": "-1",
+  "email": "paraprtb@gmail.com",
+  "membros": [
+   {
+    "cargo": "Presidente",
+    "nome": "Marcelo Pinto Pedroso",
+    "inicio": "27/07/2026"
+   },
+   {
+    "cargo": "Primeiro Secretário",
+    "nome": "Cleiton Rodrigo Nicoletti",
+    "inicio": "27/07/2026"
+   },
+   {
+    "cargo": "Primeiro Tesoureiro",
+    "nome": "Walmour Nazareno De Oliveira Rodrigues",
+    "inicio": "27/07/2026"
+   },
+   {
+    "cargo": "Primeiro Vice-Presidente",
+    "nome": "Elmi Da Conceicao Silva",
+    "inicio": "27/07/2026"
+   },
+   {
+    "cargo": "Secretário-Geral",
+    "nome": "Gleice Cristina Ferreira Santos",
+    "inicio": "27/07/2026"
+   },
+   {
+    "cargo": "Segundo Vice-Presidente",
+    "nome": "Roberto Martins Pereira",
+    "inicio": "27/07/2026"
+   },
+   {
+    "cargo": "Tesoureiro",
+    "nome": "Dayse Gisele Ferreira Santos Dos Santos",
+    "inicio": "27/07/2026"
+   }
+  ]
+ },
+ {
+  "sigla": "PSB",
+  "numero": 40,
+  "telefone": "-1",
+  "email": "gunarrr@gmail.com",
+  "membros": [
+   {
+    "cargo": "Presidente",
+    "nome": "Andreia Brito Gonçalves Siqueira",
+    "inicio": "29/03/2026"
+   },
+   {
+    "cargo": "Primeiro Vice-Presidente",
+    "nome": "Jackson Dias Da Costa",
+    "inicio": "13/04/2026"
+   },
+   {
+    "cargo": "Primeiro(A) Secretário(A)",
+    "nome": "Breno Moura Cunha",
+    "inicio": "29/03/2026"
+   },
+   {
+    "cargo": "Secretária De Mulheres",
+    "nome": "Heloisa Maria Melo E Silva Guimarães",
+    "inicio": "13/04/2026"
+   },
+   {
+    "cargo": "Secretário(A) De Finanças",
+    "nome": "Carlos Orlando Leal E Silva",
+    "inicio": "29/03/2026"
+   },
+   {
+    "cargo": "Secretário(A) De Organização",
+    "nome": "Veronica Alves Da Silva",
+    "inicio": "29/03/2026"
+   },
+   {
+    "cargo": "Secretário(A)-Geral",
+    "nome": "Euzebio Cabral De Souza",
+    "inicio": "29/03/2026"
+   },
+   {
+    "cargo": "Segundo(A) Secretário(A)",
+    "nome": "Gunar Rodrigues Ranieri",
+    "inicio": "29/03/2026"
+   },
+   {
+    "cargo": "Vice-Presidente",
+    "nome": "Thiago Maciel Neves",
+    "inicio": "13/04/2026"
+   }
+  ]
+ },
+ {
+  "sigla": "PSD",
+  "numero": 55,
+  "telefone": "-1",
+  "email": "psdpara55@gmail.com",
+  "membros": [
+   {
+    "cargo": "Presidente",
+    "nome": "João Ferrari Júnior",
+    "inicio": "03/05/2023"
+   },
+   {
+    "cargo": "Primeiro Tesoureiro",
+    "nome": "Max Andre Brandão Da Costa",
+    "inicio": "03/05/2023"
+   },
+   {
+    "cargo": "Secretário-Geral",
+    "nome": "Felipe Coelho Picanço",
+    "inicio": "03/05/2023"
+   },
+   {
+    "cargo": "Segundo Tesoureiro",
+    "nome": "José Carlos Figueiredo Picanço",
+    "inicio": "03/05/2023"
+   },
+   {
+    "cargo": "Vice-Presidente",
+    "nome": "Raimundo José Pereira Dos Santos",
+    "inicio": "03/05/2023"
+   },
+   {
+    "cargo": "Vice-Presidente",
+    "nome": "Gustavo Bemerguy Sefer",
+    "inicio": "03/05/2023"
+   },
+   {
+    "cargo": "Vogal",
+    "nome": "Nilton Silva Das Neves",
+    "inicio": "03/05/2023"
+   },
+   {
+    "cargo": "Vogal",
+    "nome": "Márcio José Nascimento Da Silva",
+    "inicio": "03/05/2023"
+   },
+   {
+    "cargo": "Vogal",
+    "nome": "João Paulo Alves Barroso",
+    "inicio": "03/05/2023"
+   },
+   {
+    "cargo": "Vogal",
+    "nome": "Natália Coelho Palheta",
+    "inicio": "03/05/2023"
+   }
+  ]
+ },
+ {
+  "sigla": "PSDB",
+  "numero": 45,
+  "telefone": "-1",
+  "email": "nalutavora@hotmail.com",
+  "membros": [
+   {
+    "cargo": "Membro",
+    "nome": "Francisca Alves Souza",
+    "inicio": "22/07/2026"
+   },
+   {
+    "cargo": "Membro",
+    "nome": "Joâo Vitor Santos De Oliveira",
+    "inicio": "22/07/2026"
+   },
+   {
+    "cargo": "Membro",
+    "nome": "Nalu Mary Collares Távora",
+    "inicio": "22/07/2026"
+   },
+   {
+    "cargo": "Presidente",
+    "nome": "Nilson Pinto De Oliveira",
+    "inicio": "18/12/2025"
+   },
+   {
+    "cargo": "Secretário-Geral",
+    "nome": "Raimundo Rodrigues Da Silva",
+    "inicio": "18/12/2025"
+   },
+   {
+    "cargo": "Suplente",
+    "nome": "Jakeline Ferreira Neto",
+    "inicio": "22/07/2026"
+   },
+   {
+    "cargo": "Suplente",
+    "nome": "Romildo Silva Rocha",
+    "inicio": "22/07/2026"
+   },
+   {
+    "cargo": "Suplente",
+    "nome": "Maria Alves Dos Santos",
+    "inicio": "22/07/2026"
+   },
+   {
+    "cargo": "Tesoureiro",
+    "nome": "Marcos Soares",
+    "inicio": "18/12/2025"
+   },
+   {
+    "cargo": "Vice-Presidente",
+    "nome": "Antonio Márcio Farias Gonçalves",
+    "inicio": "22/07/2026"
+   }
+  ]
+ },
+ {
+  "sigla": "PSOL",
+  "numero": 50,
+  "telefone": "-1",
+  "email": "psolpa@yahoo.com.br",
+  "membros": [
+   {
+    "cargo": "Membro Conselho Fiscal",
+    "nome": "Welson De Sousa Cardoso",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Membro Conselho Fiscal",
+    "nome": "Ines De Fatima Oliveira Da Silveira",
+    "inicio": "18/02/2025"
+   },
+   {
+    "cargo": "Membro Conselho Fiscal",
+    "nome": "Jurandir Santos De Novaes",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Membro Diretório",
+    "nome": "Francisco Sinval Batista",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Membro Diretório",
+    "nome": "Marcelino Conti De Souza",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Membro Diretório",
+    "nome": "Luana Da Silva Cardoso",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Membro Diretório",
+    "nome": "Adrielen Pimenta Da Silva",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Membro Diretório",
+    "nome": "Karime Argentina Duarte Ramires",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Membro Diretório",
+    "nome": "Ricardo Soares Neto",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Membro Diretório",
+    "nome": "Pedro Holanda Maia",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Membro Diretório",
+    "nome": "Aline Luzia Barbosa Pereira Vitoriano",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Membro Diretório",
+    "nome": "Hélio Alves De Oliveira",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Membro Diretório",
+    "nome": "Regina Rodrigues De Sousa",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Membro Diretório",
+    "nome": "Armando Manoel Ferreira Junior",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Membro Diretório",
+    "nome": "Carlos Renilton Freitas Cruz",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Membro Diretório",
+    "nome": "Elenize Jacqueline Da Silva",
+    "inicio": "18/02/2025"
+   },
+   {
+    "cargo": "Membro Diretório",
+    "nome": "Silvia Leticia D Oliveira Da Luz",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Membro Diretório",
+    "nome": "Emanuelle Ferreira Raiol",
+    "inicio": "10/11/2023"
+   },
+   {
+    "cargo": "Membro Diretório",
+    "nome": "Rubens Motta De Azevedo Moraes Junior",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Membro Diretório",
+    "nome": "Argemiro Branco Pedroso Neto",
+    "inicio": "18/02/2025"
+   },
+   {
+    "cargo": "Presidente",
+    "nome": "Araceli Maria Pereira Lemos",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Primeiro Secretário (A) De Comunicação",
+    "nome": "Sandra Helena Ribeiro Cruz",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Primeiro Secretário (A) De Direitos Humanos",
+    "nome": "Maria Gracionice Barbosa Gonçalves",
+    "inicio": "10/11/2023"
+   },
+   {
+    "cargo": "Primeiro Secretário (A) De Finanças",
+    "nome": "Walmir Brito Freire",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Primeiro Secretário (A) De Formação Política",
+    "nome": "José Nery Azevedo",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Primeiro Secretário (A) De Movimentos Sociais E Populares",
+    "nome": "Manoel De Jesus Soares Silva",
+    "inicio": "10/11/2023"
+   },
+   {
+    "cargo": "Primeiro Secretário (A) De Organização",
+    "nome": "Rodrigo Richard Barbosa Costa",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Primeiro Secretário (A) Sindical",
+    "nome": "Zaira Valeska Dantas Da Fonseca",
+    "inicio": "18/02/2025"
+   },
+   {
+    "cargo": "Primeiro Secretário (A)-Geral",
+    "nome": "Max Andre Correa Costa",
+    "inicio": "19/02/2024"
+   },
+   {
+    "cargo": "Suplente Conselho Fiscal",
+    "nome": "Rosilene Paiva Reis",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Suplente Conselho Fiscal",
+    "nome": "Debora Sousa Pereira",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Suplente Diretório",
+    "nome": "Joelma Mendes De Sarges Vieira",
+    "inicio": "18/02/2025"
+   },
+   {
+    "cargo": "Suplente Diretório",
+    "nome": "Maria Madalena Da Silva Da Silva",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Suplente Diretório",
+    "nome": "Roberta Aline Abdoral Santos",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Suplente Diretório",
+    "nome": "Naide Cordeiro Pacheco",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Suplente Diretório",
+    "nome": "Joao Paulo Freitas Lucena",
+    "inicio": "30/10/2023"
+   },
+   {
+    "cargo": "Suplente Diretório",
+    "nome": "Maria De Fatima Santana Da Silva",
+    "inicio": "30/10/2023"
+   }
+  ]
+ },
+ {
+  "sigla": "PSTU",
+  "numero": 16,
+  "telefone": "-1",
+  "email": "pstu_pa@yahoo.com.br",
+  "membros": [
+   {
+    "cargo": "Presidente",
+    "nome": "Daniele De Brito Schusterschitz",
+    "inicio": "25/08/2025"
+   },
+   {
+    "cargo": "Secretário",
+    "nome": "Elaine Maciel Dos Santos Fonseca",
+    "inicio": "25/08/2025"
+   },
+   {
+    "cargo": "Suplente De Membro Do Diretório",
+    "nome": "Silvio De Oliveira Ribeiro",
+    "inicio": "25/08/2025"
+   },
+   {
+    "cargo": "Suplente De Membro Do Diretório",
+    "nome": "Rosiane Cristina Pimentel Pantoja",
+    "inicio": "25/08/2025"
+   },
+   {
+    "cargo": "Tesoureiro",
+    "nome": "Ana Lúcia Souza Da Silva",
+    "inicio": "25/08/2025"
+   },
+   {
+    "cargo": "Vogal",
+    "nome": "José Cléber Barros Rabelo",
+    "inicio": "25/08/2025"
+   }
+  ]
+ },
+ {
+  "sigla": "PT",
+  "numero": 13,
+  "telefone": "-1",
+  "email": "organizacaoptpa@yahoo.com.br",
+  "membros": [
+   {
+    "cargo": "Comissão De Ética",
+    "nome": "José Cristiano Martins Nunes",
+    "inicio": "10/11/2025"
+   },
+   {
+    "cargo": "Comissão De Ética",
+    "nome": "Vinicius Santiago Ferreira",
+    "inicio": "10/11/2025"
+   },
+   {
+    "cargo": "Comissão De Ética",
+    "nome": "Taiana Nascimento Da Silva",
+    "inicio": "10/11/2025"
+   },
+   {
+    "cargo": "Comissão De Ética",
+    "nome": "Rodrigo Vandre Faleiro",
+    "inicio": "11/11/2025"
+   },
+   {
+    "cargo": "Comissão De Ética",
+    "nome": "Maria De Jesus Dos Santos Lima",
+    "inicio": "10/11/2025"
+   },
+   {
+    "cargo": "Comissão De Ética",
+    "nome": "Vera Lúcia Dos Remédios Paoloni",
+    "inicio": "10/11/2025"
+   },
+   {
+    "cargo": "Conselho Fiscal",
+    "nome": "Augusto César Vieira Burlamaqui",
+    "inicio": "10/11/2025"
+   },
+   {
+    "cargo": "Conselho Fiscal",
+    "nome": "Antônio Alex Dos Santos Rodrigues",
+    "inicio": "10/11/2025"
+   },
+   {
+    "cargo": "Conselho Fiscal",
+    "nome": "Rita Da Luz Serra Da Serra",
+    "inicio": "10/11/2025"
+   },
+   {
+    "cargo": "Conselho Fiscal",
+    "nome": "Valdir Manoel Da Silva",
+    "inicio": "10/11/2025"
+   },
+   {
+    "cargo": "Conselho Fiscal",
+    "nome": "Domingas De Paula Martins Caldas",
+    "inicio": "10/11/2025"
+   },
+   {
+    "cargo": "Conselho Fiscal",
+    "nome": "Jully Da Trindade Palheta",
+    "inicio": "10/11/2025"
+   },
+   {
+    "cargo": "Líder Na Assembléia Legislativa",
+    "nome": "Dirceu Ten Caten Pies",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Waldemiro Eduardo De Assis Sanova Nascimento",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Raimunda Vilma Araújo De Sousa",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Karolaine Cunha Da Silva",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Adna Gomes Martins",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Edson Vinicius Freitas De Almeida Valente",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Maria De Lourdes Almeida Do Nascimento",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Ricardo Da Silva Oliveira",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Marjorie Oliveira Calderaro",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "José Diego Sodré Ribeiro",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Lucivaldo Batista Dos Santos",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Francisco Assis Da Silva Gomes",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Ana Caroline Maciel Lima",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Antonia Sueli Sousa",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Bruno Daniel Da Costa Dos Santos",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Isadilva Vieira De Castro",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Stacy Ketany Carvalho Garcia",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Edileuza Viegas Muniz",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "José Cristiano Martins Nunes Junior",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Vinicio Da Silva Nascimento",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Edson Matos Dos Santos Junior",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Maria Jarlene Dos Santos Lima",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Weverton De Jesus Barbosa",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Erika Patricia Moreira Da Costa",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Raimunda Nonata Monteiro",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Reginaldo Gomes Dos Santos",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Yuri Roberto Furtado Faro",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Anginery Nei Vieira Da Silva",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Valcineia Marques Farias",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Gerlan Silva Da Gama",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Carlos Alberto Barros Bordalo",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Ediciane De Souza Santos",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Eran Solon Rodrigues",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Maria De Nazaré Maia Fernandes",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Michele Ellen Quaresma Rodrigues",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Waldirene Goncalves Da Cruz",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Celma Regina Almeida Colares",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Lucas Matheus Oliveira Dos Santos",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Leone Azevedo Gama Da Rocha",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Elisangela Do Socorro Pinto Ribeiro",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Heidiany Katrine Santos Moreno",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Everaldo De Souza Martins Filho",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Milene Risuenho Lauande",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Soraya Viana Almeida",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Apolonio Parente Brasileiro",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Sharles Rodrigues Peixoto",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Alexssander Tavares Lopes",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Arthur Houat Nery De Souza",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Darciléia Furtado Marques",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Carmem Lúcia Guimarães Santiago",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Gabriel Jeronimo Dos Passos Monteiro",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Renato Sampaio Da Silva",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Ana Flávia Lobato De Sousa",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Jordan Clay Marques Da Silva",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Maria Eterlene Castelo Duca",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Elias Guimarães Santiago",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Monica De Almeida",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Luis Cláudio Queiroz De Freitas",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Presidente",
+    "nome": "Jose Roberto Oliveira Faro",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Secretária(O) De Articulação De Políticas Públicas",
+    "nome": "Emerson Cláudio Martins Caldas",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Secretário (A) De Assuntos Institucionais",
+    "nome": "Marcos Antonio Pereira Monteiro De Oliveira",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Secretário (A) De Comunicação",
+    "nome": "Daynara Cardoso Calandrine Azevedo",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Secretário (A) De Finanças E Planejamento",
+    "nome": "Adonai Do Socorro Da Cruz Gonçalves",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Secretário (A) De Formação",
+    "nome": "Euci Ana Da Costa Gonçalves",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Secretário (A) De Mobilização",
+    "nome": "Ubiracy Rodrigues Soares",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Secretário (A) De Movimentos Populares",
+    "nome": "Pere Petit Penarrocha",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Secretário (A) De Nucleação",
+    "nome": "Larissa Martins Barbalho",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Secretário (A) De Organização",
+    "nome": "Regiany Nascimento Da Silva",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Secretário (A) Geral",
+    "nome": "Manoel Raimundo Carvalho Moraes",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Vice-Presidenta",
+    "nome": "Dilvanda Furtado Faro",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Vice-Presidenta",
+    "nome": "Luanna Da Costa Santos",
+    "inicio": "20/03/2026"
+   },
+   {
+    "cargo": "Vice-Presidenta",
+    "nome": "Michele Borcem De Lima",
+    "inicio": "16/09/2025"
+   },
+   {
+    "cargo": "Vice-Presidente",
+    "nome": "Otavio De Souza Pinheiro Neto",
+    "inicio": "16/09/2025"
+   }
+  ]
+ },
+ {
+  "sigla": "PV",
+  "numero": 43,
+  "telefone": "-1",
+  "email": "partidoverdepa43@gmail.com",
+  "membros": [
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Eldo Fabio Nascimento",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Raimundo Jose Dos Santos Costa",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Stefany Carime Da Silva Wanzeler",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Valderi Franca Do Nascimento",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Maria Do Rosario Nonato Aranha",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Joel Batista Alves",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Presidente",
+    "nome": "Marcelo Danilo Silva Alho Correa",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Secretário De Administração",
+    "nome": "Carlos Augusto Coelho Da Costa",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Secretário De Assuntos Do Executivo",
+    "nome": "Carlos Augusto Coelho Da Costa",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Secretário De Assuntos Jurídicos",
+    "nome": "Gerusa Teixeira Gardeline",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Secretário De Assuntos Parlamentares",
+    "nome": "Moacir Iran Nascimento Moraes Filho",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Secretário De Comunicação",
+    "nome": "Antonio Fonseca Santos Junior",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Secretário De Direitos Humanos E Diversidade",
+    "nome": "Jose Guilherme Dos Santos Moura",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Secretário De Finanças",
+    "nome": "Manuel Nemesio Ferreira Dos Santos",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Secretário De Formação",
+    "nome": "Gerson Prudente De Alencar Garcia",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Secretário De Juventude",
+    "nome": "Dion Leno Dos Santos Alves",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Secretário De Mobilização",
+    "nome": "Emilia De Oliveira Lima",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Secretário De Mulher",
+    "nome": "Cristina Vasconcelos Nunes",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Secretário De Organização",
+    "nome": "Fabiely Rayana De Azevedo Ferreira",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Secretário De Relações Institucionais",
+    "nome": "Manuel Nemesio Ferreira Dos Santos",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Suplente Do Diretório",
+    "nome": "Benedita Pereira Da Costa",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Suplente Do Diretório",
+    "nome": "Camilo Pinto Da Silva",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Suplente Do Diretório",
+    "nome": "Antonio Ronaldo Nobre Do Nascimento",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Suplente Do Diretório",
+    "nome": "Carlos Augusto Da Silva Viana",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Vice-Presidente",
+    "nome": "Gisele De Souza Oliveira",
+    "inicio": "08/04/2025"
+   },
+   {
+    "cargo": "Vice-Presidente",
+    "nome": "Jose Carlos Lima Da Costa",
+    "inicio": "08/04/2025"
+   }
+  ]
+ },
+ {
+  "sigla": "REDE",
+  "numero": 18,
+  "telefone": "-1",
+  "email": "contato@redepa.org",
+  "membros": [
+   {
+    "cargo": "1. Coordenação De Ação Institucional E Políticas Públicas",
+    "nome": "Rugere Rodrigues Da Silva",
+    "inicio": "11/09/2025"
+   },
+   {
+    "cargo": "1. Coordenação De Comunicação E Redes Sociais",
+    "nome": "Marcio Rogerio Cavalcante Beltrão",
+    "inicio": "11/09/2025"
+   },
+   {
+    "cargo": "1. Coordenação De Formação Política",
+    "nome": "José Cláudio Corrêa Balieiro",
+    "inicio": "11/09/2025"
+   },
+   {
+    "cargo": "1. Coordenação De Movimentos Sociais",
+    "nome": "Nauro Luís Pereira Chaves",
+    "inicio": "11/09/2025"
+   },
+   {
+    "cargo": "1. Coordenação De Organização",
+    "nome": "Bianca Oliveira De Souza",
+    "inicio": "11/09/2025"
+   },
+   {
+    "cargo": "1. Coordenação De Relações Internacionais",
+    "nome": "João Jorge Neto",
+    "inicio": "11/09/2025"
+   },
+   {
+    "cargo": "1. Coordenação Executiva/Secretário Geral",
+    "nome": "Sernio Vasconcelos Conceicao Junior",
+    "inicio": "11/09/2025"
+   },
+   {
+    "cargo": "1. Coordenação Financeira /Tesoureiro",
+    "nome": "Dulcilene Favacho Silva",
+    "inicio": "11/09/2025"
+   },
+   {
+    "cargo": "1. Coordenação Geral/Porta Voz/Presidente",
+    "nome": "Elson Lourinho Da Conceição",
+    "inicio": "11/09/2025"
+   },
+   {
+    "cargo": "2. Coordenador Geral/Porta Voz/Vice-Presidente",
+    "nome": "Vera Lucia Santos Guedes Pereira",
+    "inicio": "11/09/2025"
+   },
+   {
+    "cargo": "2. Coordenação De Ação Institucional E Políticas Públicas",
+    "nome": "Midian Do Espírito Santo Ferreira E Ferreira",
+    "inicio": "11/09/2025"
+   },
+   {
+    "cargo": "2. Coordenação De Comunicação E Redes Sociais",
+    "nome": "Maria De Nazaré De Sousa Teixeira",
+    "inicio": "11/09/2025"
+   },
+   {
+    "cargo": "2. Coordenação De Formação Política",
+    "nome": "Nilda Maria Paula Nunes",
+    "inicio": "11/09/2025"
+   },
+   {
+    "cargo": "2. Coordenação De Movimentos Sociais",
+    "nome": "Maria Waldeth Dos Santos",
+    "inicio": "11/09/2025"
+   },
+   {
+    "cargo": "2. Coordenação De Organização",
+    "nome": "Juliano Paracampos Da Silva Manccini",
+    "inicio": "11/09/2025"
+   },
+   {
+    "cargo": "2. Coordenação De Relações Internacionais",
+    "nome": "Jonnyer Orleans Dos Santos",
+    "inicio": "11/09/2025"
+   },
+   {
+    "cargo": "2. Coordenação Executiva/Secretário Geral",
+    "nome": "Andrea Luanda Peres Amador",
+    "inicio": "11/09/2025"
+   },
+   {
+    "cargo": "2. Coordenação Financeira/Tesoureiro",
+    "nome": "Michel De Jesus Paiva Ladislau",
+    "inicio": "11/09/2025"
+   }
+  ]
+ },
+ {
+  "sigla": "REPUBLICANOS",
+  "numero": 10,
+  "telefone": "-1",
+  "email": "pa@republicanos10.org.br",
+  "membros": [
+   {
+    "cargo": "Líder Da Bancada Na Assembleia Legislativa",
+    "nome": "Francisco Torres De Paula Filho",
+    "inicio": "13/04/2026"
+   },
+   {
+    "cargo": "Presidente",
+    "nome": "Evandro Garla Pereira Da Silva",
+    "inicio": "13/04/2026"
+   },
+   {
+    "cargo": "Primeiro Secretário",
+    "nome": "Thaynara Pinheiro Santos",
+    "inicio": "13/04/2026"
+   },
+   {
+    "cargo": "Primeiro Tesoureiro",
+    "nome": "Leticia Carine De Jesus Damasceno De Souza",
+    "inicio": "13/04/2026"
+   },
+   {
+    "cargo": "Primeiro Vice-Presidente",
+    "nome": "Arlindo Penha Da Silva",
+    "inicio": "13/04/2026"
+   },
+   {
+    "cargo": "Primeiro Vogal",
+    "nome": "Edvaney Dias Da Silva",
+    "inicio": "13/04/2026"
+   },
+   {
+    "cargo": "Quarto Vogal",
+    "nome": "Taíla Itália Coelho Couto",
+    "inicio": "13/04/2026"
+   },
+   {
+    "cargo": "Secretária Estadual Do Movimento Mulheres Republicanas",
+    "nome": "Shirley Helena Rolim De Souza Alves",
+    "inicio": "13/04/2026"
+   },
+   {
+    "cargo": "Secretário-Geral",
+    "nome": "Glebson Cavalcante Da Silva",
+    "inicio": "13/04/2026"
+   },
+   {
+    "cargo": "Segundo Secretário",
+    "nome": "Marcos Roberto Xavier",
+    "inicio": "13/04/2026"
+   },
+   {
+    "cargo": "Segundo Vice-Presidente",
+    "nome": "Jussara Duarte Ribeiro De Souza",
+    "inicio": "13/04/2026"
+   },
+   {
+    "cargo": "Segundo Vogal",
+    "nome": "Soriclis Costa Da Silva",
+    "inicio": "13/04/2026"
+   },
+   {
+    "cargo": "Terceiro Vogal",
+    "nome": "Simão Da Silva Vitalino",
+    "inicio": "13/04/2026"
+   },
+   {
+    "cargo": "Tesoureiro",
+    "nome": "Jose Augusto Pereira Dos Santos",
+    "inicio": "13/04/2026"
+   },
+   {
+    "cargo": "Vogal",
+    "nome": "Enio Oliveira Dos Santos",
+    "inicio": "13/04/2026"
+   }
+  ]
+ },
+ {
+  "sigla": "SOLIDARIEDADE",
+  "numero": 77,
+  "telefone": "-1",
+  "email": "solidariedadepara77@gmail.com",
+  "membros": [
+   {
+    "cargo": "Presidente",
+    "nome": "Jose Machado Barros",
+    "inicio": "09/03/2026"
+   },
+   {
+    "cargo": "Presidente",
+    "nome": "Jose Raimundo De Oliveira",
+    "inicio": "01/04/2026"
+   },
+   {
+    "cargo": "Primeira Secretária Da Mulher",
+    "nome": "Suely Guilherme De Souza Vieira",
+    "inicio": "09/03/2026"
+   },
+   {
+    "cargo": "Primeiro(A) Secretário(A) De Assuntos Parlamentares",
+    "nome": "Jackson Claudio Paz Cavalcante",
+    "inicio": "09/03/2026"
+   },
+   {
+    "cargo": "Primeiro(A) Secretário(A)-Geral",
+    "nome": "Breno Ramos Guimaraes Martins",
+    "inicio": "09/03/2026"
+   },
+   {
+    "cargo": "Primeiro(A) Secretário(A)-Geral",
+    "nome": "Janrlir Cruz Coutinho",
+    "inicio": "01/04/2026"
+   },
+   {
+    "cargo": "Primeiro(A) Tesoureiro(A)",
+    "nome": "Gilson Da Silva Serra",
+    "inicio": "09/03/2026"
+   },
+   {
+    "cargo": "Primeiro(A) Tesoureiro(A)",
+    "nome": "Emilly Camilly Freitas Zerbinato",
+    "inicio": "01/04/2026"
+   },
+   {
+    "cargo": "Secretaria Da Mulher",
+    "nome": "Odaleia Silva Melo",
+    "inicio": "09/03/2026"
+   },
+   {
+    "cargo": "Secretaria Da Mulher",
+    "nome": "Ana Cristina De Albuquerque Filho",
+    "inicio": "01/04/2026"
+   },
+   {
+    "cargo": "Secretário(A) De Assuntos Parlamentares",
+    "nome": "Livia Maria Araujo Noronha De Oliveira",
+    "inicio": "01/04/2026"
+   },
+   {
+    "cargo": "Secretário(A) De Assuntos Parlamentares",
+    "nome": "Carlos Augusto Almeida Ramos",
+    "inicio": "09/03/2026"
+   },
+   {
+    "cargo": "Secretário(A)-Geral",
+    "nome": "Luiz Antonio Adriano Da Silva",
+    "inicio": "09/03/2026"
+   },
+   {
+    "cargo": "Secretário(A)-Geral",
+    "nome": "Roberto Carlos De Lemos Pontes",
+    "inicio": "01/04/2026"
+   },
+   {
+    "cargo": "Segundo Vice-Presidente",
+    "nome": "Murilo Martires Costa",
+    "inicio": "09/03/2026"
+   },
+   {
+    "cargo": "Tesoureiro(A)-Geral",
+    "nome": "David Garibalde Ribeiro Soares",
+    "inicio": "01/04/2026"
+   },
+   {
+    "cargo": "Tesoureiro(A)-Geral",
+    "nome": "Marcos Wagner Fonseca Lopes",
+    "inicio": "09/03/2026"
+   },
+   {
+    "cargo": "Vice-Presidente",
+    "nome": "Moacir Dias Bicalho Junior",
+    "inicio": "09/03/2026"
+   },
+   {
+    "cargo": "Vice-Presidente",
+    "nome": "Maria Wanja Lobato Correa",
+    "inicio": "01/04/2026"
+   }
+  ]
+ },
+ {
+  "sigla": "UNIÃO",
+  "numero": 44,
+  "telefone": "-1",
+  "email": "para@uniaobrasil.org.br",
+  "membros": [
+   {
+    "cargo": "Membro Da Interventora",
+    "nome": "Eliel Pereira Faustino Filho",
+    "inicio": "05/03/2026"
+   },
+   {
+    "cargo": "Presidente",
+    "nome": "Francisco Das Chagas Silva Melo Filho",
+    "inicio": "05/03/2026"
+   },
+   {
+    "cargo": "Secretário(A)-Geral",
+    "nome": "Victor Orengel Dias",
+    "inicio": "05/03/2026"
+   },
+   {
+    "cargo": "Tesoureiro(A)",
+    "nome": "Francisco Nelio Aguiar Da Silva",
+    "inicio": "05/03/2026"
+   },
+   {
+    "cargo": "Vice-Presidente",
+    "nome": "Helio Leite Da Silva",
+    "inicio": "05/03/2026"
+   }
+  ]
+ },
+ {
+  "sigla": "UP",
+  "numero": 80,
+  "telefone": "-1",
+  "email": "unidadepopularpa@gmail.com",
+  "membros": [
+   {
+    "cargo": "Membro Da Comissão De Ética E Disciplina - Titular",
+    "nome": "Carlos Eduardo Campos Da Silva",
+    "inicio": "02/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão De Ética E Disciplina - Titular",
+    "nome": "Hadria Maria E Silva Dos Santos",
+    "inicio": "02/11/2025"
+   },
+   {
+    "cargo": "Membro Da Comissão De Ética E Disciplina - Titular",
+    "nome": "Sirlan Da Silva Lobato",
+    "inicio": "02/11/2025"
+   },
+   {
+    "cargo": "Membro Do Conselho Fiscal - Titular",
+    "nome": "Richard Dos Santos Abreu",
+    "inicio": "02/11/2025"
+   },
+   {
+    "cargo": "Membro Do Conselho Fiscal - Titular",
+    "nome": "Bruna Freire De Almeida",
+    "inicio": "02/11/2025"
+   },
+   {
+    "cargo": "Membro Do Conselho Fiscal - Titular",
+    "nome": "Vitória Gabrielle Rodrigues E Rodrigues",
+    "inicio": "02/11/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Alerrandro Lima Freitas",
+    "inicio": "02/11/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Paulo Henrique Pinto Maciel",
+    "inicio": "02/11/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Raquel Nonato De Brício",
+    "inicio": "02/11/2025"
+   },
+   {
+    "cargo": "Membro Do Diretório",
+    "nome": "Hamblea Victória Diniz Souza",
+    "inicio": "02/11/2025"
+   },
+   {
+    "cargo": "Presidente",
+    "nome": "Carlos Edisio Torres Leite",
+    "inicio": "02/11/2025"
+   },
+   {
+    "cargo": "Secretário(A)-Geral",
+    "nome": "Matheus Mendes Da Silva Gomes",
+    "inicio": "02/11/2025"
+   },
+   {
+    "cargo": "Tesoureiro(A)",
+    "nome": "Ana Carolina Martins Neves",
+    "inicio": "02/11/2025"
+   },
+   {
+    "cargo": "Vice-Presidente",
+    "nome": "Izabele Caroline Leite Medeiros",
+    "inicio": "02/11/2025"
+   }
+  ]
+ }
+]
