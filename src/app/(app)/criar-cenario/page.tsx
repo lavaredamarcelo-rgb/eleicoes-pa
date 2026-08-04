@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SeletorCargoSimulacao } from "@/components/simuladores/SeletorCargoSimulacao";
 import { SimuladorMetaManual } from "@/components/simuladores/SimuladorMetaManual";
 import { CriadorCenario } from "@/components/CriadorCenario";
+import { CriadorCenarioMajoritario } from "@/components/CriadorCenarioMajoritario";
 import {
   getCargosParaSimulacao,
   getDadosSimulacaoCargoOuProjetado,
@@ -24,11 +25,12 @@ export default async function CriarCenarioPage({
 }) {
   const { cargo: cargoId, modo: modoParam } = await searchParams;
   const modo = modoParam === "meta" ? "meta" : "chapa";
-  const cargosReais = await getCargosParaSimulacao({ tipoApuracao: "PROPORCIONAL" });
+  const cargosReais = await getCargosParaSimulacao({});
 
-  // Disputas futuras: para cada cargo estadual do ano mais recente, uma
-  // entrada projetada ("proj:<id>") escalada pelo eleitorado da próxima
-  // eleição (oficial do TSE quando publicado) — ex.: Dep. Estadual 2026.
+  // Disputas futuras: para cada cargo estadual do ano mais recente
+  // (proporcionais E majoritários), uma entrada projetada ("proj:<id>")
+  // escalada pelo eleitorado da próxima eleição (oficial do TSE quando
+  // publicado) — ex.: Dep. Estadual, Governador e Senador 2026.
   const anoEstadualMax = Math.max(
     0,
     ...cargosReais.filter((c) => !c.municipioNome).map((c) => c.ano)
@@ -100,29 +102,47 @@ export default async function CriarCenarioPage({
           {carga?.projetado && (
             <p className="rounded-lg border border-sky-900/60 bg-sky-950/20 px-3 py-2 text-xs text-sky-300">
               🔮 Disputa <strong>projetada para {dados.ano}</strong>: parte dos resultados reais de{" "}
-              {carga.anoBase} com os votos nominais e de legenda escalados pelo eleitorado{" "}
-              {dados.ano} (oficial do TSE). QE projetado:{" "}
-              {dados.quocienteEleitoral.toLocaleString("pt-BR")}. Troque nomes, partidos e votos à
-              vontade — é o seu cenário de {dados.ano}.
+              {carga.anoBase} com os votos {dados.tipoApuracao === "PROPORCIONAL" ? "nominais e de legenda " : ""}
+              escalados pelo eleitorado {dados.ano} (oficial do TSE).
+              {dados.tipoApuracao === "PROPORCIONAL"
+                ? ` QE projetado: ${dados.quocienteEleitoral.toLocaleString("pt-BR")}.`
+                : dados.cargoNome === "Senador"
+                  ? ` Em ${dados.ano} o Pará elege ${dados.vagas} senadores (renovação de 2/3).`
+                  : ""}{" "}
+              Troque nomes, partidos e votos à vontade — é o seu cenário de {dados.ano}.
             </p>
           )}
-          <div className="flex flex-wrap gap-2">
-            {MODOS.map((m) => (
-              <Link
-                key={m.chave}
-                href={`/criar-cenario?cargo=${dados.cargoId}&modo=${m.chave}`}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                  modo === m.chave
-                    ? "bg-amber-400 text-neutral-950"
-                    : "border border-neutral-800 bg-neutral-900 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200"
-                }`}
-              >
-                {m.rotulo}
-              </Link>
-            ))}
-          </div>
+          {dados.tipoApuracao === "PROPORCIONAL" && (
+            <div className="flex flex-wrap gap-2">
+              {MODOS.map((m) => (
+                <Link
+                  key={m.chave}
+                  href={`/criar-cenario?cargo=${dados.cargoId}&modo=${m.chave}`}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                    modo === m.chave
+                      ? "bg-amber-400 text-neutral-950"
+                      : "border border-neutral-800 bg-neutral-900 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200"
+                  }`}
+                >
+                  {m.rotulo}
+                </Link>
+              ))}
+            </div>
+          )}
 
-          {modo === "chapa" ? (
+          {dados.tipoApuracao === "MAJORITARIO" ? (
+            <CriadorCenarioMajoritario
+              key={dados.cargoId}
+              rotulo={rotuloDisputa}
+              cargoNome={dados.cargoNome}
+              ano={dados.ano}
+              candidatos={dados.candidatos}
+              partidos={partidos}
+              vagas={dados.vagas}
+              projetado={carga?.projetado ?? false}
+              anoBase={carga?.anoBase ?? dados.ano}
+            />
+          ) : modo === "chapa" ? (
             <CriadorCenario
               key={dados.cargoId}
               cargoId={dados.cargoId}

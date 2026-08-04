@@ -8,7 +8,14 @@ import { getFiliacaoAtual, getMunicipioFicha, getEleitosDoMunicipio } from "@/li
 // (somente leitura, nunca a tabela Resultado inteira), enviamos à API do
 // Claude e guardamos o resultado estruturado para reexibição e PDF.
 
-export type TipoRelatorio = "candidato" | "partido" | "municipio" | "comparativo" | "cenario" | "livre";
+export type TipoRelatorio =
+  | "candidato"
+  | "partido"
+  | "municipio"
+  | "comparativo"
+  | "cenario"
+  | "cenario-majoritario"
+  | "livre";
 
 export type ConteudoRelatorio = {
   titulo: string;
@@ -756,6 +763,64 @@ export async function gerarRelatorio(opts: {
       pedido = `Cenário simulado — ${calc.cargo.nome} ${calc.cargo.ano}`;
       dados = null;
       conteudoPadrao = conteudoRelatorioCenario(calc);
+      break;
+    }
+    case "cenario-majoritario": {
+      // Cenário majoritário montado no cliente — determinístico, as linhas
+      // do ranking já são o produto final.
+      let payload: {
+        rotulo: string;
+        cargoNome: string;
+        ano: number;
+        anoBase: number;
+        projetado: boolean;
+        vagas: number;
+        temSegundoTurno: boolean;
+        linhas: { nome: string; partidoSigla: string; votos: number; observacao: string }[];
+      };
+      try {
+        payload = JSON.parse(params.dados ?? "");
+      } catch {
+        throw new Error("Cenário inválido.");
+      }
+      const linhas = [...(payload.linhas ?? [])].sort((a, b) => b.votos - a.votos);
+      if (linhas.length === 0) throw new Error("Cenário sem candidaturas.");
+      const total = linhas.reduce((s, l) => s + l.votos, 0);
+      const pctDe = (v: number) =>
+        total > 0 ? `${((v / total) * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%` : "—";
+      const pctLider = total > 0 ? (linhas[0].votos / total) * 100 : 0;
+      const decideNoPrimeiro = !payload.temSegundoTurno || pctLider > 50;
+      const veredicto =
+        payload.vagas > 1
+          ? `Eleitos (${payload.vagas} vagas, maioria simples): ${linhas
+              .slice(0, payload.vagas)
+              .map((l) => `${l.nome} (${l.partidoSigla})`)
+              .join(" e ")}.`
+          : decideNoPrimeiro
+            ? `${linhas[0].nome} (${linhas[0].partidoSigla}) venceria${payload.temSegundoTurno ? " no 1º turno" : ""}, com ${pctDe(linhas[0].votos)} dos válidos.`
+            : `2º turno entre ${linhas[0].nome} (${linhas[0].partidoSigla}) e ${linhas[1].nome} (${linhas[1].partidoSigla}) — líder com ${pctDe(linhas[0].votos)}.`;
+      pedido = `Cenário majoritário — ${payload.cargoNome} ${payload.ano}`;
+      dados = null;
+      conteudoPadrao = {
+        titulo: `Cenário majoritário — ${payload.rotulo}`,
+        resumo: `${payload.projetado ? `Disputa PROJETADA de ${payload.ano} (base real de ${payload.anoBase}, votos escalados pelo eleitorado). ` : ""}${veredicto} Total de ${f(total)} votos válidos no cenário. Projeção hipotética — não altera os dados oficiais do sistema.`,
+        secoes: [
+          {
+            titulo: `Ranking do cenário (${linhas.length} candidaturas · ${payload.vagas} vaga${payload.vagas !== 1 ? "s" : ""})`,
+            tabela: {
+              colunas: ["#", "Candidato", "Partido", "Votos", "%", "Observação"],
+              linhas: linhas.map((l, i) => [
+                String(i + 1),
+                l.nome,
+                l.partidoSigla,
+                f(l.votos),
+                pctDe(l.votos),
+                l.observacao || "—",
+              ]),
+            },
+          },
+        ],
+      };
       break;
     }
     case "livre": {

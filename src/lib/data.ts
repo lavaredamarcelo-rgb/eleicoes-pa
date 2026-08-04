@@ -528,13 +528,20 @@ export async function getDadosSimulacaoCargoOuProjetado(id: string) {
   const votosValidos =
     candidatos.reduce((s, c) => s + c.votos, 0) +
     Object.values(votosLegenda).reduce((s, v) => s + v, 0);
-  const quocienteEleitoral = dados.vagas > 0 ? Math.floor(votosValidos / dados.vagas) : 0;
+
+  // Senador renova 1/3 e 2/3 alternadamente: quem elegeu 1 na base elege 2
+  // na projeção (e vice-versa).
+  const vagas =
+    dados.cargoNome === "Senador" ? (dados.vagas === 1 ? 2 : 1) : dados.vagas;
+  const quocienteEleitoral =
+    dados.tipoApuracao === "PROPORCIONAL" && vagas > 0 ? Math.floor(votosValidos / vagas) : 0;
 
   return {
     dados: {
       ...dados,
       cargoId: id,
       ano: anoAlvo,
+      vagas,
       candidatos,
       votosValidos,
       quocienteEleitoral,
