@@ -29,6 +29,7 @@ export function CriadorCenarioMajoritario({
   vagas,
   projetado,
   anoBase,
+  aprovadosConvencao,
 }: {
   rotulo: string;
   cargoNome: string;
@@ -38,6 +39,8 @@ export function CriadorCenarioMajoritario({
   vagas: number;
   projetado: boolean;
   anoBase: number;
+  // Aprovados nas convenções para este cargo (aba Convenções).
+  aprovadosConvencao?: { nome: string; partidoSigla: string }[];
 }) {
   const router = useRouter();
   const [substituicoes, setSubstituicoes] = useState<Record<string, string>>({});
@@ -171,6 +174,30 @@ export function CriadorCenarioMajoritario({
 
   return (
     <div className="flex flex-col gap-4">
+      {(aprovadosConvencao?.length ?? 0) > 0 && (
+        <div className="rounded-xl border border-emerald-900/50 bg-emerald-950/10 p-3">
+          <p className="text-xs font-medium text-emerald-300">
+            ✓ Aprovados nas convenções para {cargoNome} (aba Convenções) — use nos campos de
+            substituição ou como fictícios:
+          </p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {aprovadosConvencao!.map((a) => (
+              <span
+                key={`${a.nome}-${a.partidoSigla}`}
+                className="rounded-full bg-neutral-900 px-2.5 py-1 text-xs text-neutral-200"
+              >
+                {a.nome} <span className="text-neutral-500">({a.partidoSigla})</span>
+              </span>
+            ))}
+          </div>
+          <datalist id="aprovados-majoritario">
+            {aprovadosConvencao!.map((a) => (
+              <option key={`${a.nome}-${a.partidoSigla}`} value={a.nome} />
+            ))}
+          </datalist>
+        </div>
+      )}
+
       <div
         className={`rounded-xl border px-4 py-3 text-sm ${
           decideNoPrimeiro
@@ -247,6 +274,7 @@ export function CriadorCenarioMajoritario({
                   setSubstituicoes((prev) => ({ ...prev, [c.id]: e.target.value }))
                 }
                 placeholder="nome novo (herda os votos)"
+                list="aprovados-majoritario"
                 className="rounded-lg border border-neutral-800 bg-neutral-950 px-2 py-1.5 text-xs text-neutral-100"
               />
               <select
@@ -294,6 +322,7 @@ export function CriadorCenarioMajoritario({
               value={fNome}
               onChange={(e) => setFNome(e.target.value)}
               placeholder="Nome"
+              list="aprovados-majoritario"
               className="flex-1 rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100"
             />
             <select

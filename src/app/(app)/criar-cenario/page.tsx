@@ -52,6 +52,20 @@ export default async function CriarCenarioPage({
 
   const partidos = dados ? await getPartidos() : [];
 
+  // Aprovados nas convenções (aba Convenções) — viram sugestões nos
+  // construtores de cenário.
+  const aprovados = dados
+    ? await prisma.preCandidato.findMany({
+        where: { situacao: "APROVADO" },
+        include: { partido: true },
+        orderBy: { nome: "asc" },
+      })
+    : [];
+  const aprovadosPorPartido: Record<string, { nome: string; cargo: string }[]> = {};
+  for (const pc of aprovados) {
+    (aprovadosPorPartido[pc.partidoId] ??= []).push({ nome: pc.nome, cargo: pc.cargo });
+  }
+
   const session = await verifySession();
   const [municipios, referenciais, cenariosSalvos] =
     dados && carga && modo === "meta"
@@ -141,6 +155,9 @@ export default async function CriarCenarioPage({
               vagas={dados.vagas}
               projetado={carga?.projetado ?? false}
               anoBase={carga?.anoBase ?? dados.ano}
+              aprovadosConvencao={aprovados
+                .filter((pc) => pc.cargo === dados.cargoNome)
+                .map((pc) => ({ nome: pc.nome, partidoSigla: pc.partido.sigla }))}
             />
           ) : modo === "chapa" ? (
             <CriadorCenario
@@ -152,6 +169,7 @@ export default async function CriarCenarioPage({
               vagas={dados.vagas}
               quocienteOficial={dados.quocienteEleitoral}
               votosLegenda={votosLegenda}
+              aprovadosPorPartido={aprovadosPorPartido}
             />
           ) : (
             municipios &&

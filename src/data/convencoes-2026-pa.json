@@ -1,0 +1,113 @@
+{
+  "fonte": "Imprensa (O Liberal, Diário do Pará) e Wikipédia — Eleições estaduais no Pará em 2026; pesquisado em 06/08/2026",
+  "convencoes": [
+    {
+      "sigla": "MDB",
+      "dataRealizada": "01/08/2026",
+      "local": "Ginásio Mangueirinho, Belém",
+      "preCandidatos": [
+        { "nome": "Hana Ghassan", "cargo": "Governador", "situacao": "APROVADO" },
+        { "nome": "Helder Barbalho", "cargo": "Senador", "situacao": "APROVADO" }
+      ]
+    },
+    {
+      "sigla": "PT",
+      "dataRealizada": "01/08/2026",
+      "preCandidatos": [
+        { "nome": "Dirceu Ten Caten", "cargo": "Vice-Governador", "situacao": "APROVADO", "observacoes": "Vice na chapa de Hana Ghassan (MDB)" },
+        { "nome": "Ana Júlia Carepa", "cargo": "Senador", "situacao": "NAO_APROVADO", "observacoes": "Desistência — acordo desfeito; PDT manteve chapa pura" }
+      ]
+    },
+    {
+      "sigla": "AVANTE",
+      "preCandidatos": [
+        { "nome": "Josué Paiva", "cargo": "Vice-Governador", "situacao": "APROVADO", "observacoes": "Vice na chapa de Hana Ghassan (MDB)" }
+      ]
+    },
+    {
+      "sigla": "PODE",
+      "dataRealizada": "04/08/2026",
+      "preCandidatos": [
+        { "nome": "Dr. Daniel Santos", "cargo": "Governador", "situacao": "APROVADO", "observacoes": "Vice a definir até 15/08" },
+        { "nome": "Zequinha Marinho", "cargo": "Senador", "situacao": "APROVADO" }
+      ]
+    },
+    {
+      "sigla": "PSOL",
+      "dataRealizada": "04/08/2026",
+      "local": "Tuna Luso Brasileira, Belém",
+      "preCandidatos": [
+        { "nome": "Araceli Lemos", "cargo": "Governador", "situacao": "APROVADO", "observacoes": "Vice a definir até 15/08" },
+        { "nome": "Gizelle Freitas", "cargo": "Senador", "situacao": "APROVADO" },
+        { "nome": "Marcelino Conti", "cargo": "Senador", "situacao": "APROVADO" }
+      ]
+    },
+    {
+      "sigla": "PSTU",
+      "dataRealizada": "01/08/2026",
+      "preCandidatos": [
+        { "nome": "Cleber Rabelo", "cargo": "Governador", "situacao": "APROVADO" },
+        { "nome": "Well Macêdo", "cargo": "Vice-Governador", "situacao": "APROVADO", "observacoes": "Vice na chapa de Cleber Rabelo" }
+      ]
+    },
+    {
+      "sigla": "PRTB",
+      "dataRealizada": "03/08/2026",
+      "preCandidatos": [
+        { "nome": "Robertinho", "cargo": "Governador", "situacao": "APROVADO" },
+        { "nome": "José Ronaldo", "cargo": "Vice-Governador", "situacao": "APROVADO", "observacoes": "Vice na chapa de Robertinho" }
+      ]
+    },
+    {
+      "sigla": "UP",
+      "dataRealizada": "30/07/2026",
+      "preCandidatos": [
+        { "nome": "Gal Leite", "cargo": "Governador", "situacao": "APROVADO", "observacoes": "Descartou o Senado para encabeçar a chapa" },
+        { "nome": "Karen Sousa", "cargo": "Vice-Governador", "situacao": "APROVADO", "observacoes": "Vice na chapa de Gal Leite" },
+        { "nome": "Fernanda Lopes", "cargo": "Senador", "situacao": "APROVADO" }
+      ]
+    },
+    {
+      "sigla": "PDT",
+      "dataRealizada": "23/07/2026",
+      "preCandidatos": [
+        { "nome": "Celso Sabino", "cargo": "Senador", "situacao": "APROVADO", "observacoes": "Chapa pura do PDT" }
+      ]
+    },
+    {
+      "sigla": "UNIÃO",
+      "dataRealizada": "27/07/2026",
+      "preCandidatos": [
+        { "nome": "Chicão", "cargo": "Senador", "situacao": "APROVADO" }
+      ]
+    },
+    {
+      "sigla": "PL",
+      "dataRealizada": "04/08/2026",
+      "preCandidatos": [
+        { "nome": "Éder Mauro", "cargo": "Senador", "situacao": "APROVADO" }
+      ]
+    },
+    {
+      "sigla": "REDE",
+      "dataRealizada": "04/08/2026",
+      "preCandidatos": [
+        { "nome": "Orleans Santos", "cargo": "Senador", "situacao": "APROVADO" },
+        { "nome": "Francisco Cavalcante", "cargo": "Senador", "situacao": "NAO_APROVADO", "observacoes": "Partido optou por Orleans Santos" }
+      ]
+    },
+    {
+      "sigla": "SOLIDARIEDADE",
+      "dataRealizada": "05/08/2026",
+      "preCandidatos": [
+        { "nome": "Lívia Noronha", "cargo": "Senador", "situacao": "APROVADO" }
+      ]
+    },
+    {
+      "sigla": "NOVO",
+      "preCandidatos": [
+        { "nome": "Dr. Breno Guimarães", "cargo": "Senador", "situacao": "NAO_APROVADO", "observacoes": "Partido lançou apenas candidatos a deputado federal" }
+      ]
+    }
+  ]
+}

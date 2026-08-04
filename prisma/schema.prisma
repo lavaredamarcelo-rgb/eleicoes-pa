@@ -134,6 +134,8 @@ model Partido {
   trocasComoDestino    TrocaPartido[] @relation("TrocaPartidoDestino")
   votosLegenda         VotoLegenda[]
   direcoesMunicipais   DirecaoMunicipalPartido[]
+  convencao            Convencao?
+  preCandidatos        PreCandidato[]
 }
 
 model Candidato {
@@ -328,4 +330,34 @@ model DirecaoMunicipalPartido {
   inicio      String?
 
   @@unique([partidoId, municipioId])
+}
+
+// Convenção partidária do ciclo eleitoral corrente (uma por partido):
+// datas previstas/realizadas e anotações do organizador.
+model Convencao {
+  id            String   @id @default(cuid())
+  partidoId     String   @unique
+  partido       Partido  @relation(fields: [partidoId], references: [id])
+  dataPrevista  String?
+  dataRealizada String?
+  local         String?
+  observacoes   String?
+  updatedAt     DateTime @updatedAt
+}
+
+// Pré-candidato apontado para as convenções: semeado por pesquisa na
+// imprensa ou incluído à mão; após a convenção vira APROVADO (ou
+// NAO_APROVADO/desistência), e os aprovados alimentam as simulações.
+model PreCandidato {
+  id          String   @id @default(cuid())
+  partidoId   String
+  partido     Partido  @relation(fields: [partidoId], references: [id])
+  nome        String
+  cargo       String
+  situacao    String   @default("PRE_CANDIDATO")
+  origem      String   @default("manual")
+  observacoes String?
+  createdAt   DateTime @default(now())
+
+  @@unique([partidoId, nome, cargo])
 }

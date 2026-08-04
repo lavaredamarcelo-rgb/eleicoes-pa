@@ -29,6 +29,7 @@ export function CriadorCenario({
   vagas,
   quocienteOficial,
   votosLegenda,
+  aprovadosPorPartido,
 }: {
   cargoId: string;
   rotulo: string;
@@ -37,6 +38,8 @@ export function CriadorCenario({
   vagas: number;
   quocienteOficial: number;
   votosLegenda: Record<string, number>;
+  // Aprovados nas convenções (aba Convenções) — sugestões por partido.
+  aprovadosPorPartido?: Record<string, { nome: string; cargo: string }[]>;
 }) {
   const router = useRouter();
   const [partidoSel, setPartidoSel] = useState("");
@@ -269,6 +272,30 @@ export function CriadorCenario({
         </div>
       </div>
 
+      {partidoSel && (aprovadosPorPartido?.[partidoSel]?.length ?? 0) > 0 && (
+        <div className="rounded-xl border border-emerald-900/50 bg-emerald-950/10 p-3">
+          <p className="text-xs font-medium text-emerald-300">
+            ✓ Aprovados na convenção do {partidoById.get(partidoSel)?.sigla} (aba Convenções) —
+            use nos campos de substituição ou como fictícios:
+          </p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {aprovadosPorPartido![partidoSel].map((a) => (
+              <span
+                key={`${a.nome}-${a.cargo}`}
+                className="rounded-full bg-neutral-900 px-2.5 py-1 text-xs text-neutral-200"
+              >
+                {a.nome} <span className="text-neutral-500">· {a.cargo}</span>
+              </span>
+            ))}
+          </div>
+          <datalist id={`aprovados-${partidoSel}`}>
+            {aprovadosPorPartido![partidoSel].map((a) => (
+              <option key={`${a.nome}-${a.cargo}`} value={a.nome} />
+            ))}
+          </datalist>
+        </div>
+      )}
+
       {partidoSel && quota && (
         <div
           className={`rounded-xl border p-4 ${
@@ -336,6 +363,7 @@ export function CriadorCenario({
                     value={sub?.novoNome ?? ""}
                     onChange={(e) => definirSubstituicao(c.id, e.target.value)}
                     placeholder="nome novo (herda os votos)"
+                    list={`aprovados-${partidoSel}`}
                     className="rounded-lg border border-neutral-800 bg-neutral-950 px-2 py-1.5 text-xs text-neutral-100"
                   />
                   <select
@@ -368,6 +396,7 @@ export function CriadorCenario({
                 value={fNome}
                 onChange={(e) => setFNome(e.target.value)}
                 placeholder="Nome"
+                list={`aprovados-${partidoSel}`}
                 className="flex-1 rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100"
               />
               <select
