@@ -32,7 +32,7 @@ npx --yes @railway/cli ssh -- "sh -c 'echo $B64 | base64 -d > /tmp/bk.js && node
 [ "$(sqlite3 "$DEST/prod.db" 'PRAGMA integrity_check;')" = "ok" ] && echo "    prod.db íntegro"
 
 echo "5/5 Cópia no iCloud Drive…"
-ICLOUD="$HOME/Library/Mobile Documents/com~apple~CloudDocs/Backups Eleições PA"
+ICLOUD="$HOME/Library/Mobile Documents/com~apple~CloudDocs/Claude Code.Projetos/Eleicoes-pa"
 if [ -d "$(dirname "$ICLOUD")" ]; then
   mkdir -p "$ICLOUD"
   cp -R "$DEST" "$ICLOUD/$DATA"
