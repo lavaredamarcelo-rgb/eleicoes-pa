@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileDown, FileText, UserPlus } from "lucide-react";
 import { calcularSimulacao, type CandidatoSimulacao } from "@/lib/simulacaoPartido";
+import { VisorPdf } from "@/components/VisorPdf";
 
 type Candidato = {
   id: string;
@@ -52,6 +53,7 @@ export function CriadorCenario({
   const [fGenero, setFGenero] = useState<Genero>("");
   const [fVotos, setFVotos] = useState("");
   const [exportando, setExportando] = useState<"" | "pdf" | "relatorio">("");
+  const [pdfAberto, setPdfAberto] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
   const partidoById = useMemo(() => new Map(partidos.map((p) => [p.id, p])), [partidos]);
@@ -220,12 +222,7 @@ export function CriadorCenario({
         });
         if (!resp.ok) throw new Error("Falha ao gerar o PDF do cenário.");
         const blob = await resp.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "cenario-criado.pdf";
-        a.click();
-        URL.revokeObjectURL(url);
+        setPdfAberto(URL.createObjectURL(blob));
       } else {
         const resp = await fetch("/api/relatorios", {
           method: "POST",
@@ -246,6 +243,17 @@ export function CriadorCenario({
 
   return (
     <div className="flex flex-col gap-4">
+      {pdfAberto && (
+        <VisorPdf
+          titulo={`Cenário criado — ${rotulo}`}
+          blobUrl={pdfAberto}
+          nomeArquivo="cenario-criado.pdf"
+          aoFechar={() => {
+            URL.revokeObjectURL(pdfAberto);
+            setPdfAberto(null);
+          }}
+        />
+      )}
       <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
         <p className="text-sm font-medium text-neutral-300">Base do cenário: {rotulo}</p>
         <p className="text-xs text-neutral-500">

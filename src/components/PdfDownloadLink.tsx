@@ -1,14 +1,9 @@
-import { FileDown } from "lucide-react";
+"use client";
 
+import { BotaoPdf } from "@/components/VisorPdf";
+
+// Mantém a API antiga (href + label), mas agora abre o PDF no visor
+// interno — com botão Fechar — em vez de navegar para o arquivo.
 export function PdfDownloadLink({ href, label = "Baixar PDF" }: { href: string; label?: string }) {
-  return (
-    <a
-      href={href}
-      download
-      className="inline-flex items-center gap-2 rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-xs font-medium text-neutral-300 transition-colors duration-150 hover:border-neutral-600 hover:bg-neutral-800"
-    >
-      <FileDown size={14} />
-      {label}
-    </a>
-  );
+  return <BotaoPdf href={href} label={label} titulo={label} />;
 }

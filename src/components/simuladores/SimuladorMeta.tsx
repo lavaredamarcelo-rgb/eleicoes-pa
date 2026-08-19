@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileDown } from "lucide-react";
+import { BotaoPdf } from "@/components/VisorPdf";
 
 type Municipio = { municipioNome: string; peso: number; fracao: number; votosAtuais: number };
 type Distribuicao = {
@@ -62,14 +62,11 @@ export function SimuladorMeta({ distribuicao }: { distribuicao: Distribuicao }) 
               {distribuicao.totalAtual.toLocaleString("pt-BR")} votos
             </p>
           </div>
-          <a
+          <BotaoPdf
             href={`/api/pdf/meta?candidato=${distribuicao.id}&base=${distribuicao.base}&meta=${meta}`}
-            target="_blank"
-            className="flex items-center gap-1.5 rounded-lg border border-neutral-700 px-3 py-1.5 text-xs text-neutral-300 transition-colors hover:border-neutral-500"
-          >
-            <FileDown size={13} />
-            Baixar PDF
-          </a>
+            titulo={`Meta de campanha — ${distribuicao.nome}`}
+            nomeArquivo="meta-campanha.pdf"
+          />
         </div>
 
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { FileDown } from "lucide-react";
+import { BotaoPdf } from "@/components/VisorPdf";
 
 type MunicipioVoto = { municipioNome: string; regiaoNome: string; votos: number };
 type Distribuicao = {
@@ -66,14 +66,11 @@ export function SimuladorProjecaoPercentual({ distribuicao }: { distribuicao: Di
               {distribuicao.total.toLocaleString("pt-BR")} votos
             </p>
           </div>
-          <a
+          <BotaoPdf
             href={`/api/pdf/meta-percentual?candidato=${distribuicao.id}&pct=${pctAssinado}`}
-            target="_blank"
-            className="flex items-center gap-1.5 rounded-lg border border-neutral-700 px-3 py-1.5 text-xs text-neutral-300 transition-colors hover:border-neutral-500"
-          >
-            <FileDown size={13} />
-            Baixar PDF
-          </a>
+            titulo={`Projeção percentual — ${distribuicao.nome}`}
+            nomeArquivo="projecao-percentual.pdf"
+          />
         </div>
 
         <div className="mt-3 flex flex-wrap items-end gap-3">

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileDown, FileText } from "lucide-react";
 import { CandidatoCombobox } from "./CandidatoCombobox";
+import { VisorPdf } from "@/components/VisorPdf";
 import {
   calcularSimulacao,
   votosProjetados,
@@ -194,6 +195,7 @@ export function SimuladorPartido({
   }
 
   const [gerandoPdf, setGerandoPdf] = useState(false);
+  const [pdfAberto, setPdfAberto] = useState<string | null>(null);
   const [salvandoRelatorio, setSalvandoRelatorio] = useState(false);
   const [erroExport, setErroExport] = useState<string | null>(null);
 
@@ -225,12 +227,7 @@ export function SimuladorPartido({
       });
       if (!resp.ok) throw new Error("Falha ao gerar o PDF do cenário.");
       const blob = await resp.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "cenario-simulado.pdf";
-      a.click();
-      URL.revokeObjectURL(url);
+      setPdfAberto(URL.createObjectURL(blob));
     } catch (e) {
       setErroExport(e instanceof Error ? e.message : "Falha ao gerar o PDF.");
     } finally {
@@ -262,6 +259,17 @@ export function SimuladorPartido({
 
   return (
     <section className="flex flex-col gap-3 rounded-xl border border-orange-900/50 bg-orange-950/10 p-4">
+      {pdfAberto && (
+        <VisorPdf
+          titulo="Cenário simulado"
+          blobUrl={pdfAberto}
+          nomeArquivo="cenario-simulado.pdf"
+          aoFechar={() => {
+            URL.revokeObjectURL(pdfAberto);
+            setPdfAberto(null);
+          }}
+        />
+      )}
       <div>
         <h2 className="text-sm font-medium text-orange-300">Simulador de cenários</h2>
         <p className="text-xs text-neutral-500">

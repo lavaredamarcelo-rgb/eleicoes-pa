@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileDown, FileText, UserPlus } from "lucide-react";
+import { VisorPdf } from "@/components/VisorPdf";
 
 type Candidato = {
   id: string;
@@ -51,6 +52,7 @@ export function CriadorCenarioMajoritario({
   const [fPartido, setFPartido] = useState("");
   const [fVotos, setFVotos] = useState("");
   const [exportando, setExportando] = useState<"" | "pdf" | "relatorio">("");
+  const [pdfAberto, setPdfAberto] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
   const partidoById = useMemo(() => new Map(partidos.map((p) => [p.id, p])), [partidos]);
@@ -145,12 +147,7 @@ export function CriadorCenarioMajoritario({
         });
         if (!resp.ok) throw new Error("Falha ao gerar o PDF do cenário.");
         const blob = await resp.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "cenario-majoritario.pdf";
-        a.click();
-        URL.revokeObjectURL(url);
+        setPdfAberto(URL.createObjectURL(blob));
       } else {
         const resp = await fetch("/api/relatorios", {
           method: "POST",
@@ -174,6 +171,17 @@ export function CriadorCenarioMajoritario({
 
   return (
     <div className="flex flex-col gap-4">
+      {pdfAberto && (
+        <VisorPdf
+          titulo={`Cenário majoritário — ${rotulo}`}
+          blobUrl={pdfAberto}
+          nomeArquivo="cenario-majoritario.pdf"
+          aoFechar={() => {
+            URL.revokeObjectURL(pdfAberto);
+            setPdfAberto(null);
+          }}
+        />
+      )}
       {(aprovadosConvencao?.length ?? 0) > 0 && (
         <div className="rounded-xl border border-emerald-900/50 bg-emerald-950/10 p-3">
           <p className="text-xs font-medium text-emerald-300">

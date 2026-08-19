@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileDown, FolderOpen, Save, Search, Shuffle } from "lucide-react";
 import { calcularSimulacao, type CandidatoSimulacao } from "@/lib/simulacaoPartido";
+import { VisorPdf } from "@/components/VisorPdf";
 import { salvarCenarioMeta, excluirCenarioMeta } from "@/app/actions/cenarios";
 import { BotaoExcluir } from "@/components/BotaoExcluir";
 
@@ -56,6 +57,7 @@ export function SimuladorMetaManual({
   const [filtro, setFiltro] = useState("");
   const [partidoEstudo, setPartidoEstudo] = useState("");
   const [gerandoPdf, setGerandoPdf] = useState(false);
+  const [pdfAberto, setPdfAberto] = useState<string | null>(null);
   // Distribuição automática a partir de um total.
   const [totalDistribuir, setTotalDistribuir] = useState("");
   const [modoDistribuicao, setModoDistribuicao] = useState<
@@ -245,12 +247,7 @@ export function SimuladorMetaManual({
       });
       if (!resp.ok) throw new Error("Falha ao gerar o PDF.");
       const blob = await resp.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `meta-manual-${(nome.trim() || "candidato").toLowerCase().replace(/[^a-z0-9]+/gi, "-")}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
+      setPdfAberto(URL.createObjectURL(blob));
     } finally {
       setGerandoPdf(false);
     }
@@ -258,6 +255,17 @@ export function SimuladorMetaManual({
 
   return (
     <div className="flex flex-col gap-4">
+      {pdfAberto && (
+        <VisorPdf
+          titulo={`Distribuição de votos — ${nome.trim() || "Pretenso candidato"}`}
+          blobUrl={pdfAberto}
+          nomeArquivo="meta-manual.pdf"
+          aoFechar={() => {
+            URL.revokeObjectURL(pdfAberto);
+            setPdfAberto(null);
+          }}
+        />
+      )}
       {estudo && (
         <div className="flex flex-col gap-3 rounded-xl border border-amber-900/40 bg-amber-950/10 p-4">
           <p className="text-sm font-medium text-amber-300">
