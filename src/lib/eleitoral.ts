@@ -330,6 +330,28 @@ export async function calcularQuocienteProjetado(cargoBaseId: string) {
   const qeComparecimento =
     vagas > 0 && validosComparecimento > 0 ? Math.floor(validosComparecimento / vagas) : 0;
 
+  // Estimativas 3 e 4 — teto e piso históricos: o MAIOR e o MENOR
+  // comparecimento válido já registrados para o cargo, aplicados ao
+  // eleitorado alvo. Delimitam a faixa provável do quociente real.
+  const histMax = historico.length > 0
+    ? historico.reduce((a, b) => (b.proporcao > a.proporcao ? b : a))
+    : null;
+  const histMin = historico.length > 0
+    ? historico.reduce((a, b) => (b.proporcao < a.proporcao ? b : a))
+    : null;
+  const estimativaDe = (h: { ano: number; proporcao: number } | null) => {
+    if (!h) return null;
+    const validos = Math.round(aptosAlvo * h.proporcao);
+    return {
+      validos,
+      qe: vagas > 0 && validos > 0 ? Math.floor(validos / vagas) : 0,
+      proporcao: h.proporcao,
+      anoReferencia: h.ano,
+    };
+  };
+  const estimativaMaxima = estimativaDe(histMax);
+  const estimativaMinima = estimativaDe(histMin);
+
   // Vagas do cenário (estimativa A): diretas pelo QP e sobras rodada a
   // rodada pela maior média, registrando quem leva cada uma.
   const partidosProj = base.partidos
@@ -388,6 +410,8 @@ export async function calcularQuocienteProjetado(cargoBaseId: string) {
     aptosOficiais,
     fator,
     estimativaEleitorado: { validos: validosEleitorado, qe: qeEleitorado },
+    estimativaMaxima,
+    estimativaMinima,
     estimativaComparecimento: {
       validos: validosComparecimento,
       qe: qeComparecimento,
@@ -397,5 +421,152 @@ export async function calcularQuocienteProjetado(cargoBaseId: string) {
     partidos: tabelaPartidos,
     vagasSobras,
     rodadasSobras,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Cenário 2 das vagas previstas: incorpora os APROVADOS nas convenções
+// (aba Convenções) com um PESO por candidato — a última votação nominal
+// dele no banco (qualquer cargo/ano), escalada pelo crescimento do
+// eleitorado. Partidos com aprovados têm os votos projetados recompostos
+// como Σ pesos + legenda projetada; os demais mantêm a projeção base.
+
+import { buscarCandidatoIds } from "@/lib/data";
+
+type ProjBase = NonNullable<Awaited<ReturnType<typeof calcularQuocienteProjetado>>>;
+
+export async function cenarioComAprovados(cargoBaseId: string, proj: ProjBase) {
+  const aprovados = await prisma.preCandidato.findMany({
+    where: { situacao: "APROVADO", cargo: proj.cargoNome },
+    include: { partido: true },
+    orderBy: { nome: "asc" },
+  });
+  if (aprovados.length === 0) return { aprovados: [] as never[], partidos: null, qe: 0, rodadasSobras: [] };
+
+  const normalizar = (t: string) =>
+    t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+
+  // Peso de cada aprovado: melhor correspondência no histórico de urnas.
+  const pesos: {
+    nome: string;
+    partidoId: string;
+    partidoSigla: string;
+    peso: number;
+    base: string;
+  }[] = [];
+  for (const pc of aprovados) {
+    let ids = await buscarCandidatoIds(pc.nome, 8);
+    if (ids.length === 0) {
+      // fallback: primeiro nome, filtrando depois pelos demais termos
+      const termos = pc.nome.split(/\s+/).filter((t) => t.length >= 3);
+      if (termos.length > 1) ids = await buscarCandidatoIds(termos[0], 30);
+    }
+    const historicos = ids.length
+      ? await prisma.candidato.findMany({
+          where: { id: { in: ids } },
+          include: {
+            cargo: { include: { eleicao: true, municipio: true } },
+            resultados: true,
+          },
+        })
+      : [];
+    const termos = pc.nome.split(/\s+/).filter((t) => t.length >= 3).map(normalizar);
+    const candidatas = historicos
+      .filter((c) => {
+        const alvo = normalizar(`${c.nome} ${c.nomeCompleto ?? ""}`);
+        return termos.every((t) => alvo.includes(t));
+      })
+      .map((c) => ({
+        c,
+        ano: c.cargo.eleicao.ano,
+        votos: c.resultados.filter((r) => r.turno === 1).reduce((s, r) => s + r.votos, 0),
+      }))
+      .filter((x) => x.votos > 0)
+      // histórico do MESMO cargo vale mais que o mais recente de outro
+      // cargo (a votação de prefeito numa cidade não mede a força numa
+      // disputa estadual); dentro do mesmo critério, o mais recente.
+      .sort((a, b) => {
+        const mesmoA = a.c.cargo.nome === proj.cargoNome ? 1 : 0;
+        const mesmoB = b.c.cargo.nome === proj.cargoNome ? 1 : 0;
+        return mesmoB - mesmoA || b.ano - a.ano || b.votos - a.votos;
+      });
+    const melhor = candidatas[0];
+    if (melhor) {
+      pesos.push({
+        nome: pc.nome,
+        partidoId: pc.partidoId,
+        partidoSigla: pc.partido.sigla,
+        peso: Math.round(melhor.votos * proj.fator),
+        base: `${melhor.votos.toLocaleString("pt-BR")} votos como ${melhor.c.cargo.nome} · ${melhor.c.cargo.municipio?.nome ?? "PA"} · ${melhor.ano}`,
+      });
+    } else {
+      pesos.push({
+        nome: pc.nome,
+        partidoId: pc.partidoId,
+        partidoSigla: pc.partido.sigla,
+        peso: 0,
+        base: "sem histórico eleitoral no banco — estime os votos no Criar Cenário",
+      });
+    }
+  }
+
+  // Votos por partido no cenário: aprovados substituem a projeção base do
+  // partido (Σ pesos + legenda projetada); os demais partidos mantêm a base.
+  const legendaLinhas = await prisma.votoLegenda.findMany({
+    where: { cargoId: cargoBaseId, turno: 1 },
+    include: { partido: true },
+  });
+  const legendaProjPorSigla = new Map<string, number>();
+  for (const vl of legendaLinhas) {
+    legendaProjPorSigla.set(
+      vl.partido.sigla,
+      (legendaProjPorSigla.get(vl.partido.sigla) ?? 0) + Math.round(vl.votos * proj.fator)
+    );
+  }
+  const pesosPorSigla = new Map<string, number>();
+  for (const p of pesos) {
+    pesosPorSigla.set(p.partidoSigla, (pesosPorSigla.get(p.partidoSigla) ?? 0) + p.peso);
+  }
+
+  const siglasBase = new Set(proj.partidos.map((p) => p.sigla));
+  const partidosCenario = [
+    ...proj.partidos.map((p) => {
+      if (!pesosPorSigla.has(p.sigla)) return { sigla: p.sigla, votos: p.votos, comAprovados: false };
+      return {
+        sigla: p.sigla,
+        votos: (pesosPorSigla.get(p.sigla) ?? 0) + (legendaProjPorSigla.get(p.sigla) ?? 0),
+        comAprovados: true,
+      };
+    }),
+    // partidos que só existem via aprovados (sem histórico no cargo)
+    ...Array.from(pesosPorSigla.entries())
+      .filter(([sigla]) => !siglasBase.has(sigla))
+      .map(([sigla, votos]) => ({ sigla, votos, comAprovados: true })),
+  ]
+    .filter((p) => p.votos > 0)
+    .sort((a, b) => b.votos - a.votos);
+
+  const totalCenario = partidosCenario.reduce((s, p) => s + p.votos, 0);
+  const qe = proj.vagas > 0 ? Math.floor(totalCenario / proj.vagas) : 0;
+
+  const vagasFinais = distribuirVagas(
+    partidosCenario.map((p) => ({ partidoId: p.sigla, votos: p.votos })),
+    proj.vagas,
+    qe
+  );
+  const vagasBase = new Map(proj.partidos.map((p) => [p.sigla, p.total]));
+
+  return {
+    aprovados: pesos,
+    qe,
+    totalCenario,
+    partidos: partidosCenario.map((p) => {
+      const total = vagasFinais.get(p.sigla) ?? 0;
+      return {
+        ...p,
+        total,
+        delta: total - (vagasBase.get(p.sigla) ?? 0),
+      };
+    }),
   };
 }

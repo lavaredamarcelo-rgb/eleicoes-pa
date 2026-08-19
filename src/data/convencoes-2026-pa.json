@@ -1,112 +1,152 @@
 {
-  "fonte": "Imprensa (O Liberal, Diário do Pará) e Wikipédia — Eleições estaduais no Pará em 2026; pesquisado em 06/08/2026",
+  "fonte": "Imprensa (O Liberal, Diário do Pará) e Wikipédia — convenções (20/07–05/08/2026) e registro de candidaturas no TSE; atualizado em 12/08/2026",
   "convencoes": [
     {
       "sigla": "MDB",
+      "numero": 15,
       "dataRealizada": "01/08/2026",
       "local": "Ginásio Mangueirinho, Belém",
       "preCandidatos": [
-        { "nome": "Hana Ghassan", "cargo": "Governador", "situacao": "APROVADO" },
-        { "nome": "Helder Barbalho", "cargo": "Senador", "situacao": "APROVADO" }
+        { "nome": "Hana Ghassan", "cargo": "Governador", "situacao": "APROVADO", "observacoes": "Chapa nº 15 · vice: Dirceu Ten Caten (PT) · coligação 'O Pará Tá Junto': MDB, FE Brasil (PT/PCdoB/PV), Avante, PSD, União, Republicanos, PSDB/Cidadania, PDT, PSB, Agir" },
+        { "nome": "Helder Barbalho", "cargo": "Senador", "situacao": "APROVADO", "observacoes": "Nº 151 · suplentes: Jader Barbalho (MDB) e Samuel Câmara (Republicanos)" }
       ]
     },
     {
       "sigla": "PT",
-      "dataRealizada": "01/08/2026",
+      "numero": 13,
       "preCandidatos": [
-        { "nome": "Dirceu Ten Caten", "cargo": "Vice-Governador", "situacao": "APROVADO", "observacoes": "Vice na chapa de Hana Ghassan (MDB)" },
-        { "nome": "Ana Júlia Carepa", "cargo": "Senador", "situacao": "NAO_APROVADO", "observacoes": "Desistência — acordo desfeito; PDT manteve chapa pura" }
-      ]
-    },
-    {
-      "sigla": "AVANTE",
-      "preCandidatos": [
-        { "nome": "Josué Paiva", "cargo": "Vice-Governador", "situacao": "APROVADO", "observacoes": "Vice na chapa de Hana Ghassan (MDB)" }
+        { "nome": "Dirceu Ten Caten", "cargo": "Vice-Governador", "situacao": "APROVADO", "observacoes": "Vice na chapa de Hana Ghassan (MDB), nº 15" },
+        { "nome": "Ana Júlia Carepa", "cargo": "Senador", "situacao": "NAO_APROVADO", "observacoes": "Acordo desfeito; PDT manteve chapa própria ao Senado" }
       ]
     },
     {
       "sigla": "PODE",
+      "numero": 20,
       "dataRealizada": "04/08/2026",
       "preCandidatos": [
-        { "nome": "Dr. Daniel Santos", "cargo": "Governador", "situacao": "APROVADO", "observacoes": "Vice a definir até 15/08" },
-        { "nome": "Zequinha Marinho", "cargo": "Senador", "situacao": "APROVADO" }
-      ]
-    },
-    {
-      "sigla": "PSOL",
-      "dataRealizada": "04/08/2026",
-      "local": "Tuna Luso Brasileira, Belém",
-      "preCandidatos": [
-        { "nome": "Araceli Lemos", "cargo": "Governador", "situacao": "APROVADO", "observacoes": "Vice a definir até 15/08" },
-        { "nome": "Gizelle Freitas", "cargo": "Senador", "situacao": "APROVADO" },
-        { "nome": "Marcelino Conti", "cargo": "Senador", "situacao": "APROVADO" }
-      ]
-    },
-    {
-      "sigla": "PSTU",
-      "dataRealizada": "01/08/2026",
-      "preCandidatos": [
-        { "nome": "Cleber Rabelo", "cargo": "Governador", "situacao": "APROVADO" },
-        { "nome": "Well Macêdo", "cargo": "Vice-Governador", "situacao": "APROVADO", "observacoes": "Vice na chapa de Cleber Rabelo" }
-      ]
-    },
-    {
-      "sigla": "PRTB",
-      "dataRealizada": "03/08/2026",
-      "preCandidatos": [
-        { "nome": "Robertinho", "cargo": "Governador", "situacao": "APROVADO" },
-        { "nome": "José Ronaldo", "cargo": "Vice-Governador", "situacao": "APROVADO", "observacoes": "Vice na chapa de Robertinho" }
-      ]
-    },
-    {
-      "sigla": "UP",
-      "dataRealizada": "30/07/2026",
-      "preCandidatos": [
-        { "nome": "Gal Leite", "cargo": "Governador", "situacao": "APROVADO", "observacoes": "Descartou o Senado para encabeçar a chapa" },
-        { "nome": "Karen Sousa", "cargo": "Vice-Governador", "situacao": "APROVADO", "observacoes": "Vice na chapa de Gal Leite" },
-        { "nome": "Fernanda Lopes", "cargo": "Senador", "situacao": "APROVADO" }
-      ]
-    },
-    {
-      "sigla": "PDT",
-      "dataRealizada": "23/07/2026",
-      "preCandidatos": [
-        { "nome": "Celso Sabino", "cargo": "Senador", "situacao": "APROVADO", "observacoes": "Chapa pura do PDT" }
-      ]
-    },
-    {
-      "sigla": "UNIÃO",
-      "dataRealizada": "27/07/2026",
-      "preCandidatos": [
-        { "nome": "Chicão", "cargo": "Senador", "situacao": "APROVADO" }
+        { "nome": "Dr. Daniel Santos", "cargo": "Governador", "situacao": "APROVADO", "observacoes": "Chapa nº 20 · vice: Ellayne D'Almeida (PL) · coligação 'O Pará é do Povo!': PODE, PL, Fed. Renovação Solidária, DC, NOVO" },
+        { "nome": "Zequinha Marinho", "cargo": "Senador", "situacao": "APROVADO", "observacoes": "Nº 200 · suplentes: Tarcizio Burin (PODE) e 2º a definir" }
       ]
     },
     {
       "sigla": "PL",
+      "numero": 22,
       "dataRealizada": "04/08/2026",
       "preCandidatos": [
-        { "nome": "Éder Mauro", "cargo": "Senador", "situacao": "APROVADO" }
+        { "nome": "Ellayne D'Almeida", "cargo": "Vice-Governador", "situacao": "APROVADO", "observacoes": "Vice na chapa de Dr. Daniel Santos (PODE), nº 20" },
+        { "nome": "Éder Mauro", "cargo": "Senador", "situacao": "APROVADO", "observacoes": "Nº 222 (Delegado Éder Mauro) · suplentes: Alex Lima (PL) e Alessandra Sá (PL)" }
+      ]
+    },
+    {
+      "sigla": "PSTU",
+      "numero": 16,
+      "dataRealizada": "01/08/2026",
+      "preCandidatos": [
+        { "nome": "Well Macêdo", "cargo": "Governador", "situacao": "APROVADO", "observacoes": "Chapa nº 16 · vice: Seu Alex (PSTU) · no registro do TSE a chapa foi invertida: Well Macêdo encabeça (Cleber Rabelo era o nome da convenção)" },
+        { "nome": "Seu Alex", "cargo": "Vice-Governador", "situacao": "APROVADO", "observacoes": "Vice na chapa de Well Macêdo (PSTU), nº 16" },
+        { "nome": "Cleber Rabelo", "cargo": "Governador", "situacao": "NAO_APROVADO", "observacoes": "Aprovado na convenção, mas o registro no TSE saiu com Well Macêdo à frente da chapa" }
+      ]
+    },
+    {
+      "sigla": "DEMOCRATA",
+      "numero": 35,
+      "preCandidatos": [
+        { "nome": "José Moita", "cargo": "Governador", "situacao": "APROVADO", "observacoes": "Chapa nº 35 · vice: Ruth Reis (Democrata) · partido isolado" },
+        { "nome": "Ruth Reis", "cargo": "Vice-Governador", "situacao": "APROVADO", "observacoes": "Vice na chapa de José Moita (Democrata), nº 35" },
+        { "nome": "Edlaine Rodrigues", "cargo": "Senador", "situacao": "APROVADO", "observacoes": "Nº 355 · suplentes: Olinto Cei e Nelson Margalho (Democrata)" },
+        { "nome": "Paulo Sezar Moraes Rodrigues", "cargo": "Deputado Federal", "situacao": "PRE_CANDIDATO", "observacoes": "Presidente estadual do partido" }
+      ]
+    },
+    {
+      "sigla": "PSOL",
+      "numero": 50,
+      "dataRealizada": "04/08/2026",
+      "local": "Tuna Luso Brasileira, Belém",
+      "preCandidatos": [
+        { "nome": "Araceli Lemos", "cargo": "Governador", "situacao": "APROVADO", "observacoes": "Chapa nº 50 · vice: Fátima Santana (PSOL) · Federação PSOL/REDE" },
+        { "nome": "Fátima Santana", "cargo": "Vice-Governador", "situacao": "APROVADO", "observacoes": "Vice na chapa de Araceli Lemos (PSOL), nº 50" },
+        { "nome": "Gizelle Freitas", "cargo": "Senador", "situacao": "APROVADO", "observacoes": "Nº 505 · suplentes: Naide Cordeiro e Edna Gouvêa (PSOL)" },
+        { "nome": "Marcelino Conti", "cargo": "Senador", "situacao": "APROVADO", "observacoes": "Nº 500 (Conti) · suplentes: Maria Luísa Farias e Joana da Economia Solidária (PSOL)" }
+      ]
+    },
+    {
+      "sigla": "UP",
+      "numero": 80,
+      "dataRealizada": "30/07/2026",
+      "preCandidatos": [
+        { "nome": "Gal Leite", "cargo": "Governador", "situacao": "APROVADO", "observacoes": "Chapa nº 80 · vice: Karen Suellen (UP) · partido isolado" },
+        { "nome": "Karen Suellen", "cargo": "Vice-Governador", "situacao": "APROVADO", "observacoes": "Vice na chapa de Gal Leite (UP), nº 80" },
+        { "nome": "Fernanda Lopes", "cargo": "Senador", "situacao": "APROVADO", "observacoes": "Nº 800 · suplentes: Socorro Bayma e Lucilene Oliveira (UP)" }
+      ]
+    },
+    {
+      "sigla": "PDT",
+      "numero": 12,
+      "dataRealizada": "23/07/2026",
+      "preCandidatos": [
+        { "nome": "Celso Sabino", "cargo": "Senador", "situacao": "APROVADO", "observacoes": "Nº 123 · suplentes: Italo Mácola e Ney Teixeira (PDT) · PDT integra a coligação de Hana ao governo" }
+      ]
+    },
+    {
+      "sigla": "UNIÃO",
+      "numero": 44,
+      "dataRealizada": "27/07/2026",
+      "preCandidatos": [
+        { "nome": "Chicão", "cargo": "Senador", "situacao": "APROVADO", "observacoes": "Nº 444 (Francisco das Chagas Silva Melo Filho) · suplentes: Joel Lobato (MDB) e Patrícia Queiroz (PP)" }
+      ]
+    },
+    {
+      "sigla": "DC",
+      "numero": 27,
+      "preCandidatos": [
+        { "nome": "Willem da Silva", "cargo": "Senador", "situacao": "APROVADO", "observacoes": "Nº 277 · suplentes: Sanro Oliveira e Marcílio Ferreira (DC) · DC integra a coligação de Dr. Daniel ao governo" }
+      ]
+    },
+    {
+      "sigla": "MOBILIZA",
+      "numero": 33,
+      "preCandidatos": [
+        { "nome": "Breno Guimarães", "cargo": "Senador", "situacao": "APROVADO", "observacoes": "Nº 333 · suplentes: Telmo Marinho e Roseli Malcher (Mobiliza) · havia desistido pelo NOVO e registrou pelo Mobiliza" }
+      ]
+    },
+    {
+      "sigla": "PRTB",
+      "numero": 28,
+      "dataRealizada": "03/08/2026",
+      "preCandidatos": [
+        { "nome": "Robertinho", "cargo": "Governador", "situacao": "NAO_APROVADO", "observacoes": "Aprovado na convenção, mas a chapa não constou do registro de candidaturas no TSE" },
+        { "nome": "José Ronaldo", "cargo": "Vice-Governador", "situacao": "NAO_APROVADO", "observacoes": "Chapa do PRTB não constou do registro no TSE" }
       ]
     },
     {
       "sigla": "REDE",
+      "numero": 18,
       "dataRealizada": "04/08/2026",
       "preCandidatos": [
-        { "nome": "Orleans Santos", "cargo": "Senador", "situacao": "APROVADO" },
-        { "nome": "Francisco Cavalcante", "cargo": "Senador", "situacao": "NAO_APROVADO", "observacoes": "Partido optou por Orleans Santos" }
+        { "nome": "Orleans Santos", "cargo": "Senador", "situacao": "NAO_APROVADO", "observacoes": "A Federação PSOL/REDE registrou Conti e Gizelle Freitas ao Senado" },
+        { "nome": "Francisco Cavalcante", "cargo": "Senador", "situacao": "NAO_APROVADO", "observacoes": "Partido optou por Orleans Santos, que também não foi registrado" }
       ]
     },
     {
       "sigla": "SOLIDARIEDADE",
+      "numero": 77,
       "dataRealizada": "05/08/2026",
       "preCandidatos": [
-        { "nome": "Lívia Noronha", "cargo": "Senador", "situacao": "APROVADO" }
+        { "nome": "Lívia Noronha", "cargo": "Senador", "situacao": "NAO_APROVADO", "observacoes": "Candidatura não constou do registro; a Fed. Renovação Solidária integrou a coligação de Dr. Daniel" }
       ]
     },
     {
       "sigla": "NOVO",
+      "numero": 30,
       "preCandidatos": [
-        { "nome": "Dr. Breno Guimarães", "cargo": "Senador", "situacao": "NAO_APROVADO", "observacoes": "Partido lançou apenas candidatos a deputado federal" }
+        { "nome": "Dr. Breno Guimarães", "cargo": "Senador", "situacao": "NAO_APROVADO", "observacoes": "Desistiu pelo NOVO (partido lançou só federais); registrou-se pelo Mobiliza" }
+      ]
+    },
+    {
+      "sigla": "AVANTE",
+      "numero": 70,
+      "preCandidatos": [
+        { "nome": "Josué Paiva", "cargo": "Vice-Governador", "situacao": "NAO_APROVADO", "observacoes": "Cogitado como vice de Hana; o registro saiu com Dirceu Ten Caten (PT)" }
       ]
     }
   ]

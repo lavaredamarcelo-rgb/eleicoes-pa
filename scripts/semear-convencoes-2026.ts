@@ -8,6 +8,7 @@ import { prisma } from "../src/lib/prisma";
 
 type Entrada = {
   sigla: string;
+  numero?: number;
   dataRealizada?: string;
   dataPrevista?: string;
   local?: string;
@@ -24,12 +25,15 @@ async function main() {
   const partidos = await prisma.partido.findMany();
   const normalizar = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, "");
   const porSigla = new Map(partidos.map((p) => [normalizar(p.sigla), p]));
+  const porNumero = new Map(partidos.map((p) => [p.numero, p]));
 
   let convencoesGravadas = 0;
   let preCandidatosGravados = 0;
 
   for (const e of convencoes) {
-    const partido = porSigla.get(normalizar(e.sigla));
+    const partido =
+      porSigla.get(normalizar(e.sigla)) ??
+      (e.numero != null ? porNumero.get(e.numero) : undefined);
     if (!partido) {
       console.log(`  partido não encontrado: ${e.sigla}`);
       continue;
@@ -73,8 +77,27 @@ async function main() {
     }
   }
 
+  // Poda: registros de origem "web" que saíram da fonte (trocas de chapa,
+  // registros indeferidos) são removidos — os manuais ficam intactos.
+  const chavesFonte = new Set<string>();
+  for (const e of convencoes) {
+    const partido =
+      porSigla.get(normalizar(e.sigla)) ??
+      (e.numero != null ? porNumero.get(e.numero) : undefined);
+    if (!partido) continue;
+    for (const pc of e.preCandidatos) chavesFonte.add(`${partido.id}|${pc.nome}|${pc.cargo}`);
+  }
+  const daWeb = await prisma.preCandidato.findMany({ where: { origem: "web" } });
+  let removidos = 0;
+  for (const pc of daWeb) {
+    if (!chavesFonte.has(`${pc.partidoId}|${pc.nome}|${pc.cargo}`)) {
+      await prisma.preCandidato.delete({ where: { id: pc.id } });
+      removidos++;
+    }
+  }
+
   console.log(
-    `Convenções: ${convencoesGravadas} gravada(s) · pré-candidatos: ${preCandidatosGravados} gravado(s)`
+    `Convenções: ${convencoesGravadas} gravada(s) · pré-candidatos: ${preCandidatosGravados} gravado(s) · removidos da fonte: ${removidos}`
   );
 }
 

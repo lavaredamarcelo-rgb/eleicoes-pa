@@ -2,6 +2,7 @@ import { AnoSelector } from "@/components/AnoSelector";
 import { EleitosPorCargo } from "@/components/EleitosPorCargo";
 import { PdfDownloadLink } from "@/components/PdfDownloadLink";
 import { getAnosComEleitos, getEleitosOficiais } from "@/lib/data";
+import { prisma } from "@/lib/prisma";
 
 export default async function EleitosPage({
   searchParams,
@@ -16,6 +17,13 @@ export default async function EleitosPage({
       : anosDisponiveis[0];
 
   const cargos = anoSelecionado ? await getEleitosOficiais(anoSelecionado) : [];
+  const [regioes, municipiosOpcoes] = await Promise.all([
+    prisma.regiao.findMany({ orderBy: { nome: "asc" }, select: { id: true, nome: true } }),
+    prisma.municipio.findMany({
+      orderBy: { nome: "asc" },
+      select: { id: true, nome: true, regiaoId: true },
+    }),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -37,7 +45,7 @@ export default async function EleitosPage({
       </div>
 
       {cargos.length > 0 ? (
-        <EleitosPorCargo cargos={cargos} />
+        <EleitosPorCargo cargos={cargos} regioes={regioes} municipiosOpcoes={municipiosOpcoes} />
       ) : (
         <p className="text-sm text-neutral-500">
           Nenhum eleito importado ainda. Importe os dados do TSE em Configurações.

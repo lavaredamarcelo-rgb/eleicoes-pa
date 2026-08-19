@@ -4,6 +4,7 @@ import {
   calcularQuocienteEleitoral,
   calcularMajoritario,
   calcularQuocienteProjetado,
+  cenarioComAprovados,
 } from "@/lib/eleitoral";
 import { getPartidos, getEleitoresCargo } from "@/lib/data";
 import { SimuladorPartido } from "@/components/SimuladorPartido";
@@ -27,7 +28,8 @@ export default async function QuocienteDetailPage({
   if (cargoId.startsWith("proj:")) {
     const proj = await calcularQuocienteProjetado(cargoId.slice(5));
     if (!proj) notFound();
-    return <QuocientePrevisto proj={proj} />;
+    const comAprovados = await cenarioComAprovados(cargoId.slice(5), proj);
+    return <QuocientePrevisto proj={proj} comAprovados={comAprovados} />;
   }
 
   const cargo = await prisma.cargo.findUnique({ where: { id: cargoId }, include: { eleicao: true } });
@@ -357,8 +359,10 @@ function VotosPorMunicipio({
 
 function QuocientePrevisto({
   proj,
+  comAprovados,
 }: {
   proj: NonNullable<Awaited<ReturnType<typeof calcularQuocienteProjetado>>>;
+  comAprovados: Awaited<ReturnType<typeof cenarioComAprovados>>;
 }) {
   const f = (n: number) => n.toLocaleString("pt-BR");
   const pctMedia = (proj.estimativaComparecimento.media * 100).toLocaleString("pt-BR", {
@@ -391,6 +395,13 @@ function QuocientePrevisto({
           <p className="mt-1 text-xs text-neutral-500">
             {f(proj.estimativaEleitorado.validos)} votos válidos projetados ÷ {proj.vagas} vagas
           </p>
+          <p className="mt-2 text-[11px] leading-relaxed text-neutral-500">
+            Como é calculada: pega os votos válidos REAIS da eleição base ({proj.anoBase}) e os
+            multiplica pelo crescimento do eleitorado até {proj.anoAlvo} (
+            {((proj.fator - 1) * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%).
+            Em outras palavras: assume que o mesmo percentual de eleitores que votou válido em{" "}
+            {proj.anoBase} volta a votar válido em {proj.anoAlvo} — só o tamanho do eleitorado muda.
+          </p>
         </div>
         <div className="rounded-xl border border-violet-900 bg-violet-950/20 px-4 py-3">
           <p className="text-xs text-violet-300">
@@ -402,8 +413,49 @@ function QuocientePrevisto({
           <p className="mt-1 text-xs text-neutral-500">
             {f(proj.estimativaComparecimento.validos)} votos válidos estimados ÷ {proj.vagas} vagas
           </p>
+          <p className="mt-2 text-[11px] leading-relaxed text-neutral-500">
+            Média do comparecimento válido (válidos ÷ aptos) de todas as eleições anteriores do
+            cargo, aplicada aos aptos de {proj.anoAlvo}.
+          </p>
         </div>
+        {proj.estimativaMaxima && (
+          <div className="rounded-xl border border-emerald-900 bg-emerald-950/20 px-4 py-3">
+            <p className="text-xs text-emerald-300">
+              Estimativa 3 — comparecimento máximo histórico (
+              {(proj.estimativaMaxima.proporcao * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}
+              % em {proj.estimativaMaxima.anoReferencia})
+            </p>
+            <p className="text-2xl font-bold text-emerald-300">QE {f(proj.estimativaMaxima.qe)}</p>
+            <p className="mt-1 text-xs text-neutral-500">
+              {f(proj.estimativaMaxima.validos)} votos válidos estimados ÷ {proj.vagas} vagas — o
+              TETO: se {proj.anoAlvo} repetir o melhor comparecimento já visto, o QE chega aqui.
+            </p>
+          </div>
+        )}
+        {proj.estimativaMinima && (
+          <div className="rounded-xl border border-sky-900 bg-sky-950/20 px-4 py-3">
+            <p className="text-xs text-sky-300">
+              Estimativa 4 — comparecimento mínimo histórico (
+              {(proj.estimativaMinima.proporcao * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}
+              % em {proj.estimativaMinima.anoReferencia})
+            </p>
+            <p className="text-2xl font-bold text-sky-300">QE {f(proj.estimativaMinima.qe)}</p>
+            <p className="mt-1 text-xs text-neutral-500">
+              {f(proj.estimativaMinima.validos)} votos válidos estimados ÷ {proj.vagas} vagas — o
+              PISO: com o pior comparecimento já visto, o QE não passa daqui.
+            </p>
+          </div>
+        )}
       </section>
+
+      {proj.estimativaMinima && proj.estimativaMaxima && (
+        <p className="rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-xs text-neutral-400">
+          Leitura prática: o quociente de {proj.anoAlvo} deve ficar entre{" "}
+          <strong className="text-sky-300">{f(proj.estimativaMinima.qe)}</strong> (piso) e{" "}
+          <strong className="text-emerald-300">{f(proj.estimativaMaxima.qe)}</strong> (teto), com as
+          estimativas 1 e 2 como cenários centrais.
+        </p>
+      )}
 
       {proj.estimativaComparecimento.historico.length > 0 && (
         <section className="flex flex-col gap-2">
@@ -465,6 +517,90 @@ function QuocientePrevisto({
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-sm font-medium text-neutral-400">
+          Cenário 2 — vagas com os aprovados nas convenções (análise de força)
+        </h2>
+        {comAprovados.partidos ? (
+          <>
+            <p className="rounded-lg border border-teal-900/60 bg-teal-950/20 px-3 py-2 text-xs text-teal-300">
+              Cada aprovado recebe um <strong>peso</strong>: a última votação nominal dele no
+              banco (qualquer cargo/ano), escalada pelo crescimento do eleitorado. Partidos com
+              aprovados têm os votos recompostos como soma dos pesos + legenda projetada; os
+              demais mantêm a projeção base. QE deste cenário:{" "}
+              <strong>{f(comAprovados.qe)}</strong>.
+            </p>
+            <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900">
+              <p className="border-b border-neutral-800 px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-neutral-500">
+                Pesos dos aprovados ({comAprovados.aprovados.length})
+              </p>
+              {comAprovados.aprovados.map((a) => (
+                <div
+                  key={`${a.nome}-${a.partidoSigla}`}
+                  className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800/50 px-4 py-2 text-xs last:border-0"
+                >
+                  <span className="text-neutral-200">
+                    {a.nome} <span className="text-neutral-500">({a.partidoSigla})</span>
+                    <span className="ml-2 text-[11px] text-neutral-600">{a.base}</span>
+                  </span>
+                  <span className={`font-semibold ${a.peso > 0 ? "text-teal-300" : "text-neutral-600"}`}>
+                    {a.peso > 0 ? `peso ${f(a.peso)}` : "peso 0"}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900">
+              <div
+                className="grid gap-2 border-b border-neutral-800 px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-neutral-500"
+                style={{ gridTemplateColumns: "1fr 1.4fr 0.8fr 1.2fr" }}
+              >
+                <span>Partido</span>
+                <span className="text-right">Votos do cenário</span>
+                <span className="text-right">Vagas</span>
+                <span className="text-right">vs. cenário base</span>
+              </div>
+              {comAprovados.partidos
+                .filter((p) => p.total > 0 || p.comAprovados)
+                .map((p) => (
+                  <div
+                    key={p.sigla}
+                    className="grid gap-2 border-b border-neutral-800/50 px-4 py-2 text-xs last:border-0"
+                    style={{ gridTemplateColumns: "1fr 1.4fr 0.8fr 1.2fr" }}
+                  >
+                    <span className="font-medium text-neutral-200">
+                      {p.sigla}
+                      {p.comAprovados && (
+                        <span className="ml-1.5 rounded-full bg-teal-950 px-1.5 py-0.5 text-[10px] text-teal-300">
+                          aprovados
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-right text-neutral-400">{f(p.votos)}</span>
+                    <span className="text-right font-semibold text-amber-400">{p.total}</span>
+                    <span
+                      className={`text-right ${p.delta > 0 ? "text-emerald-400" : p.delta < 0 ? "text-red-400" : "text-neutral-600"}`}
+                    >
+                      {p.delta === 0 ? "—" : p.delta > 0 ? `+${p.delta}` : String(p.delta)}
+                    </span>
+                  </div>
+                ))}
+            </div>
+            <p className="text-xs text-neutral-600">
+              Análise hipotética: pesos vêm do histórico individual e não capturam migração de
+              votos entre candidatos, recursos de campanha nem puxadores novos. Aprovados com peso
+              0 precisam de estimativa manual (Criar Cenário).
+            </p>
+          </>
+        ) : (
+          <p className="rounded-xl border border-dashed border-neutral-700 bg-neutral-900/50 px-4 py-4 text-xs leading-relaxed text-neutral-500">
+            Nenhum aprovado registrado para <strong>{proj.cargoNome}</strong> na aba Convenções
+            ainda. Cadastre os nomes aprovados lá (situação &quot;Aprovado na convenção&quot;) e
+            esta análise ganha vida: cada candidato recebe um peso pela última votação dele no
+            banco, escalada pelo eleitorado, e as vagas são recalculadas partido a partido.
+          </p>
+        )}
       </section>
 
       {proj.rodadasSobras.length > 0 && (

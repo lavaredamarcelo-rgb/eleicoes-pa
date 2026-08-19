@@ -20,8 +20,8 @@ export async function getEleitosOficiais(ano: number) {
     where: { eleito: true, cargo: { eleicao: { ano } } },
     include: {
       partido: true,
-      cargo: { include: { municipio: true } },
-      resultados: true,
+      cargo: { include: { municipio: { include: { regiao: true } } } },
+      resultados: { include: { municipio: { include: { regiao: true } } } },
     },
   });
 
@@ -32,6 +32,14 @@ export async function getEleitosOficiais(ano: number) {
     partidoSigla: string;
     votos: number;
     viceNome: string | null;
+    // Reduto eleitoral: município de maior votação (cargos estaduais) ou o
+    // próprio município da disputa (cargos municipais) — base dos filtros
+    // por região/município da aba Eleitos.
+    redutoMunicipioId: string | null;
+    redutoNome: string | null;
+    redutoRegiaoId: string | null;
+    redutoRegiaoNome: string | null;
+    redutoPct: number | null;
   };
   type GrupoMunicipio = { municipioId: string; municipioNome: string; eleitos: Eleito[] };
   type GrupoCargo = {
@@ -56,6 +64,42 @@ export async function getEleitosOficiais(ano: number) {
       porCargo.set(nome, grupo);
     }
 
+    let reduto: Pick<
+      Eleito,
+      "redutoMunicipioId" | "redutoNome" | "redutoRegiaoId" | "redutoRegiaoNome" | "redutoPct"
+    > = {
+      redutoMunicipioId: null,
+      redutoNome: null,
+      redutoRegiaoId: null,
+      redutoRegiaoNome: null,
+      redutoPct: null,
+    };
+    if (c.cargo.municipio) {
+      reduto = {
+        redutoMunicipioId: c.cargo.municipio.id,
+        redutoNome: c.cargo.municipio.nome,
+        redutoRegiaoId: c.cargo.municipio.regiao.id,
+        redutoRegiaoNome: c.cargo.municipio.regiao.nome,
+        redutoPct: null,
+      };
+    } else {
+      const t1 = c.resultados.filter((r) => r.turno === 1);
+      const totalT1 = t1.reduce((s2, r) => s2 + r.votos, 0);
+      const top = t1.reduce(
+        (melhor, r) => (melhor === null || r.votos > melhor.votos ? r : melhor),
+        null as (typeof t1)[number] | null
+      );
+      if (top && totalT1 > 0) {
+        reduto = {
+          redutoMunicipioId: top.municipio.id,
+          redutoNome: top.municipio.nome,
+          redutoRegiaoId: top.municipio.regiao.id,
+          redutoRegiaoNome: top.municipio.regiao.nome,
+          redutoPct: (top.votos / totalT1) * 100,
+        };
+      }
+    }
+
     const eleito: Eleito = {
       id: c.id,
       nome: c.nome,
@@ -63,6 +107,7 @@ export async function getEleitosOficiais(ano: number) {
       partidoSigla: c.partido.sigla,
       votos: votosDecisivos(c.resultados),
       viceNome: c.viceNome,
+      ...reduto,
     };
 
     if (c.cargo.municipio) {

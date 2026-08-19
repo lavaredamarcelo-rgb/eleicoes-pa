@@ -35,12 +35,22 @@ export default async function ConvencoesPage() {
   );
 
   const aprovados = preCandidatos.filter((pc) => pc.situacao === "APROVADO");
+  const numeroDe = (obs: string | null) => {
+    const m = obs?.match(/[Nn]º\s*(\d+)|[Cc]hapa nº\s*(\d+)/);
+    return m ? Number(m[1] ?? m[2]) : 999;
+  };
   const aprovadosPorCargo = ORDEM_CARGOS.map((cargo) => ({
     cargo,
-    nomes: aprovados
+    itens: aprovados
       .filter((pc) => pc.cargo === cargo)
-      .map((pc) => ({ nome: pc.nome, sigla: partidoById.get(pc.partidoId)?.sigla ?? "?" })),
-  })).filter((g) => g.nomes.length > 0);
+      .map((pc) => ({
+        nome: pc.nome,
+        sigla: partidoById.get(pc.partidoId)?.sigla ?? "?",
+        observacoes: pc.observacoes,
+        numero: numeroDe(pc.observacoes),
+      }))
+      .sort((a, b) => a.numero - b.numero || a.nome.localeCompare(b.nome, "pt-BR")),
+  })).filter((g) => g.itens.length > 0);
 
   return (
     <div className="flex flex-col gap-6">
@@ -60,15 +70,33 @@ export default async function ConvencoesPage() {
             Aprovados nas convenções
           </p>
           {aprovadosPorCargo.map((g) => (
-            <div key={g.cargo} className="flex flex-wrap items-center gap-1.5">
-              <span className="w-36 shrink-0 text-xs text-neutral-500">{g.cargo}</span>
-              {g.nomes.map((n) => (
-                <span
+            <div
+              key={g.cargo}
+              className="overflow-hidden rounded-lg border border-neutral-800 bg-neutral-950"
+            >
+              <p className="border-b border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                {g.cargo} ({g.itens.length})
+              </p>
+              {g.itens.map((n) => (
+                <div
                   key={`${n.nome}-${n.sigla}`}
-                  className="rounded-full bg-neutral-900 px-2.5 py-1 text-xs text-neutral-200"
+                  className="border-b border-neutral-800/50 px-3 py-2 last:border-0"
                 >
-                  {n.nome} <span className="text-neutral-500">({n.sigla})</span>
-                </span>
+                  <p className="text-sm">
+                    {n.numero !== 999 && (
+                      <span className="mr-2 rounded bg-neutral-800 px-1.5 py-0.5 text-[11px] font-bold text-amber-300">
+                        {n.numero}
+                      </span>
+                    )}
+                    <span className="font-medium text-neutral-100">{n.nome}</span>{" "}
+                    <span className="text-xs text-neutral-500">({n.sigla})</span>
+                  </p>
+                  {n.observacoes && (
+                    <p className="mt-0.5 text-[11px] leading-relaxed text-neutral-500">
+                      {n.observacoes.replace(/^(Chapa )?[Nn]º\s*\d+\s*(\([^)]*\))?\s*·?\s*/, "")}
+                    </p>
+                  )}
+                </div>
               ))}
             </div>
           ))}
