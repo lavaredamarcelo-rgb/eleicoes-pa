@@ -12,14 +12,21 @@ export async function POST(req: NextRequest) {
 
   try {
     if (favoritar) {
-      await prisma.politicoFavorito.upsert({
-        where: { userId_candidatoId: { userId: session.userId, candidatoId } },
-        create: { userId: session.userId, candidatoId },
-        update: {},
+      // Verificar se já existe
+      const existe = await prisma.politicoFavorito.findFirst({
+        where: { userId: session.userId, candidatoId },
       });
+
+      // Se não existe, criar
+      if (!existe) {
+        await prisma.politicoFavorito.create({
+          data: { userId: session.userId, candidatoId },
+        });
+      }
     } else {
-      await prisma.politicoFavorito.delete({
-        where: { userId_candidatoId: { userId: session.userId, candidatoId } },
+      // Deletar se existe
+      await prisma.politicoFavorito.deleteMany({
+        where: { userId: session.userId, candidatoId },
       });
     }
     return NextResponse.json({ ok: true });
