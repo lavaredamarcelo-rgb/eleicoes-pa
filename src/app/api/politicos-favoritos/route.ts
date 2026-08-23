@@ -9,31 +9,35 @@ export async function POST(req: NextRequest) {
   }
 
   const { candidatoId, favoritar } = await req.json();
+  console.log("POST favorito:", { userId: session.userId, candidatoId, favoritar });
 
   try {
     if (favoritar) {
-      // Verificar se já existe
+      console.log("Buscando se existe...");
       const existe = await prisma.politicoFavorito.findFirst({
         where: { userId: session.userId, candidatoId },
       });
 
-      // Se não existe, criar
+      console.log("Existe?", !!existe);
       if (!existe) {
+        console.log("Criando novo favorito...");
         await prisma.politicoFavorito.create({
           data: { userId: session.userId, candidatoId },
         });
+        console.log("Favorito criado!");
       }
     } else {
-      // Deletar se existe
+      console.log("Deletando favorito...");
       await prisma.politicoFavorito.deleteMany({
         where: { userId: session.userId, candidatoId },
       });
+      console.log("Favorito deletado!");
     }
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Erro ao favoritar:", error);
     return NextResponse.json(
-      { error: "Erro ao processar favorito" },
+      { error: `Erro ao processar favorito: ${error instanceof Error ? error.message : "desconhecido"}` },
       { status: 500 }
     );
   }
