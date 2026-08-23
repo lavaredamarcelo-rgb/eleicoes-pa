@@ -355,6 +355,7 @@ model PoliticoFavorito {
   candidatoId String
   candidato   Candidato @relation(fields: [candidatoId], references: [id])
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@unique([userId, candidatoId])
 }
