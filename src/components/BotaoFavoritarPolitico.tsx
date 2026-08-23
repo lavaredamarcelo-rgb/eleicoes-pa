@@ -18,12 +18,19 @@ export default function BotaoFavoritarPolitico({
   const toggleFavorito = async () => {
     setCarregando(true);
     try {
-      await fetch("/api/politicos-favoritos", {
+      const res = await fetch("/api/politicos-favoritos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ candidatoId, favoritar: !favorito }),
       });
-      setFavorito(!favorito);
+
+      if (res.ok) {
+        setFavorito(!favorito);
+        // Recarregar página se estiver em /meus-politicos
+        if (window.location.pathname === "/meus-politicos") {
+          window.location.reload();
+        }
+      }
     } catch (error) {
       console.error("Erro ao favoritar:", error);
     } finally {
