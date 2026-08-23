@@ -76,6 +76,11 @@ export default async function MeusPoliticosPage() {
                         ✓ Eleito
                       </span>
                     )}
+                    {favorito.notas && (
+                      <p className="mt-3 text-sm text-gray-700 bg-yellow-50 p-2 rounded border-l-4 border-yellow-400">
+                        📝 {favorito.notas}
+                      </p>
+                    )}
                   </div>
                 </div>
               </Link>

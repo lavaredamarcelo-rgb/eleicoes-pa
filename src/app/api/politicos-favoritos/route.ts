@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { candidatoId, favoritar } = await req.json();
+  const { candidatoId, favoritar, notas } = await req.json();
   console.log("POST favorito:", { userId: session.userId, candidatoId, favoritar });
 
   try {
@@ -22,9 +22,16 @@ export async function POST(req: NextRequest) {
       if (!existe) {
         console.log("Criando novo favorito...");
         await prisma.politicoFavorito.create({
-          data: { userId: session.userId, candidatoId },
+          data: { userId: session.userId, candidatoId, notas: notas || null },
         });
         console.log("Favorito criado!");
+      } else if (notas !== undefined) {
+        console.log("Atualizando notas...");
+        await prisma.politicoFavorito.update({
+          where: { id: existe.id },
+          data: { notas },
+        });
+        console.log("Notas atualizadas!");
       }
     } else {
       console.log("Deletando favorito...");

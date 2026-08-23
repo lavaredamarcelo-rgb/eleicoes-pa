@@ -354,6 +354,7 @@ model PoliticoFavorito {
   user        User     @relation(fields: [userId], references: [id])
   candidatoId String
   candidato   Candidato @relation(fields: [candidatoId], references: [id])
+  notas       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
