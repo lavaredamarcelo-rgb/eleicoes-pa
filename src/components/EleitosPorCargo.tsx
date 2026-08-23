@@ -57,7 +57,7 @@ function LinhaEleito({ eleito, mostrarReduto }: { eleito: Eleito; mostrarReduto:
           {eleito.votos.toLocaleString("pt-BR")}
         </span>
       </Link>
-      <div onClick={(e) => e.preventDefault()} className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div onClick={(e) => e.preventDefault()} className="ml-2">
         <BotaoFavoritarPolitico candidatoId={eleito.id} />
       </div>
     </div>
