@@ -76,10 +76,12 @@ export default async function MeusPoliticosPage() {
                         ✓ Eleito
                       </span>
                     )}
-                    {favorito.notas && (
+                    {favorito.notas ? (
                       <p className="mt-3 text-sm text-gray-700 bg-yellow-50 p-2 rounded border-l-4 border-yellow-400">
                         📝 {favorito.notas}
                       </p>
+                    ) : (
+                      <p className="mt-3 text-xs text-gray-400">sem notas</p>
                     )}
                   </div>
                 </div>

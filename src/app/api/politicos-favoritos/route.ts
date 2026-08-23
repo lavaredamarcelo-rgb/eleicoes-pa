@@ -70,6 +70,11 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
+    console.log("Favoritos retornados:", favoritos.length);
+    if (favoritos.length > 0) {
+      console.log("Primeiro favorito:", JSON.stringify(favoritos[0], null, 2));
+    }
+
     return NextResponse.json(favoritos);
   } catch (error) {
     console.error("Erro ao buscar favoritos:", error);
