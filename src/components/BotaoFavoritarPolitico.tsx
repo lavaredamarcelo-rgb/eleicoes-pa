@@ -19,19 +19,28 @@ export default function BotaoFavoritarPolitico({
     setCarregando(true);
     try {
       const novoEstado = !favorito;
+      console.log("Favoritar:", { candidatoId, novoEstado });
+
       const res = await fetch("/api/politicos-favoritos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ candidatoId, favoritar: novoEstado }),
       });
 
+      console.log("Resposta status:", res.status);
+      const data = await res.json();
+      console.log("Resposta data:", data);
+
       if (res.ok) {
+        console.log("Sucesso! Atualizando estado para:", novoEstado);
         setFavorito(novoEstado);
       } else {
-        console.error("Erro na resposta:", res.status);
+        console.error("Erro na resposta:", res.status, data);
+        alert(`Erro: ${data.error || "Falha ao favoritar"}`);
       }
     } catch (error) {
       console.error("Erro ao favoritar:", error);
+      alert("Erro de conexão");
     } finally {
       setCarregando(false);
     }
