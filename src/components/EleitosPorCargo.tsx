@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, ChevronDown, MapPin } from "lucide-react";
+import BotaoFavoritarPolitico from "./BotaoFavoritarPolitico";
 
 type Eleito = {
   id: string;
@@ -30,31 +31,36 @@ type MunicipioOpcao = { id: string; nome: string; regiaoId: string };
 
 function LinhaEleito({ eleito, mostrarReduto }: { eleito: Eleito; mostrarReduto: boolean }) {
   return (
-    <Link
-      href={`/candidatos/${eleito.id}`}
-      className="flex items-center justify-between rounded-md px-2 py-1.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-900"
-    >
-      <span className="min-w-0">
-        {eleito.nome}
-        <span className="ml-2 text-neutral-600">
-          {eleito.numero} · {eleito.partidoSigla}
-        </span>
-        {eleito.viceNome && (
-          <span className="ml-2 text-amber-400/70">vice: {eleito.viceNome}</span>
-        )}
-        {mostrarReduto && eleito.redutoNome && (
-          <span className="ml-2 text-neutral-500">
-            <MapPin size={10} className="mr-0.5 inline" />
-            reduto: {eleito.redutoNome}
-            {eleito.redutoPct != null &&
-              ` (${eleito.redutoPct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%)`}
+    <div className="flex items-center justify-between rounded-md px-2 py-1.5 text-xs text-neutral-300 hover:bg-neutral-900 transition-colors group">
+      <Link
+        href={`/candidatos/${eleito.id}`}
+        className="flex-1 min-w-0 flex items-center justify-between"
+      >
+        <span className="min-w-0">
+          {eleito.nome}
+          <span className="ml-2 text-neutral-600">
+            {eleito.numero} · {eleito.partidoSigla}
           </span>
-        )}
-      </span>
-      <span className="shrink-0 font-medium text-amber-400">
-        {eleito.votos.toLocaleString("pt-BR")}
-      </span>
-    </Link>
+          {eleito.viceNome && (
+            <span className="ml-2 text-amber-400/70">vice: {eleito.viceNome}</span>
+          )}
+          {mostrarReduto && eleito.redutoNome && (
+            <span className="ml-2 text-neutral-500">
+              <MapPin size={10} className="mr-0.5 inline" />
+              reduto: {eleito.redutoNome}
+              {eleito.redutoPct != null &&
+                ` (${eleito.redutoPct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%)`}
+            </span>
+          )}
+        </span>
+        <span className="shrink-0 font-medium text-amber-400">
+          {eleito.votos.toLocaleString("pt-BR")}
+        </span>
+      </Link>
+      <div onClick={(e) => e.preventDefault()} className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <BotaoFavoritarPolitico candidatoId={eleito.id} />
+      </div>
+    </div>
   );
 }
 
