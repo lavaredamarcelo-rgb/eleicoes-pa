@@ -2,10 +2,24 @@ import { verifySession } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { ArrowUpDown } from "lucide-react";
 
-export default async function MeusPoliticosPage() {
+export default async function MeusPoliticosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ordenar?: string }>;
+}) {
   const session = await verifySession();
   if (!session) redirect("/login");
+
+  const { ordenar: ordenarParam } = await searchParams;
+  const ordenar = ordenarParam || "data-desc";
+
+  let orderBy: any = { createdAt: "desc" };
+
+  if (ordenar === "data-asc") orderBy = { createdAt: "asc" };
+  if (ordenar === "votos-desc") orderBy = { candidato: { resultados: { _count: "desc" } } };
+  if (ordenar === "votos-asc") orderBy = { candidato: { resultados: { _count: "asc" } } };
 
   const favoritos = await prisma.politicoFavorito.findMany({
     where: { userId: session.userId },
@@ -20,7 +34,7 @@ export default async function MeusPoliticosPage() {
         },
       },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy,
   });
 
   return (
@@ -31,6 +45,51 @@ export default async function MeusPoliticosPage() {
           Acompanhe a evolução de seus políticos favoritos
         </p>
       </div>
+
+      {favoritos.length > 0 && (
+        <div className="flex gap-2 flex-wrap">
+          <Link
+            href={`?ordenar=data-desc`}
+            className={`px-3 py-1 rounded text-sm flex items-center gap-1 transition ${
+              ordenar === "data-desc"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+            }`}
+          >
+            <ArrowUpDown size={14} /> Mais recentes
+          </Link>
+          <Link
+            href={`?ordenar=data-asc`}
+            className={`px-3 py-1 rounded text-sm flex items-center gap-1 transition ${
+              ordenar === "data-asc"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+            }`}
+          >
+            <ArrowUpDown size={14} /> Mais antigos
+          </Link>
+          <Link
+            href={`?ordenar=votos-desc`}
+            className={`px-3 py-1 rounded text-sm flex items-center gap-1 transition ${
+              ordenar === "votos-desc"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+            }`}
+          >
+            <ArrowUpDown size={14} /> Mais votos
+          </Link>
+          <Link
+            href={`?ordenar=votos-asc`}
+            className={`px-3 py-1 rounded text-sm flex items-center gap-1 transition ${
+              ordenar === "votos-asc"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+            }`}
+          >
+            <ArrowUpDown size={14} /> Menos votos
+          </Link>
+        </div>
+      )}
 
       {favoritos.length === 0 ? (
         <div className="text-center py-12 text-gray-500 border rounded-lg">
