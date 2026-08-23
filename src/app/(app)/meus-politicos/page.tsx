@@ -7,21 +7,26 @@ export default async function MeusPoliticosPage() {
   const session = await verifySession();
   if (!session) redirect("/login");
 
-  const favoritos = await prisma.politicoFavorito.findMany({
-    where: { userId: session.userId },
-    include: {
-      candidato: {
-        include: {
-          cargo: true,
-          partido: true,
-          resultados: {
-            select: { municipioId: true, votos: true },
+  let favoritos = [];
+  try {
+    favoritos = await prisma.politicoFavorito.findMany({
+      where: { userId: session.userId },
+      include: {
+        candidato: {
+          include: {
+            cargo: true,
+            partido: true,
+            resultados: {
+              select: { municipioId: true, votos: true },
+            },
           },
         },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (error) {
+    console.error("Erro ao buscar favoritos:", error);
+  }
 
   return (
     <div className="space-y-6">
