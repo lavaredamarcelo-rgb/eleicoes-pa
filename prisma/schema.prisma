@@ -53,6 +53,7 @@ model User {
   criadoPor         User?              @relation("UsuariosCriados", fields: [criadoPorId], references: [id])
   criados           User[]             @relation("UsuariosCriados")
   favoritosApuracao ApuracaoFavorito[]
+  favoritosPoliticos PoliticoFavorito[]
   relatorios        Relatorio[]
   cenariosMeta      CenarioMeta[]
   createdAt         DateTime           @default(now())
@@ -164,6 +165,7 @@ model Candidato {
   votosLocais   VotoLocal[]
   users         User[]
   trocasPartido TrocaPartido[]
+  favoritosPoliticos PoliticoFavorito[]
 }
 
 // Registro histórico real de mudança de partido de um candidato (data
@@ -343,6 +345,18 @@ model Convencao {
   local         String?
   observacoes   String?
   updatedAt     DateTime @updatedAt
+}
+
+// Político favorito do usuário: para acompanhar evolução de candidatos
+model PoliticoFavorito {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  candidatoId String
+  candidato   Candidato @relation(fields: [candidatoId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, candidatoId])
 }
 
 // Pré-candidato apontado para as convenções: semeado por pesquisa na

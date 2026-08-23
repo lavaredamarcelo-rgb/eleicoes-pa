@@ -1,9 +1,10 @@
-import { Home, Users, MapPin, Calculator, Landmark, Flag, Activity, FileText, PenLine, CalendarDays } from "lucide-react";
+import { Home, Users, MapPin, Calculator, Landmark, Flag, Activity, FileText, PenLine, CalendarDays, Heart } from "lucide-react";
 
 export const NAV_ITEMS = [
   { href: "/inicio", label: "Início", icon: Home },
   { href: "/apuracao", label: "Apuração", icon: Activity },
   { href: "/candidatos", label: "Eleitos", icon: Users },
+  { href: "/meus-politicos", label: "Meus Políticos", icon: Heart },
   { href: "/municipios", label: "Municípios", icon: MapPin },
   { href: "/convencoes", label: "Convenções", icon: CalendarDays },
   { href: "/cenario", label: "Cenários", icon: Landmark },
