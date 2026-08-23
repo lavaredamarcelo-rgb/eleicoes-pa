@@ -1,68 +1,27 @@
-"use client";
-
+import { verifySession } from "@/lib/dal";
+import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
-interface Favorito {
-  id: string;
-  notas: string | null;
-  createdAt: string;
-  candidato: {
-    id: string;
-    nome: string;
-    eleito: boolean;
-    cargo: { id: string; nome: string };
-    partido: { sigla: string };
-    resultados: Array<{ municipioId: string; votos: number }>;
-  };
-}
+export default async function MeusPoliticosPage() {
+  const session = await verifySession();
+  if (!session) redirect("/login");
 
-export default function MeusPoliticosPage() {
-  const [favoritos, setFavoritos] = useState<Favorito[]>([]);
-  const [cargos, setCargos] = useState<Array<{ id: string; nome: string }>>([]);
-  const [municipios, setMunicipios] = useState<Array<{ id: string; nome: string }>>([]);
-  const [carregando, setCarregando] = useState(true);
-
-  const [cargoSelecionado, setCargoSelecionado] = useState("");
-  const [municipioSelecionado, setMunicipioSelecionado] = useState("");
-
-  useEffect(() => {
-    const buscarDados = async () => {
-      try {
-        const [favRes, cargosRes, municipiosRes] = await Promise.all([
-          fetch("/api/politicos-favoritos"),
-          fetch("/api/cargos"),
-          fetch("/api/municipios"),
-        ]);
-
-        if (favRes.ok) setFavoritos(await favRes.json());
-        if (cargosRes.ok) setCargos(await cargosRes.json());
-        if (municipiosRes.ok) setMunicipios(await municipiosRes.json());
-      } catch (error) {
-        console.error("Erro ao buscar dados:", error);
-      } finally {
-        setCarregando(false);
-      }
-    };
-
-    buscarDados();
-  }, []);
-
-  const favoritosFiltrados = favoritos.filter((f) => {
-    if (cargoSelecionado && f.candidato.cargo.id !== cargoSelecionado)
-      return false;
-    if (municipioSelecionado) {
-      const temMunicipio = f.candidato.resultados.some(
-        (r) => r.municipioId === municipioSelecionado
-      );
-      if (!temMunicipio) return false;
-    }
-    return true;
+  const favoritos = await prisma.politicoFavorito.findMany({
+    where: { userId: session.userId },
+    include: {
+      candidato: {
+        include: {
+          cargo: true,
+          partido: true,
+          resultados: {
+            select: { municipioId: true, votos: true },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
   });
-
-  if (carregando) {
-    return <div className="text-center py-12">Carregando...</div>;
-  }
 
   return (
     <div className="space-y-6">
@@ -73,42 +32,7 @@ export default function MeusPoliticosPage() {
         </p>
       </div>
 
-      {favoritos.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-gray-50 p-4 rounded-lg">
-          <div>
-            <label className="block text-sm font-medium mb-1">Filtrar por cargo:</label>
-            <select
-              value={cargoSelecionado}
-              onChange={(e) => setCargoSelecionado(e.target.value)}
-              className="w-full border rounded px-3 py-2"
-            >
-              <option value="">Todos</option>
-              {cargos.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Filtrar por município:</label>
-            <select
-              value={municipioSelecionado}
-              onChange={(e) => setMunicipioSelecionado(e.target.value)}
-              className="w-full border rounded px-3 py-2"
-            >
-              <option value="">Todos</option>
-              {municipios.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.nome}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
-
-      {favoritosFiltrados.length === 0 ? (
+      {favoritos.length === 0 ? (
         <div className="text-center py-12 text-gray-500 border rounded-lg">
           <p>Você ainda não favoritou nenhum político.</p>
           <p className="text-sm">
@@ -123,7 +47,7 @@ export default function MeusPoliticosPage() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {favoritosFiltrados.map((favorito) => {
+          {favoritos.map((favorito) => {
             const totalVotos = favorito.candidato.resultados.reduce(
               (sum, r) => sum + r.votos,
               0
