@@ -64,8 +64,8 @@ export default function BotaoFavoritar({ candidatoId, tamanho = "md" }: BotaoFav
     <button
       onClick={handleToggleFavorito}
       disabled={carregando}
-      className="transition-colors hover:opacity-70 disabled:opacity-50"
-      title={favoritado ? "Remover de favoritos" : "Adicionar aos favoritos"}
+      className="transition-colors hover:opacity-70 disabled:opacity-50 flex items-center gap-1"
+      title={favoritado ? "Clique para remover de favoritos" : "Clique para adicionar aos favoritos"}
     >
       <Heart
         className={`${tamanhos[tamanho]} ${
