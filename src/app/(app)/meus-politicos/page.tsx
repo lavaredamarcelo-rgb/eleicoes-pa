@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowUpDown } from "lucide-react";
 import EditorNotas from "@/components/EditorNotas";
+import FiltrosMeusPoliticos from "@/components/FiltrosMeusPoliticos";
 
 export default async function MeusPoliticosPage({
   searchParams,
@@ -65,54 +66,12 @@ export default async function MeusPoliticosPage({
       {favoritos.length > 0 && (
         <>
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-gray-50 p-4 rounded-lg">
-              <div>
-                <label className="block text-sm font-medium mb-1">Filtrar por cargo:</label>
-                <select
-                  value={cargoParam || ""}
-                  onChange={(e) => {
-                    const url = new URL(window.location.href);
-                    if (e.target.value) {
-                      url.searchParams.set("cargo", e.target.value);
-                    } else {
-                      url.searchParams.delete("cargo");
-                    }
-                    window.location.href = url.toString();
-                  }}
-                  className="w-full border rounded px-3 py-2"
-                >
-                  <option value="">Todos</option>
-                  {cargos.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nome}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Filtrar por região:</label>
-                <select
-                  value={regiaoParam || ""}
-                  onChange={(e) => {
-                    const url = new URL(window.location.href);
-                    if (e.target.value) {
-                      url.searchParams.set("regiao", e.target.value);
-                    } else {
-                      url.searchParams.delete("regiao");
-                    }
-                    window.location.href = url.toString();
-                  }}
-                  className="w-full border rounded px-3 py-2"
-                >
-                  <option value="">Todas</option>
-                  {regioes.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.nome}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            <FiltrosMeusPoliticos
+              cargos={cargos}
+              regioes={regioes}
+              cargoParam={cargoParam}
+              regiaoParam={regiaoParam}
+            />
 
             <div className="flex gap-2 flex-wrap">
               <Link
