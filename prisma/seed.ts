@@ -1,316 +1,49 @@
-import "dotenv/config";
-import { PrismaClient } from "../src/generated/prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-import bcrypt from "bcryptjs";
-import municipiosIbge from "../src/data/pa-municipios.json";
+import { PrismaClient } from '@prisma/client';
+import * as fs from 'fs';
+import * as path from 'path';
 
-const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL! });
-const prisma = new PrismaClient({ adapter });
-
-// Os 144 municípios e as 6 mesorregiões oficiais do Pará, gerados por
-// scripts/generate-municipios-data.mjs a partir da API do IBGE.
-const MUNICIPIOS: { nome: string; codigoIbge: string; regiao: string }[] = municipiosIbge;
-
-const PARTIDOS = [
-  { sigla: "PT", nome: "Partido dos Trabalhadores", numero: 13 },
-  { sigla: "PL", nome: "Partido Liberal", numero: 22 },
-  { sigla: "MDB", nome: "Movimento Democrático Brasileiro", numero: 15 },
-  { sigla: "PSDB", nome: "Partido da Social Democracia Brasileira", numero: 45 },
-  { sigla: "PSD", nome: "Partido Social Democrático", numero: 55 },
-  { sigla: "UNIÃO", nome: "União Brasil", numero: 44 },
-];
-
-function randomVotos(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-async function criarCandidatosComVotos(
-  cargoId: string,
-  candidatosBase: { nome: string; numero: number; partido: string }[],
-  partidosById: Map<string, string>,
-  municipioIds: Iterable<string>,
-  faixaVotos: [number, number]
-) {
-  for (const c of candidatosBase) {
-    const candidato = await prisma.candidato.create({
-      data: {
-        nome: c.nome,
-        numero: c.numero,
-        cargoId,
-        partidoId: partidosById.get(c.partido)!,
-      },
-    });
-    for (const municipioId of municipioIds) {
-      await prisma.resultado.create({
-        data: {
-          candidatoId: candidato.id,
-          municipioId,
-          votos: randomVotos(...faixaVotos),
-        },
-      });
-    }
-  }
-}
-
-async function criarCandidatosComVotosFixos(
-  cargoId: string,
-  candidatosBase: { nome: string; numero: number; partido: string; votos: number }[],
-  partidosById: Map<string, string>,
-  municipioId: string
-) {
-  for (const c of candidatosBase) {
-    const candidato = await prisma.candidato.create({
-      data: {
-        nome: c.nome,
-        numero: c.numero,
-        cargoId,
-        partidoId: partidosById.get(c.partido)!,
-      },
-    });
-    await prisma.resultado.create({
-      data: { candidatoId: candidato.id, municipioId, votos: c.votos },
-    });
-  }
-}
+const prisma = new PrismaClient();
 
 async function main() {
-  // Limpa dados de execuções anteriores do seed (ordem respeita FKs)
-  await prisma.resultado.deleteMany();
-  await prisma.colegioEleitoral.deleteMany();
-  await prisma.candidato.deleteMany();
-  await prisma.cargo.deleteMany();
-  await prisma.eleicao.deleteMany();
-  await prisma.user.deleteMany({ where: { role: { not: "ADMIN" } } });
-  await prisma.municipio.deleteMany();
-  await prisma.regiao.deleteMany();
-  await prisma.partido.deleteMany();
+  console.log('🌱 Iniciando seed...');
 
-  // Regiões e municípios
-  const regiaoIdByNome = new Map<string, string>();
-  const municipiosByNome = new Map<string, string>();
-  for (const m of MUNICIPIOS) {
-    let regiaoId = regiaoIdByNome.get(m.regiao);
-    if (!regiaoId) {
-      const regiao = await prisma.regiao.upsert({
-        where: { nome: m.regiao },
-        update: {},
-        create: { nome: m.regiao },
-      });
-      regiaoId = regiao.id;
-      regiaoIdByNome.set(m.regiao, regiaoId);
+  try {
+    const count = await prisma.candidato.count();
+    if (count > 100) {
+      console.log(`✅ Banco já tem ${count} candidatos. Pulando seed.`);
+      return;
     }
 
-    const municipio = await prisma.municipio.upsert({
-      where: { nome_regiaoId: { nome: m.nome, regiaoId } },
-      update: { codigoIbge: m.codigoIbge },
-      create: { nome: m.nome, regiaoId, codigoIbge: m.codigoIbge },
-    });
-    municipiosByNome.set(m.nome, municipio.id);
+    const sqlFile = path.join(__dirname, '../import-candidatos.sql');
+    if (!fs.existsSync(sqlFile)) {
+      console.log('⚠️  Arquivo não encontrado.');
+      return;
+    }
+
+    console.log('📝 Lendo SQL...');
+    const sql = fs.readFileSync(sqlFile, 'utf-8');
+    const statements = sql.split(';').filter(s => s.trim());
+
+    console.log(`📦 Importando ${statements.length} statements...`);
+
+    for (const stmt of statements) {
+      if (stmt.trim()) {
+        await prisma.$executeRawUnsafe(stmt);
+      }
+    }
+
+    const finalCount = await prisma.candidato.count();
+    console.log(`✅ ${finalCount} candidatos importados.`);
+  } catch (e) {
+    console.error('❌ Erro:', e);
+    process.exit(1);
   }
-
-  // Partidos
-  const partidosById = new Map<string, string>();
-  for (const p of PARTIDOS) {
-    const partido = await prisma.partido.upsert({
-      where: { sigla: p.sigla },
-      update: {},
-      create: p,
-    });
-    partidosById.set(p.sigla, partido.id);
-  }
-
-  // Eleição estadual 2026
-  const eleicaoEstadual = await prisma.eleicao.create({
-    data: { ano: 2026, uf: "PA", tipo: "ESTADUAL" },
-  });
-
-  const cargoGovernador = await prisma.cargo.create({
-    data: {
-      nome: "Governador",
-      tipoApuracao: "MAJORITARIO",
-      vagas: 1,
-      eleicaoId: eleicaoEstadual.id,
-    },
-  });
-
-  const cargoDepEstadual = await prisma.cargo.create({
-    data: {
-      nome: "Deputado Estadual",
-      tipoApuracao: "PROPORCIONAL",
-      vagas: 41,
-      eleicaoId: eleicaoEstadual.id,
-    },
-  });
-
-  const cargoDepFederal = await prisma.cargo.create({
-    data: {
-      nome: "Deputado Federal",
-      tipoApuracao: "PROPORCIONAL",
-      vagas: 17,
-      eleicaoId: eleicaoEstadual.id,
-    },
-  });
-
-  // Eleição municipal 2028 (demo em Belém)
-  const eleicaoMunicipal = await prisma.eleicao.create({
-    data: { ano: 2028, uf: "PA", tipo: "MUNICIPAL" },
-  });
-
-  const belemId = municipiosByNome.get("Belém")!;
-
-  const cargoPrefeito = await prisma.cargo.create({
-    data: {
-      nome: "Prefeito",
-      tipoApuracao: "MAJORITARIO",
-      vagas: 1,
-      eleicaoId: eleicaoMunicipal.id,
-      municipioId: belemId,
-    },
-  });
-
-  const cargoVereador = await prisma.cargo.create({
-    data: {
-      nome: "Vereador",
-      tipoApuracao: "PROPORCIONAL",
-      vagas: 35,
-      eleicaoId: eleicaoMunicipal.id,
-      municipioId: belemId,
-    },
-  });
-
-  // Candidatos - Governador (majoritário, estadual)
-  await criarCandidatosComVotos(
-    cargoGovernador.id,
-    [
-      { nome: "Ana Ferreira", numero: 13, partido: "PT" },
-      { nome: "Carlos Nunes", numero: 22, partido: "PL" },
-      { nome: "Beatriz Souza", numero: 15, partido: "MDB" },
-    ],
-    partidosById,
-    Array.from(municipiosByNome.values()),
-    [2000, 60000]
-  );
-
-  // Candidatos - Deputado Estadual (proporcional)
-  await criarCandidatosComVotos(
-    cargoDepEstadual.id,
-    [
-      { nome: "João Ramos", numero: 1301, partido: "PT" },
-      { nome: "Marcos Lima", numero: 2201, partido: "PL" },
-      { nome: "Fernanda Costa", numero: 4501, partido: "PSDB" },
-      { nome: "Renata Alves", numero: 5501, partido: "PSD" },
-    ],
-    partidosById,
-    Array.from(municipiosByNome.values()),
-    [200, 8000]
-  );
-
-  // Candidatos - Deputado Federal (proporcional)
-  await criarCandidatosComVotos(
-    cargoDepFederal.id,
-    [
-      { nome: "Paulo Vieira", numero: 1310, partido: "PT" },
-      { nome: "Camila Duarte", numero: 2210, partido: "PL" },
-      { nome: "Roberto Cunha", numero: 1510, partido: "MDB" },
-      { nome: "Juliana Rocha", numero: 4410, partido: "UNIÃO" },
-    ],
-    partidosById,
-    Array.from(municipiosByNome.values()),
-    [300, 10000]
-  );
-
-  // Candidatos - Prefeito de Belém (majoritário)
-  await criarCandidatosComVotos(
-    cargoPrefeito.id,
-    [
-      { nome: "Rogério Batista", numero: 13, partido: "PT" },
-      { nome: "Patrícia Gomes", numero: 44, partido: "UNIÃO" },
-    ],
-    partidosById,
-    [belemId],
-    [80000, 300000]
-  );
-
-  // Candidatos - Vereador de Belém (proporcional). Cada partido tem 10
-  // candidatos com uma curva de votos decrescente (como numa eleição real:
-  // poucos "puxadores de voto" e uma cauda longa) para que a apuração
-  // gere eleitos E suplentes de verdade, não só eleitos.
-  const curvaVotos = [9000, 7000, 5500, 4200, 3200, 2400, 1800, 1300, 900, 600];
-  const partidosVereador: { partido: string; nomes: string[] }[] = [
-    {
-      partido: "PT",
-      nomes: [
-        "Tiago Pereira", "Cláudia Nascimento", "Fábio Andrade", "Renan Costa",
-        "Débora Lins", "Wagner Souza", "Aline Furtado", "Bruno Cardozo",
-        "Patrícia Melo", "Igor Nogueira",
-      ],
-    },
-    {
-      partido: "PL",
-      nomes: [
-        "Larissa Monteiro", "Diego Salgado", "Vanessa Coutinho", "Rodrigo Aguiar",
-        "Camila Brito", "Otávio Reis", "Juliana Prado", "Leandro Farias",
-        "Bianca Teixeira", "Hugo Martins",
-      ],
-    },
-    {
-      partido: "MDB",
-      nomes: [
-        "Marcelo Tavares", "Simone Ribeiro", "André Luz", "Fernanda Castro",
-        "Caio Ferreira", "Talita Barros", "Vinícius Moraes", "Sandra Pinheiro",
-        "Gustavo Rocha", "Elaine Duarte",
-      ],
-    },
-    {
-      partido: "PSD",
-      nomes: [
-        "Eduardo Farias", "Priscila Amaral", "Marcos Vieira", "Natália Correia",
-        "Felipe Guimarães", "Roberta Lacerda", "César Bittencourt", "Luíza Andrade",
-        "Thiago Nunes", "Ana Beatriz Lopes",
-      ],
-    },
-  ];
-
-  let numeroSequencial = 100;
-  const candidatosVereadorFixos = partidosVereador.flatMap(({ partido, nomes }) =>
-    nomes.map((nome, i) => ({
-      nome,
-      numero: numeroSequencial++,
-      partido,
-      votos: curvaVotos[i],
-    }))
-  );
-
-  await criarCandidatosComVotosFixos(
-    cargoVereador.id,
-    candidatosVereadorFixos,
-    partidosById,
-    belemId
-  );
-
-  // Usuário admin
-  const adminPassword = "eleicoes2026";
-  const passwordHash = await bcrypt.hash(adminPassword, 10);
-  await prisma.user.upsert({
-    where: { email: "lavaredamarcelo@gmail.com" },
-    update: {},
-    create: {
-      nome: "Marcelo Lavareda",
-      email: "lavaredamarcelo@gmail.com",
-      passwordHash,
-      role: "ADMIN",
-    },
-  });
-
-  console.log("Seed concluído.");
-  console.log(`Login admin: lavaredamarcelo@gmail.com / senha: ${adminPassword}`);
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().then(async () => {
+  await prisma.$disconnect();
+}).catch(async (e) => {
+  console.error(e);
+  await prisma.$disconnect();
+  process.exit(1);
+});
