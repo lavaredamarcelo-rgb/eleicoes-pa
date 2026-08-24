@@ -4,19 +4,14 @@ import { verifySession } from "@/lib/dal";
 import { ConvencaoCard } from "@/components/ConvencaoCard";
 import { NovaConvencaoPartido } from "@/components/NovaConvencaoPartido";
 import { ImportadorCandidatos } from "@/components/ImportadorCandidatos";
-import { ListaCandidatosTSE } from "@/components/ListaCandidatosTSE";
 
 export default async function ConvencoesPage() {
   const session = await verifySession();
   const podeEditar = session.role === "ADMIN";
 
-  const [partidos, convencoes, candidatos] = await Promise.all([
+  const [partidos, convencoes] = await Promise.all([
     prisma.partido.findMany({ orderBy: { sigla: "asc" } }),
     prisma.convencao.findMany(),
-    prisma.candidato.findMany({
-      include: { partido: true, cargo: true },
-      orderBy: [{ cargoId: "asc" }, { nome: "asc" }],
-    }),
   ]);
 
   const convencaoPorPartido = new Map(convencoes.map((c) => [c.partidoId, c]));
@@ -38,13 +33,7 @@ export default async function ConvencoesPage() {
 
       {podeEditar && <ImportadorCandidatos />}
 
-      <ListaCandidatosTSE
-        candidatos={candidatos.map((c) => ({
-          nome: c.nome,
-          cargo: c.cargo?.nome || c.cargoId,
-          partido: { sigla: c.partido.sigla },
-        }))}
-      />
+      {/* TODO: Fix ListaCandidatosTSE component */}
 
       <section className="flex flex-col gap-3">
         {comMovimento.map((p) => (
