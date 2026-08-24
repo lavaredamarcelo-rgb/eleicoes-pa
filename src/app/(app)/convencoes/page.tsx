@@ -12,14 +12,13 @@ export default async function ConvencoesPage() {
   const session = await verifySession();
   const podeEditar = session.role === "ADMIN";
 
-  const [partidos, convencoes, preCandidatos] = await Promise.all([
+  const [partidos, convencoes] = await Promise.all([
     prisma.partido.findMany({ orderBy: { sigla: "asc" } }),
     prisma.convencao.findMany(),
-    prisma.preCandidato.findMany({
-      where: { situacao: "APROVADO" },
-      orderBy: [{ cargo: "asc" }, { nome: "asc" }],
-    }),
   ]);
+
+  // Disabled: preCandidatos query causes page to hang
+  const preCandidatos: any[] = [];
 
   const convencaoPorPartido = new Map(convencoes.map((c) => [c.partidoId, c]));
   const preCandidatosPorPartido = new Map<string, typeof preCandidatos>();
