@@ -25,14 +25,19 @@ export function PreCandidatosLazy() {
 
     try {
       const res = await fetch("/api/pre-candidatos/aprovados");
-      if (!res.ok) throw new Error("Erro ao carregar dados");
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`HTTP ${res.status}: ${text}`);
+      }
 
       const preCandidatos = await res.json();
+      console.log("Pré-candidatos carregados:", preCandidatos);
       setDados(preCandidatos);
       setExpandido(true);
     } catch (err) {
-      setErro("Erro ao carregar pré-candidatos");
-      console.error(err);
+      const msg = err instanceof Error ? err.message : "Erro desconhecido";
+      setErro(`Erro ao carregar pré-candidatos: ${msg}`);
+      console.error("Erro completo:", err);
     } finally {
       setCarregando(false);
     }
