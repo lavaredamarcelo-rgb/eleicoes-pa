@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowUpDown } from "lucide-react";
 import EditorNotas from "@/components/EditorNotas";
 import FiltrosMeusPoliticos from "@/components/FiltrosMeusPoliticos";
+import NotificacoesFavoritos from "@/components/NotificacoesFavoritos";
 
 export default async function MeusPoliticosPage({
   searchParams,
@@ -37,6 +38,14 @@ export default async function MeusPoliticosPage({
             resultados: {
               select: { municipioId: true, votos: true, municipio: { select: { regiaoId: true } } },
             },
+            trocasPartido: {
+              include: {
+                partidoOrigem: true,
+                partidoDestino: true,
+              },
+              orderBy: { data: "desc" },
+              take: 1,
+            },
           },
         },
       },
@@ -45,6 +54,24 @@ export default async function MeusPoliticosPage({
     prisma.cargo.findMany({ orderBy: { nome: "asc" } }),
     prisma.regiao.findMany({ orderBy: { nome: "asc" } }),
   ]);
+
+  // Gerar notificações de trocas recentes (últimos 7 dias)
+  const agora = new Date();
+  const umaSemanaAtras = new Date(agora.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  const notificacoes = favoritos
+    .filter((fav) => fav.candidato.trocasPartido.length > 0)
+    .filter((fav) => fav.candidato.trocasPartido[0].data > umaSemanaAtras)
+    .map((fav) => {
+      const troca = fav.candidato.trocasPartido[0];
+      return {
+        tipo: "troca_partido" as const,
+        titulo: `${fav.candidato.nome} trocou de partido`,
+        descricao: `Saiu do ${troca.partidoOrigem.sigla} e entrou no ${troca.partidoDestino.sigla}`,
+        candidatoNome: fav.candidato.nome,
+        data: troca.data,
+      };
+    });
 
   // Filtrar por região se selecionada
   let favoritosFiltrados = favoritos;
@@ -57,7 +84,7 @@ export default async function MeusPoliticosPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Meus Políticos</h1>
+        <h1 className="text-3xl font-bold">Favoritos</h1>
         <p className="text-gray-600 mt-2">
           Acompanhe a evolução de seus políticos favoritos
         </p>
@@ -65,6 +92,7 @@ export default async function MeusPoliticosPage({
 
       {favoritos.length > 0 && (
         <>
+          {notificacoes.length > 0 && <NotificacoesFavoritos notificacoes={notificacoes} />}
           <div className="space-y-4">
             <FiltrosMeusPoliticos
               cargos={cargos}
