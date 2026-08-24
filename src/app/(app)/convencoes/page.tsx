@@ -15,7 +15,11 @@ export default async function ConvencoesPage() {
   const [partidos, convencoes, preCandidatos] = await Promise.all([
     prisma.partido.findMany({ orderBy: { sigla: "asc" } }),
     prisma.convencao.findMany(),
-    prisma.preCandidato.findMany({ orderBy: [{ cargo: "asc" }, { nome: "asc" }] }),
+    // Temporariamente carregando apenas preCandidatos aprovados para performance
+    prisma.preCandidato.findMany({
+      where: { situacao: "APROVADO" },
+      orderBy: [{ cargo: "asc" }, { nome: "asc" }]
+    }),
   ]);
 
   const convencaoPorPartido = new Map(convencoes.map((c) => [c.partidoId, c]));
