@@ -2,12 +2,12 @@ import { verifySession } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Plus } from "lucide-react";
 import EditorNotas from "@/components/EditorNotas";
 import FiltrosMeusPoliticos from "@/components/FiltrosMeusPoliticos";
 import NotificacoesFavoritos from "@/components/NotificacoesFavoritos";
 
-export default async function MeusPoliticosPage({
+export default async function FavoritosPage({
   searchParams,
 }: {
   searchParams: Promise<{ ordenar?: string; cargo?: string; regiao?: string }>;
@@ -90,6 +90,33 @@ export default async function MeusPoliticosPage({
         </p>
       </div>
 
+      {/* Card para favoritar candidatos que perderam eleição */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+        <div className="flex items-start gap-3">
+          <Plus className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <h3 className="font-semibold text-blue-900">Favorititar candidatos não-eleitos</h3>
+            <p className="text-sm text-blue-800 mt-1">
+              Você também pode favorititar o segundo colocado, terceiro lugar ou outros candidatos que perderam a eleição.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <Link
+                href="/candidatos"
+                className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition"
+              >
+                <Plus size={16} /> Ver todos os candidatos
+              </Link>
+              <Link
+                href="/cenario"
+                className="inline-flex items-center gap-2 px-3 py-2 bg-blue-200 text-blue-900 text-sm rounded hover:bg-blue-300 transition"
+              >
+                Explorar cenários
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {favoritos.length > 0 && (
         <>
           {notificacoes.length > 0 && <NotificacoesFavoritos notificacoes={notificacoes} />}
@@ -151,13 +178,13 @@ export default async function MeusPoliticosPage({
         <div className="text-center py-12 text-gray-500 border rounded-lg">
           <p>Você ainda não favoritou nenhum político.</p>
           <p className="text-sm">
-            Visite a aba "Eleitos" para favoritar seus candidatos preferidos.
+            Visite a aba "Eleitos" ou "Cenários" para favorititar seus candidatos preferidos.
           </p>
           <Link
             href="/candidatos"
             className="text-blue-600 hover:underline mt-4 inline-block"
           >
-            Ir para Eleitos →
+            Ir para Candidatos →
           </Link>
         </div>
       ) : (
