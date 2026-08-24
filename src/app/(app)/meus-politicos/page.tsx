@@ -116,7 +116,7 @@ export default async function MeusPoliticosPage({
               <Link
                 key={favorito.id}
                 href={`/candidatos/${favorito.candidato.id}`}
-                className="border rounded-lg p-4 hover:bg-gray-50 transition"
+                className="border rounded-lg p-4 hover:bg-yellow-50 transition"
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
