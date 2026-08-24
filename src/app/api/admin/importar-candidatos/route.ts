@@ -1,7 +1,7 @@
 import { verifySession } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import xlsx from "xlsx";
+import * as xlsx from "xlsx";
 
 export async function POST(req: NextRequest) {
   const session = await verifySession();
