@@ -5,6 +5,7 @@ import { getPartidos } from "@/lib/data";
 import { SimuladorPartido } from "@/components/SimuladorPartido";
 import { MunicipioSwitcher } from "@/components/MunicipioSwitcher";
 import { ComposicaoCasa } from "@/components/ComposicaoCasa";
+import BotaoFavoritar from "@/components/BotaoFavoritar";
 
 export default async function CenarioDetailPage({
   params,
@@ -92,9 +93,12 @@ export default async function CenarioDetailPage({
                     </p>
                   </div>
                 </div>
-                <span className="text-sm font-semibold text-amber-400">
-                  {c.votos.toLocaleString("pt-BR")}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-semibold text-amber-400">
+                    {c.votos.toLocaleString("pt-BR")}
+                  </span>
+                  <BotaoFavoritar candidatoId={c.id} tamanho="md" />
+                </div>
               </div>
             ))}
         </section>
@@ -150,12 +154,17 @@ export default async function CenarioDetailPage({
 
       {titular && (
         <section className="rounded-xl border border-amber-900 bg-amber-950/40 px-4 py-4">
-          <p className="text-xs text-amber-300">Titular eleito</p>
-          <p className="text-lg font-semibold text-amber-100">{titular.nome}</p>
-          <p className="text-xs text-neutral-400">
-            {titular.numero} · {titular.partido.sigla} · {titular.votos.toLocaleString("pt-BR")}{" "}
-            votos
-          </p>
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-xs text-amber-300">Titular eleito</p>
+              <p className="text-lg font-semibold text-amber-100">{titular.nome}</p>
+              <p className="text-xs text-neutral-400">
+                {titular.numero} · {titular.partido.sigla} · {titular.votos.toLocaleString("pt-BR")}{" "}
+                votos
+              </p>
+            </div>
+            <BotaoFavoritar candidatoId={titular.id} tamanho="md" />
+          </div>
           {titular.viceNome && (
             <p className="mt-2 rounded-lg border border-amber-900/40 bg-amber-950/30 px-3 py-2 text-sm text-amber-200">
               Vice: {titular.viceNome} ({titular.viceNumero})
@@ -180,9 +189,12 @@ export default async function CenarioDetailPage({
                 {c.viceNome ? ` · vice: ${c.viceNome}` : ""}
               </p>
             </div>
-            <span className="text-sm font-semibold text-amber-400">
-              {c.votos.toLocaleString("pt-BR")}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-amber-400">
+                {c.votos.toLocaleString("pt-BR")}
+              </span>
+              <BotaoFavoritar candidatoId={c.id} tamanho="md" />
+            </div>
           </div>
         ))}
       </section>
