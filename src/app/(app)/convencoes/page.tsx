@@ -13,6 +13,7 @@ export default async function ConvencoesPage() {
     prisma.partido.findMany({ orderBy: { sigla: "asc" } }),
     prisma.convencao.findMany(),
     prisma.candidato.findMany({
+      where: { eleicaoId: "2026" },
       include: { partido: true, cargo: true },
     }),
   ]);
