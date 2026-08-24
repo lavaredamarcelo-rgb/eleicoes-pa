@@ -5,13 +5,23 @@ import { ConvencaoCard } from "@/components/ConvencaoCard";
 import { NovaConvencaoPartido } from "@/components/NovaConvencaoPartido";
 
 export default async function ConvencoesPage() {
+  console.log("[Convenções] Iniciando carregamento...");
   const session = await verifySession();
   const podeEditar = session.role === "ADMIN";
 
+  console.log("[Convenções] Session verificada, carregando dados...");
+
   const [partidos, convencoes] = await Promise.all([
-    prisma.partido.findMany({ orderBy: { sigla: "asc" } }),
-    prisma.convencao.findMany(),
+    prisma.partido.findMany({
+      orderBy: { sigla: "asc" },
+      select: { id: true, sigla: true, federacao: true, presidenteEstadualPA: true },
+    }),
+    prisma.convencao.findMany({
+      select: { id: true, partidoId: true, dataPrevista: true, dataRealizada: true, local: true },
+    }),
   ]);
+
+  console.log(`[Convenções] Dados carregados: ${partidos.length} partidos, ${convencoes.length} convenções`);
 
   const convencaoPorPartido = new Map(convencoes.map((c) => [c.partidoId, c]));
 
