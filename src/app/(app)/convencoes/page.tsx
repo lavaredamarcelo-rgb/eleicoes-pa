@@ -11,7 +11,7 @@ export default async function ConvencoesPage() {
 
   console.log("[Convenções] Session verificada, carregando dados...");
 
-  const [partidos, convencoes] = await Promise.all([
+  const [partidos, convencoes, preCandidatos] = await Promise.all([
     prisma.partido.findMany({
       orderBy: { sigla: "asc" },
       select: { id: true, sigla: true, federacao: true, presidenteEstadualPA: true },
@@ -19,11 +19,22 @@ export default async function ConvencoesPage() {
     prisma.convencao.findMany({
       select: { id: true, partidoId: true, dataPrevista: true, dataRealizada: true, local: true },
     }),
+    prisma.preCandidato.findMany({
+      where: { situacao: "APROVADO" },
+      select: { id: true, nome: true, cargo: true, situacao: true, origem: true, observacoes: true, partidoId: true },
+      orderBy: [{ partidoId: "asc" }, { cargo: "asc" }],
+    }),
   ]);
 
-  console.log(`[Convenções] Dados carregados: ${partidos.length} partidos, ${convencoes.length} convenções`);
+  console.log(`[Convenções] Dados carregados: ${partidos.length} partidos, ${convencoes.length} convenções, ${preCandidatos.length} pré-candidatos`);
 
   const convencaoPorPartido = new Map(convencoes.map((c) => [c.partidoId, c]));
+  const preCandidatoPorPartido = new Map(
+    partidos.map((p) => [
+      p.id,
+      preCandidatos.filter((pc) => pc.partidoId === p.id),
+    ])
+  );
 
   // Partidos com convenção aparecem primeiro
   const comMovimento = partidos.filter((p) => convencaoPorPartido.has(p.id));
@@ -51,7 +62,7 @@ export default async function ConvencoesPage() {
               presidenteEstadualPA: p.presidenteEstadualPA,
             }}
             convencao={convencaoPorPartido.get(p.id) ?? null}
-            preCandidatos={[]}
+            preCandidatos={preCandidatoPorPartido.get(p.id) ?? []}
             podeEditar={podeEditar}
           />
         ))}
