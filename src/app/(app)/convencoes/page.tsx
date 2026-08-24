@@ -13,7 +13,19 @@ export default async function ConvencoesPage() {
     prisma.partido.findMany({ orderBy: { sigla: "asc" } }),
     prisma.convencao.findMany(),
     prisma.candidato.findMany({
-      where: { eleicaoId: "2026" },
+      where: {
+        cargo: {
+          nome: {
+            in: [
+              "Governador",
+              "Vice-Governador",
+              "Senador",
+              "Deputado Federal",
+              "Deputado Estadual",
+            ],
+          },
+        },
+      },
       include: { partido: true, cargo: true },
     }),
   ]);
