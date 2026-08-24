@@ -197,6 +197,20 @@ export default async function CenarioDetailPage({
     );
   }
 
+  // Buscar pré-candidatos aprovados em convenção (para Deputados)
+  const cargoNome = cargo.nome;
+  const preCandidatos =
+    cargoNome === "Deputado Estadual" || cargoNome === "Deputado Federal"
+      ? await prisma.preCandidato.findMany({
+          where: {
+            situacao: "APROVADO",
+            cargo: cargoNome,
+          },
+          include: { partido: true },
+          orderBy: { nome: "asc" },
+        })
+      : [];
+
   const resultado = await calcularMajoritario(cargoId);
   if (!resultado) notFound();
 
@@ -261,6 +275,31 @@ export default async function CenarioDetailPage({
           </div>
         ))}
       </section>
+
+      {preCandidatos.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-neutral-400">Pré-candidatos em Convenção</h2>
+          {preCandidatos.map((pc) => (
+            <div
+              key={pc.id}
+              className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3"
+            >
+              <div>
+                <p className="font-medium">{pc.nome}</p>
+                <p className="text-xs text-neutral-500">
+                  {pc.partido.sigla}
+                  {pc.registroTRE === true && " · ✓ Registrado no TRE"}
+                  {pc.registroTRE === false && " · ✗ Não registrado"}
+                  {pc.registroTRE === null && " · ? Pendente verificação"}
+                </p>
+              </div>
+              <div className="flex-shrink-0">
+                <BotaoFavoritar candidatoId={pc.id} tamanho="md" />
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
 
       <section className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
         <p className="text-xs text-neutral-500">

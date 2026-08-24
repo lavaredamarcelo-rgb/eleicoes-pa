@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { verifySession } from "@/lib/dal";
 import { ConvencaoCard } from "@/components/ConvencaoCard";
 import { NovaConvencaoPartido } from "@/components/NovaConvencaoPartido";
+import { GerenciadorPreCandidatosTRE } from "@/components/GerenciadorPreCandidatosTRE";
 
 const ORDEM_CARGOS = ["Governador", "Vice-Governador", "Senador", "Deputado Federal", "Deputado Estadual"];
 
@@ -108,6 +109,10 @@ export default async function ConvencoesPage() {
             .
           </p>
         </section>
+      )}
+
+      {aprovados.length > 0 && (
+        <GerenciadorPreCandidatosTRE preCandidatos={preCandidatos} />
       )}
 
       <section className="flex flex-col gap-3">

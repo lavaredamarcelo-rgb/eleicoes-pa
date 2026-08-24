@@ -365,15 +365,18 @@ model PoliticoFavorito {
 // imprensa ou incluído à mão; após a convenção vira APROVADO (ou
 // NAO_APROVADO/desistência), e os aprovados alimentam as simulações.
 model PreCandidato {
-  id          String   @id @default(cuid())
-  partidoId   String
-  partido     Partido  @relation(fields: [partidoId], references: [id])
-  nome        String
-  cargo       String
-  situacao    String   @default("PRE_CANDIDATO")
-  origem      String   @default("manual")
-  observacoes String?
-  createdAt   DateTime @default(now())
+  id              String   @id @default(cuid())
+  partidoId       String
+  partido         Partido  @relation(fields: [partidoId], references: [id])
+  nome            String
+  cargo           String
+  situacao        String   @default("PRE_CANDIDATO")
+  origem          String   @default("manual")
+  observacoes     String?
+  registroTRE     Boolean?
+  dataRegistroTRE DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@unique([partidoId, nome, cargo])
 }
