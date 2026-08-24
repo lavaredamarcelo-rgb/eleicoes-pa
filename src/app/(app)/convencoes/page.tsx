@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { verifySession } from "@/lib/dal";
 import { ConvencaoCard } from "@/components/ConvencaoCard";
 import { NovaConvencaoPartido } from "@/components/NovaConvencaoPartido";
-import { PreCandidatosLazy } from "@/components/PreCandidatosLazy";
 
 export default async function ConvencoesPage() {
   const session = await verifySession();
@@ -30,8 +29,6 @@ export default async function ConvencoesPage() {
           20/07 a 05/08 (art. 8º, Lei 9.504/97).
         </p>
       </div>
-
-      <PreCandidatosLazy />
 
       <section className="flex flex-col gap-3">
         {comMovimento.map((p) => (

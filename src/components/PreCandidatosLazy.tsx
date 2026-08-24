@@ -12,10 +12,11 @@ const ORDEM_CARGOS = [
 ];
 
 export function PreCandidatosLazy() {
-  const [expandido, setExpandido] = useState(false);
-  const [carregando, setCarregando] = useState(false);
-  const [dados, setDados] = useState<any[]>([]);
-  const [erro, setErro] = useState<string | null>(null);
+  try {
+    const [expandido, setExpandido] = useState(false);
+    const [carregando, setCarregando] = useState(false);
+    const [dados, setDados] = useState<any[]>([]);
+    const [erro, setErro] = useState<string | null>(null);
 
   const handleExpand = async () => {
     if (expandido || carregando) return;
