@@ -24,7 +24,7 @@ export function PreCandidatosLazy() {
     setErro(null);
 
     try {
-      const res = await fetch("/api/pre-candidatos/aprovados");
+      const res = await fetch("/public-api/pre-candidatos-aprovados");
       if (!res.ok) {
         const text = await res.text();
         throw new Error(`HTTP ${res.status}: ${text}`);
