@@ -114,35 +114,32 @@ export default async function MeusPoliticosPage({
             );
 
             return (
-              <Link
-                key={favorito.id}
-                href={`/candidatos/${favorito.candidato.id}`}
-                className="border rounded-lg p-4 hover:bg-yellow-50 transition"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold">
-                      {favorito.candidato.nome}
-                    </h3>
-                    <div className="flex gap-4 mt-2 text-sm text-gray-600">
-                      <span className="font-medium">
-                        {favorito.candidato.cargo.nome}
-                      </span>
-                      <span>{favorito.candidato.partido.sigla}</span>
-                      <span>{totalVotos.toLocaleString("pt-BR")} votos</span>
-                    </div>
-                    {favorito.candidato.eleito && (
-                      <span className="inline-block mt-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
-                        ✓ Eleito
-                      </span>
-                    )}
-                    <EditorNotas
-                      favoritoId={favorito.id}
-                      notasInicial={favorito.notas || ""}
-                    />
+              <div key={favorito.id} className="border rounded-lg p-4 hover:bg-yellow-50 transition space-y-3">
+                <Link
+                  href={`/candidatos/${favorito.candidato.id}`}
+                  className="block"
+                >
+                  <h3 className="text-lg font-semibold">
+                    {favorito.candidato.nome}
+                  </h3>
+                  <div className="flex gap-4 mt-2 text-sm text-gray-600">
+                    <span className="font-medium">
+                      {favorito.candidato.cargo.nome}
+                    </span>
+                    <span>{favorito.candidato.partido.sigla}</span>
+                    <span>{totalVotos.toLocaleString("pt-BR")} votos</span>
                   </div>
-                </div>
-              </Link>
+                  {favorito.candidato.eleito && (
+                    <span className="inline-block mt-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                      ✓ Eleito
+                    </span>
+                  )}
+                </Link>
+                <EditorNotas
+                  favoritoId={favorito.id}
+                  notasInicial={favorito.notas || ""}
+                />
+              </div>
             );
           })}
         </div>
