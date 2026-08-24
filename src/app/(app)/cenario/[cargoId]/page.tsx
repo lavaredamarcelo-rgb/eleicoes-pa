@@ -103,6 +103,69 @@ export default async function CenarioDetailPage({
             ))}
         </section>
 
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-neutral-400">Suplentes</h2>
+          {resultado.candidatosComSituacao.filter((c) => c.situacao === "suplente").length === 0 ? (
+            <p className="text-xs text-neutral-500">Nenhum suplente</p>
+          ) : (
+            resultado.candidatosComSituacao
+              .filter((c) => c.situacao === "suplente")
+              .map((c) => (
+                <div
+                  key={c.id}
+                  className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-2"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="w-7 text-right text-xs text-neutral-600">{c.ordemSuplencia}º</span>
+                    <div>
+                      <p>{c.nome}</p>
+                      <p className="text-xs text-neutral-500">
+                        {c.numero} · {c.partido.sigla}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-amber-400">
+                      {c.votos.toLocaleString("pt-BR")}
+                    </span>
+                    <BotaoFavoritar candidatoId={c.id} tamanho="md" />
+                  </div>
+                </div>
+              ))
+          )}
+        </section>
+
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-neutral-400">Demais candidatos</h2>
+          {resultado.candidatosComSituacao.filter((c) => c.situacao !== "eleito" && c.situacao !== "suplente").length === 0 ? (
+            <p className="text-xs text-neutral-500">Nenhum outro candidato</p>
+          ) : (
+            resultado.candidatosComSituacao
+              .filter((c) => c.situacao !== "eleito" && c.situacao !== "suplente")
+              .map((c) => (
+                <div
+                  key={c.id}
+                  className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-2"
+                >
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <p>{c.nome}</p>
+                      <p className="text-xs text-neutral-500">
+                        {c.numero} · {c.partido.sigla}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-amber-400">
+                      {c.votos.toLocaleString("pt-BR")}
+                    </span>
+                    <BotaoFavoritar candidatoId={c.id} tamanho="md" />
+                  </div>
+                </div>
+              ))
+          )}
+        </section>
+
         <section className="flex flex-col gap-2 rounded-xl border border-orange-900/50 bg-orange-950/10 px-4 py-4">
           <h2 className="text-sm font-medium text-orange-300">Simular cenário: troca de partido</h2>
           <p className="text-xs text-neutral-500">
