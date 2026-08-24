@@ -7,7 +7,15 @@ export async function GET() {
 
     const preCandidatos = await prisma.preCandidato.findMany({
       where: { situacao: "APROVADO" },
-      include: { partido: true },
+      select: {
+        id: true,
+        nome: true,
+        cargo: true,
+        situacao: true,
+        origem: true,
+        observacoes: true,
+        partido: true,
+      },
       orderBy: [{ cargo: "asc" }, { nome: "asc" }],
     });
 
