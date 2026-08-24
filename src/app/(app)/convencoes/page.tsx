@@ -5,48 +5,15 @@ import { ConvencaoCard } from "@/components/ConvencaoCard";
 import { NovaConvencaoPartido } from "@/components/NovaConvencaoPartido";
 
 export default async function ConvencoesPage() {
-  console.log("[Convenções] Iniciando carregamento...");
   const session = await verifySession();
   const podeEditar = session.role === "ADMIN";
 
-  console.log("[Convenções] Session verificada, carregando dados...");
-
   const [partidos, convencoes] = await Promise.all([
-    prisma.partido.findMany({
-      orderBy: { sigla: "asc" },
-      select: { id: true, sigla: true, federacao: true, presidenteEstadualPA: true },
-    }),
-    prisma.convencao.findMany({
-      select: { id: true, partidoId: true, dataPrevista: true, dataRealizada: true, local: true },
-    }),
+    prisma.partido.findMany({ orderBy: { sigla: "asc" } }),
+    prisma.convencao.findMany(),
   ]);
 
-  console.log(`[Convenções] Dados carregados: ${partidos.length} partidos, ${convencoes.length} convenções`);
-
-  // Tentar carregar pré-candidatos com timeout
-  let preCandidatos: any[] = [];
-  try {
-    preCandidatos = await Promise.race([
-      prisma.preCandidato.findMany({
-        where: { situacao: "APROVADO" },
-        select: { id: true, nome: true, cargo: true, situacao: true, origem: true, observacoes: true, partidoId: true },
-        orderBy: [{ partidoId: "asc" }, { cargo: "asc" }],
-      }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000)),
-    ]);
-    console.log(`[Convenções] ${preCandidatos.length} pré-candidatos carregados`);
-  } catch (err) {
-    console.log(`[Convenções] Erro ao carregar pré-candidatos: ${err}`);
-    preCandidatos = [];
-  }
-
   const convencaoPorPartido = new Map(convencoes.map((c) => [c.partidoId, c]));
-  const preCandidatoPorPartido = new Map(
-    partidos.map((p) => [
-      p.id,
-      preCandidatos.filter((pc) => pc.partidoId === p.id),
-    ])
-  );
 
   // Partidos com convenção aparecem primeiro
   const comMovimento = partidos.filter((p) => convencaoPorPartido.has(p.id));
@@ -74,7 +41,7 @@ export default async function ConvencoesPage() {
               presidenteEstadualPA: p.presidenteEstadualPA,
             }}
             convencao={convencaoPorPartido.get(p.id) ?? null}
-            preCandidatos={preCandidatoPorPartido.get(p.id) ?? []}
+            preCandidatos={[]}
             podeEditar={podeEditar}
           />
         ))}
