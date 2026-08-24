@@ -9,13 +9,13 @@ interface PreCandidato {
   cargo: string;
   situacao: string;
   registroTRE: boolean | null;
-  dataRegistroTRE: string | null;
+  dataRegistroTRE: Date | string | null;
   partido: { sigla: string };
 }
 
 const ORDEM_CARGOS = ["Governador", "Vice-Governador", "Senador", "Deputado Federal", "Deputado Estadual"];
 
-export function GerenciadorPreCandidatosTRE({ preCandidatos }: { preCandidatos: PreCandidato[] }) {
+export function GerenciadorPreCandidatosTRE({ preCandidatos }: { preCandidatos: any[] }) {
   const [atualizando, setAtualizando] = useState<string | null>(null);
 
   const aprovados = preCandidatos.filter((pc) => pc.situacao === "APROVADO");
@@ -72,7 +72,7 @@ export function GerenciadorPreCandidatosTRE({ preCandidatos }: { preCandidatos: 
                 </p>
                 {pc.dataRegistroTRE && (
                   <p className="text-[11px] text-neutral-600 mt-0.5">
-                    Atualizado em {new Date(pc.dataRegistroTRE).toLocaleDateString("pt-BR")}
+                    Atualizado em {new Date(pc.dataRegistroTRE as any).toLocaleDateString("pt-BR")}
                   </p>
                 )}
               </div>

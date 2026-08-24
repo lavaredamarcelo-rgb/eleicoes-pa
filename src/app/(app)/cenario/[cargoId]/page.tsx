@@ -199,7 +199,7 @@ export default async function CenarioDetailPage({
 
   // Buscar pré-candidatos aprovados em convenção (para Deputados)
   const cargoNome = cargo.nome;
-  const preCandidatos =
+  const preCandidatos: any[] =
     cargoNome === "Deputado Estadual" || cargoNome === "Deputado Federal"
       ? await prisma.preCandidato.findMany({
           where: {
