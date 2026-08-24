@@ -111,9 +111,10 @@ export default async function ConvencoesPage() {
         </section>
       )}
 
-      {aprovados.length > 0 && (
+      {/* TODO: Temporariamente desativado para debug */}
+      {/* {aprovados.length > 0 && (
         <GerenciadorPreCandidatosTRE preCandidatos={preCandidatos} />
-      )}
+      )} */}
 
       <section className="flex flex-col gap-3">
         {comMovimento.map((p) => (
