@@ -15,7 +15,7 @@ export default async function ConvencoesPage() {
     prisma.convencao.findMany(),
     prisma.candidato.findMany({
       include: { partido: true, cargo: true },
-      orderBy: [{ cargo: "asc" }, { nome: "asc" }],
+      orderBy: [{ cargoId: "asc" }, { nome: "asc" }],
     }),
   ]);
 
