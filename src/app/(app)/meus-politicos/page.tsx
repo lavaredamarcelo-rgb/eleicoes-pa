@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowUpDown } from "lucide-react";
+import EditorNotas from "@/components/EditorNotas";
 
 export default async function MeusPoliticosPage({
   searchParams,
@@ -135,13 +136,10 @@ export default async function MeusPoliticosPage({
                         ✓ Eleito
                       </span>
                     )}
-                    {favorito.notas ? (
-                      <p className="mt-3 text-sm text-gray-700 bg-yellow-50 p-2 rounded border-l-4 border-yellow-400">
-                        📝 {favorito.notas}
-                      </p>
-                    ) : (
-                      <p className="mt-3 text-xs text-gray-400">sem notas</p>
-                    )}
+                    <EditorNotas
+                      favoritoId={favorito.id}
+                      notasInicial={favorito.notas || ""}
+                    />
                   </div>
                 </div>
               </Link>
