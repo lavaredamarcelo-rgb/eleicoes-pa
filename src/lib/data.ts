@@ -143,6 +143,22 @@ export async function getEleitosOficiais(ano: number) {
     }));
 }
 
+// Todos os candidatos de um ano (eleitos e não-eleitos) - para permitir favorititar qualquer um
+export async function getCandidatosPorAno(ano: number) {
+  return prisma.candidato.findMany({
+    where: { cargo: { eleicao: { ano } } },
+    include: {
+      partido: true,
+      cargo: { include: { municipio: { include: { regiao: true } } } },
+      resultados: { include: { municipio: { include: { regiao: true } } } },
+    },
+    orderBy: [
+      { cargo: { nome: 'asc' } },
+      { resultados: { _count: 'desc' } },
+    ],
+  });
+}
+
 export async function getEleicoes() {
   return prisma.eleicao.findMany({
     include: { cargos: { include: { municipio: true } } },

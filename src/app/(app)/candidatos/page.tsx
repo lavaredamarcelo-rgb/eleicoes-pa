@@ -31,7 +31,7 @@ export default async function EleitosPage({
         <div>
           <h1 className="text-lg font-semibold">Eleitos</h1>
           <p className="text-sm text-neutral-500">
-            Situação oficial do TSE · escolha o cargo e o município
+            Situação oficial do TSE · escolha o cargo e o município (você também pode favorititar candidatos não-eleitos em Favoritos)
           </p>
         </div>
         {anoSelecionado && (
