@@ -12,23 +12,21 @@ export default async function ConvencoesPage() {
   const session = await verifySession();
   const podeEditar = session.role === "ADMIN";
 
-  const [partidos, convencoes, preCandidatos] = await Promise.all([
+  const [partidos, convencoes] = await Promise.all([
     prisma.partido.findMany({ orderBy: { sigla: "asc" } }),
     prisma.convencao.findMany(),
-    // Temporariamente carregando apenas preCandidatos aprovados para performance
-    prisma.preCandidato.findMany({
-      where: { situacao: "APROVADO" },
-      orderBy: [{ cargo: "asc" }, { nome: "asc" }]
-    }),
   ]);
 
+  // TODO: Re-enable preCandidatos after fixing performance issue
+  const preCandidatos: any[] = [];
+
   const convencaoPorPartido = new Map(convencoes.map((c) => [c.partidoId, c]));
-  const preCandidatosPorPartido = new Map<string, typeof preCandidatos>();
-  for (const pc of preCandidatos) {
-    const lista = preCandidatosPorPartido.get(pc.partidoId);
-    if (lista) lista.push(pc);
-    else preCandidatosPorPartido.set(pc.partidoId, [pc]);
-  }
+  const preCandidatosPorPartido = new Map<string, any[]>();
+  // for (const pc of preCandidatos) {
+  //   const lista = preCandidatosPorPartido.get(pc.partidoId);
+  //   if (lista) lista.push(pc);
+  //   else preCandidatosPorPartido.set(pc.partidoId, [pc]);
+  // }
 
   // Partidos com convenção ou pré-candidatos aparecem primeiro.
   const partidoById = new Map(partidos.map((p) => [p.id, p]));
