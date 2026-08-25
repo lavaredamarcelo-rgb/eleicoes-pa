@@ -9,14 +9,30 @@ export async function GET() {
     out.candidatos = await prisma.candidato.count();
     out.partidos = await prisma.partido.count();
     out.convencoes = await prisma.convencao.count();
-    out.politicosFavoritos = await prisma.politicoFavorito.count();
-    out.preCandidatos = await prisma.preCandidato.count();
-    const col = await prisma.$queryRawUnsafe<{ n: number }[]>(
+  } catch (e) {
+    out.dbError = e instanceof Error ? e.message : String(e);
+  }
+  try {
+    const tabelas = await prisma.$queryRawUnsafe<{ name: string }[]>(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('PoliticoFavorito','PesquisaEleitoral','PreCandidato','new_PreCandidato') ORDER BY name"
+    );
+    out.tabelas = tabelas.map((t) => t.name);
+    const col = await prisma.$queryRawUnsafe<{ n: bigint }[]>(
       "SELECT COUNT(*) as n FROM pragma_table_info('PreCandidato') WHERE name='registroTRE'"
     );
     out.migracaoRegistroTRE = Number(col[0]?.n) === 1 ? "aplicada" : "PENDENTE";
+    const migs = await prisma.$queryRawUnsafe<
+      { migration_name: string; finished_at: string | null; rolled_back_at: string | null }[]
+    >(
+      "SELECT migration_name, finished_at, rolled_back_at FROM _prisma_migrations ORDER BY started_at DESC LIMIT 6"
+    );
+    out.ultimasMigracoes = migs.map(
+      (m) =>
+        m.migration_name +
+        (m.finished_at ? " [ok]" : m.rolled_back_at ? " [rolled-back]" : " [FALHOU]")
+    );
   } catch (e) {
-    out.dbError = e instanceof Error ? e.message : String(e);
+    out.migError = e instanceof Error ? e.message : String(e);
   }
   try {
     out.dataDirExists = fs.existsSync("/data");
