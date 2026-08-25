@@ -26,7 +26,7 @@ const CORES = [
 ];
 
 const NAO_CANDIDATO =
-  /brancos?|nulos?|n[aã]o sabe|n[aã]o respondeu|nenhum|indecisos?|ns\/nr|^outros?$/i;
+  /brancos?|nulos?|n[aã]o sabe|n[aã]o respondeu|nenhum|indecisos?|ns\/nr|ns\/sr|^outros?$/i;
 
 export default async function EvolucaoPage({
   searchParams,

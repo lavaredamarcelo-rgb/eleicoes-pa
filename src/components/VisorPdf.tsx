@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X, Share2, FileDown } from "lucide-react";
+import { X, Share2, FileDown, ZoomIn, ZoomOut } from "lucide-react";
 
 // Visor de PDF interno: abre por cima da tela com botão FECHAR sempre
 // visível (no app instalado no celular, um PDF aberto direto não tem como
@@ -20,6 +20,7 @@ export function VisorPdf({
 }) {
   const contRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<"carregando" | "pronto" | "erro">("carregando");
+  const [zoom, setZoom] = useState(100);
 
   useEffect(() => {
     let cancelado = false;
@@ -83,7 +84,10 @@ export function VisorPdf({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-neutral-950">
-      <div className="flex items-center justify-between gap-2 border-b border-neutral-800 bg-neutral-900 px-3 py-2.5">
+      <div
+        className="flex items-center justify-between gap-2 border-b border-neutral-800 bg-neutral-900 px-3 pb-2.5"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 10px)" }}
+      >
         <button
           onClick={aoFechar}
           className="flex shrink-0 items-center gap-1.5 rounded-lg bg-amber-400 px-3 py-2 text-sm font-semibold text-neutral-950"
@@ -93,6 +97,22 @@ export function VisorPdf({
         </button>
         <p className="min-w-0 truncate text-xs text-neutral-400">{titulo}</p>
         <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            onClick={() => setZoom((z) => Math.max(100, z - 50))}
+            aria-label="Diminuir zoom"
+            disabled={zoom <= 100}
+            className="rounded-lg border border-neutral-700 p-2 text-neutral-300 disabled:opacity-40"
+          >
+            <ZoomOut size={15} />
+          </button>
+          <button
+            onClick={() => setZoom((z) => Math.min(300, z + 50))}
+            aria-label="Aumentar zoom"
+            disabled={zoom >= 300}
+            className="rounded-lg border border-neutral-700 p-2 text-neutral-300 disabled:opacity-40"
+          >
+            <ZoomIn size={15} />
+          </button>
           <button
             onClick={compartilhar}
             aria-label="Compartilhar"
@@ -109,12 +129,12 @@ export function VisorPdf({
           </button>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="flex-1 overflow-auto p-2" style={{ touchAction: "pan-x pan-y pinch-zoom" }}>
         {status === "carregando" && (
           <p className="py-10 text-center text-sm text-neutral-500">Preparando o PDF…</p>
         )}
         {/* área gerenciada fora do React: só o pdf.js escreve aqui */}
-        <div ref={contRef} />
+        <div ref={contRef} style={{ width: `${zoom}%` }} />
       </div>
       {status === "erro" && (
         <div className="border-t border-neutral-800 bg-neutral-900 px-3 py-3 text-center">
