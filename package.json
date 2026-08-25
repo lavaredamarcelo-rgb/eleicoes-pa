@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "node scripts/restore-db.js; node scripts/pre-migrate-fix.js; (prisma migrate deploy --skip-generate > /data/migrate.log 2>&1 || true); cat /data/migrate.log; next start",
+    "start": "node scripts/restore-db.js; node scripts/pre-migrate-fix.js; (prisma migrate deploy > /data/migrate.log 2>&1 || true); cat /data/migrate.log; next start",
     "postinstall": "prisma generate",
     "lint": "eslint"
   },
