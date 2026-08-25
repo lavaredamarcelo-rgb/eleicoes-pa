@@ -2,6 +2,7 @@ import { verifySession } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { PdfDownloadLink } from "@/components/PdfDownloadLink";
 
 const DISPUTAS = [
   "Governador",
@@ -91,14 +92,20 @@ export default async function EvolucaoPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-lg font-semibold">Evolução das pesquisas</h1>
-        <p className="text-sm text-neutral-500">
-          Pesquisas estimuladas, em ordem de divulgação.{" "}
-          <Link href="/pesquisas" className="text-amber-400 hover:underline">
-            ← Ver lista
-          </Link>
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-semibold">Evolução das pesquisas</h1>
+          <p className="text-sm text-neutral-500">
+            Pesquisas estimuladas, em ordem de divulgação.{" "}
+            <Link href="/pesquisas" className="text-amber-400 hover:underline">
+              ← Ver lista
+            </Link>
+          </p>
+        </div>
+        <PdfDownloadLink
+          href={`/api/pdf/pesquisas?disputa=${encodeURIComponent(disputa)}&turno=${turno}`}
+          label={`PDF · ${disputa} ${turno}º turno`}
+        />
       </div>
 
       <div className="flex flex-wrap gap-2">

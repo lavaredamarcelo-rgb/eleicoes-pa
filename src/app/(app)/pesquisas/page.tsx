@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Plus, TrendingUp, ExternalLink } from "lucide-react";
 import BotaoExcluirPesquisa from "@/components/BotaoExcluirPesquisa";
+import { PdfDownloadLink } from "@/components/PdfDownloadLink";
 
 const DISPUTAS = [
   "Governador",
@@ -49,7 +50,15 @@ export default async function PesquisasPage({
             no PesqEle/TSE e divulgadas na imprensa.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <PdfDownloadLink
+            href={`/api/pdf/pesquisas${
+              disputa
+                ? `?disputa=${encodeURIComponent(disputa)}${turno ? `&turno=${turno}` : ""}`
+                : ""
+            }`}
+            label={disputa ? `PDF · ${disputa}` : "PDF geral"}
+          />
           <Link
             href="/pesquisas/evolucao"
             className="flex items-center gap-1.5 rounded-lg border border-neutral-800 px-3 py-2 text-sm text-neutral-200 transition hover:bg-neutral-900"
