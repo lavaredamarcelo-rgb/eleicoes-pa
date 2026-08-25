@@ -1,6 +1,7 @@
 import { AnoSelector } from "@/components/AnoSelector";
 import { EleitosPorCargo } from "@/components/EleitosPorCargo";
 import { PdfDownloadLink } from "@/components/PdfDownloadLink";
+import { PdfEleitosMunicipio } from "@/components/PdfEleitosMunicipio";
 import { getAnosComEleitos, getEleitosOficiais } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 
@@ -36,6 +37,7 @@ export default async function EleitosPage({
         </div>
         {anoSelecionado && (
           <div className="flex items-center gap-2">
+            <PdfEleitosMunicipio ano={anoSelecionado} municipios={municipiosOpcoes} />
             <PdfDownloadLink href={`/api/pdf/eleitos/${anoSelecionado}`} />
             <div className="w-32">
               <AnoSelectorSimples anos={anosDisponiveis} selecionado={anoSelecionado} />

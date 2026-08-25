@@ -5,11 +5,24 @@ import type { getEleitosOficiais } from "@/lib/data";
 
 type Grupos = Awaited<ReturnType<typeof getEleitosOficiais>>;
 
-export function RelatorioEleitos({ ano, grupos }: { ano: number; grupos: Grupos }) {
+export function RelatorioEleitos({
+  ano,
+  grupos,
+  local,
+}: {
+  ano: number;
+  grupos: Grupos;
+  local?: string;
+}) {
   const total = grupos.reduce((s, g) => s + g.totalEleitos, 0);
 
   return (
-    <ReportShell title={`Eleitos — ${ano}`} subtitle={`Pará · ${total} eleitos (situação oficial do TSE)`}>
+    <ReportShell
+      title={`Eleitos — ${ano}${local ? ` · ${local}` : ""}`}
+      subtitle={`${local ?? "Pará"} · ${total} eleitos (situação oficial do TSE)${
+        local ? " · cargos estaduais: eleitos com reduto no município" : ""
+      }`}
+    >
       {grupos.map((g) => (
         <View key={g.cargoNome}>
           <SectionTitle>
