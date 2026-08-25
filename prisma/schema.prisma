@@ -380,3 +380,40 @@ model PreCandidato {
 
   @@unique([partidoId, nome, cargo])
 }
+
+// Pesquisa eleitoral divulgada na imprensa e registrada no PesqEle/TSE.
+// Disputas acompanhadas: Governador, Senador, Dep. Federal e Estadual (PA)
+// e Presidente. Resultados como texto livre (funciona para qualquer nome,
+// inclusive Brancos/Nulos e Não sabe).
+model PesquisaEleitoral {
+  id              String              @id @default(cuid())
+  disputa         String
+  turno           Int                 @default(1)
+  tipo            String              @default("estimulada")
+  cenario         String?
+  instituto       String
+  contratante     String?
+  registroTSE     String?
+  linkRegistro    String?
+  linkMateria     String?
+  dataCampoInicio DateTime?
+  dataCampoFim    DateTime?
+  dataDivulgacao  DateTime
+  amostra         Int?
+  margemErro      Float?
+  confianca       Float?
+  observacoes     String?
+  resultados      PesquisaResultado[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+}
+
+model PesquisaResultado {
+  id         String            @id @default(cuid())
+  pesquisaId String
+  pesquisa   PesquisaEleitoral @relation(fields: [pesquisaId], references: [id], onDelete: Cascade)
+  nome       String
+  partido    String?
+  percentual Float
+  ordem      Int               @default(0)
+}
