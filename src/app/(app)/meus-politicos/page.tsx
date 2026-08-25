@@ -2,8 +2,9 @@ import { verifySession } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, MapPin } from "lucide-react";
 import EditorNotas from "@/components/EditorNotas";
+import BotaoDesfavoritar from "@/components/BotaoDesfavoritar";
 import FiltrosMeusPoliticos from "@/components/FiltrosMeusPoliticos";
 import NotificacoesFavoritos from "@/components/NotificacoesFavoritos";
 
@@ -16,9 +17,10 @@ export default async function FavoritosPage({
   if (!session) redirect("/login");
 
   const { ordenar: ordenarParam, cargo: cargoParam, regiao: regiaoParam } = await searchParams;
-  const ordenar = ordenarParam || "data-desc";
+  const ordenar = ordenarParam || "nome";
 
-  let orderBy: any = { createdAt: "desc" };
+  let orderBy: any = { candidato: { nome: "asc" } };
+  if (ordenar === "data-desc") orderBy = { createdAt: "desc" };
   if (ordenar === "data-asc") orderBy = { createdAt: "asc" };
   if (ordenar === "votos-desc") orderBy = { candidato: { resultados: { _count: "desc" } } };
   if (ordenar === "votos-asc") orderBy = { candidato: { resultados: { _count: "asc" } } };
@@ -36,7 +38,11 @@ export default async function FavoritosPage({
             cargo: true,
             partido: true,
             resultados: {
-              select: { municipioId: true, votos: true, municipio: { select: { regiaoId: true } } },
+              select: {
+                municipioId: true,
+                votos: true,
+                municipio: { select: { regiaoId: true, nome: true } },
+              },
             },
             trocasPartido: {
               include: {
@@ -81,6 +87,84 @@ export default async function FavoritosPage({
     );
   }
 
+  // Localidade = reduto eleitoral (município de maior votação)
+  const localidadeDe = (fav: (typeof favoritos)[number]) => {
+    let melhor: { nome: string; votos: number } | null = null;
+    for (const r of fav.candidato.resultados) {
+      if (r.municipio?.nome && (!melhor || r.votos > melhor.votos)) {
+        melhor = { nome: r.municipio.nome, votos: r.votos };
+      }
+    }
+    return melhor?.nome ?? "Sem localidade";
+  };
+
+  // Agrupamento por localidade (quando selecionado)
+  const grupos: { localidade: string; itens: typeof favoritos }[] = [];
+  if (ordenar === "localidade") {
+    const mapa = new Map<string, typeof favoritos>();
+    for (const fav of favoritosFiltrados) {
+      const loc = localidadeDe(fav);
+      if (!mapa.has(loc)) mapa.set(loc, []);
+      mapa.get(loc)!.push(fav);
+    }
+    const nomesOrdenados = [...mapa.keys()].sort((a, b) => {
+      if (a === "Sem localidade") return 1;
+      if (b === "Sem localidade") return -1;
+      return a.localeCompare(b, "pt");
+    });
+    for (const loc of nomesOrdenados) {
+      const itens = mapa
+        .get(loc)!
+        .sort((a, b) => a.candidato.nome.localeCompare(b.candidato.nome, "pt"));
+      grupos.push({ localidade: loc, itens });
+    }
+  }
+
+  const botoesOrdenar: { chave: string; rotulo: string }[] = [
+    { chave: "nome", rotulo: "Nome (A-Z)" },
+    { chave: "localidade", rotulo: "Localidade" },
+    { chave: "data-desc", rotulo: "Mais recentes" },
+    { chave: "votos-desc", rotulo: "Mais votos" },
+  ];
+
+  const renderCard = (favorito: (typeof favoritos)[number]) => {
+    const totalVotos = favorito.candidato.resultados.reduce(
+      (sum, r) => sum + r.votos,
+      0
+    );
+
+    return (
+      <div
+        key={favorito.id}
+        className="border rounded-lg p-4 hover:bg-yellow-50 transition space-y-3"
+      >
+        <div className="flex items-start justify-between gap-2">
+          <Link href={`/candidatos/${favorito.candidato.id}`} className="block flex-1">
+            <h3 className="text-lg font-semibold">{favorito.candidato.nome}</h3>
+            <div className="flex gap-4 mt-2 text-sm text-gray-600 flex-wrap">
+              <span className="font-medium">{favorito.candidato.cargo.nome}</span>
+              <span>{favorito.candidato.partido.sigla}</span>
+              <span>{totalVotos.toLocaleString("pt-BR")} votos</span>
+              <span className="flex items-center gap-1">
+                <MapPin size={13} /> {localidadeDe(favorito)}
+              </span>
+            </div>
+            {favorito.candidato.eleito && (
+              <span className="inline-block mt-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                ✓ Eleito
+              </span>
+            )}
+          </Link>
+          <BotaoDesfavoritar
+            candidatoId={favorito.candidatoId}
+            nome={favorito.candidato.nome}
+          />
+        </div>
+        <EditorNotas favoritoId={favorito.id} notasInicial={favorito.notas || ""} />
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -102,46 +186,24 @@ export default async function FavoritosPage({
             />
 
             <div className="flex gap-2 flex-wrap">
-              <Link
-                href={`?ordenar=data-desc`}
-                className={`px-3 py-1 rounded text-sm flex items-center gap-1 transition ${
-                  ordenar === "data-desc"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                }`}
-              >
-                <ArrowUpDown size={14} /> Mais recentes
-              </Link>
-              <Link
-                href={`?ordenar=data-asc`}
-                className={`px-3 py-1 rounded text-sm flex items-center gap-1 transition ${
-                  ordenar === "data-asc"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                }`}
-              >
-                <ArrowUpDown size={14} /> Mais antigos
-              </Link>
-              <Link
-                href={`?ordenar=votos-desc`}
-                className={`px-3 py-1 rounded text-sm flex items-center gap-1 transition ${
-                  ordenar === "votos-desc"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                }`}
-              >
-                <ArrowUpDown size={14} /> Mais votos
-              </Link>
-              <Link
-                href={`?ordenar=votos-asc`}
-                className={`px-3 py-1 rounded text-sm flex items-center gap-1 transition ${
-                  ordenar === "votos-asc"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                }`}
-              >
-                <ArrowUpDown size={14} /> Menos votos
-              </Link>
+              {botoesOrdenar.map((b) => (
+                <Link
+                  key={b.chave}
+                  href={`?ordenar=${b.chave}`}
+                  className={`px-3 py-1 rounded text-sm flex items-center gap-1 transition ${
+                    ordenar === b.chave
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  }`}
+                >
+                  {b.chave === "localidade" ? (
+                    <MapPin size={14} />
+                  ) : (
+                    <ArrowUpDown size={14} />
+                  )}{" "}
+                  {b.rotulo}
+                </Link>
+              ))}
             </div>
           </div>
         </>
@@ -151,7 +213,7 @@ export default async function FavoritosPage({
         <div className="text-center py-12 text-gray-500 border rounded-lg">
           <p>Você ainda não favoritou nenhum político.</p>
           <p className="text-sm">
-            Visite a aba "Eleitos" ou "Cenários" para favorititar seus candidatos preferidos.
+            Visite a aba "Eleitos" ou "Cenários" para favoritar seus candidatos preferidos.
           </p>
           <Link
             href="/candidatos"
@@ -160,50 +222,23 @@ export default async function FavoritosPage({
             Ir para Candidatos →
           </Link>
         </div>
-      ) : (
-        <div className="grid gap-4">
-          {favoritosFiltrados.length === 0 ? (
-            <p className="text-center py-8 text-gray-500">Nenhum político com esses filtros.</p>
-          ) : (
-            <>
-              {favoritosFiltrados.map((favorito) => {
-                const totalVotos = favorito.candidato.resultados.reduce(
-                  (sum, r) => sum + r.votos,
-                  0
-                );
-
-                return (
-                  <div key={favorito.id} className="border rounded-lg p-4 hover:bg-yellow-50 transition space-y-3">
-                    <Link
-                      href={`/candidatos/${favorito.candidato.id}`}
-                      className="block"
-                    >
-                      <h3 className="text-lg font-semibold">
-                        {favorito.candidato.nome}
-                      </h3>
-                      <div className="flex gap-4 mt-2 text-sm text-gray-600">
-                        <span className="font-medium">
-                          {favorito.candidato.cargo.nome}
-                        </span>
-                        <span>{favorito.candidato.partido.sigla}</span>
-                        <span>{totalVotos.toLocaleString("pt-BR")} votos</span>
-                      </div>
-                      {favorito.candidato.eleito && (
-                        <span className="inline-block mt-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
-                          ✓ Eleito
-                        </span>
-                      )}
-                    </Link>
-                    <EditorNotas
-                      favoritoId={favorito.id}
-                      notasInicial={favorito.notas || ""}
-                    />
-                  </div>
-                );
-              })}
-            </>
-          )}
+      ) : favoritosFiltrados.length === 0 ? (
+        <p className="text-center py-8 text-gray-500">
+          Nenhum político com esses filtros.
+        </p>
+      ) : ordenar === "localidade" ? (
+        <div className="space-y-6">
+          {grupos.map((g) => (
+            <div key={g.localidade} className="space-y-3">
+              <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-gray-500 border-b pb-1">
+                <MapPin size={14} /> {g.localidade} ({g.itens.length})
+              </h2>
+              <div className="grid gap-4">{g.itens.map(renderCard)}</div>
+            </div>
+          ))}
         </div>
+      ) : (
+        <div className="grid gap-4">{favoritosFiltrados.map(renderCard)}</div>
       )}
     </div>
   );
