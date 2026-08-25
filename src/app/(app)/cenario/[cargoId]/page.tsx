@@ -6,6 +6,8 @@ import { SimuladorPartido } from "@/components/SimuladorPartido";
 import { MunicipioSwitcher } from "@/components/MunicipioSwitcher";
 import { ComposicaoCasa } from "@/components/ComposicaoCasa";
 import BotaoFavoritar from "@/components/BotaoFavoritar";
+import { SuplentesPorPartido } from "@/components/SuplentesPorPartido";
+import { PdfDownloadLink } from "@/components/PdfDownloadLink";
 
 export default async function CenarioDetailPage({
   params,
@@ -51,6 +53,13 @@ export default async function CenarioDetailPage({
             ) : undefined
           }
         />
+
+        <div className="flex justify-end">
+          <PdfDownloadLink
+            href={`/api/pdf/quociente/${cargoId}`}
+            label="PDF do cenário"
+          />
+        </div>
 
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-medium text-neutral-400">
@@ -103,37 +112,22 @@ export default async function CenarioDetailPage({
             ))}
         </section>
 
-        <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-medium text-neutral-400">Suplentes</h2>
-          {resultado.candidatosComSituacao.filter((c) => c.situacao === "suplente").length === 0 ? (
-            <p className="text-xs text-neutral-500">Nenhum suplente</p>
-          ) : (
-            resultado.candidatosComSituacao
-              .filter((c) => c.situacao === "suplente")
-              .map((c) => (
-                <div
-                  key={c.id}
-                  className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-2"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-7 text-right text-xs text-neutral-600">{c.ordemSuplencia}º</span>
-                    <div>
-                      <p>{c.nome}</p>
-                      <p className="text-xs text-neutral-500">
-                        {c.numero} · {c.partido.sigla}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-amber-400">
-                      {c.votos.toLocaleString("pt-BR")}
-                    </span>
-                    <BotaoFavoritar candidatoId={c.id} tamanho="md" />
-                  </div>
-                </div>
-              ))
+        <SuplentesPorPartido
+          candidatos={resultado.candidatosComSituacao
+            .filter((c) => c.situacao === "suplente")
+            .map((c) => ({
+              id: c.id,
+              nome: c.nome,
+              numero: c.numero,
+              votos: c.votos,
+              ordemSuplencia: c.ordemSuplencia,
+              partidoId: c.partido.id,
+              partidoSigla: c.partido.sigla,
+            }))}
+          cadeirasPorPartido={Object.fromEntries(
+            resultado.partidos.map((p) => [p.partidoId, p.cadeirasOficiais])
           )}
-        </section>
+        />
 
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-medium text-neutral-400">Demais candidatos</h2>
@@ -228,6 +222,13 @@ export default async function CenarioDetailPage({
           ) : undefined
         }
       />
+
+      <div className="flex justify-end">
+        <PdfDownloadLink
+          href={`/api/pdf/quociente/${cargoId}`}
+          label="PDF do cenário"
+        />
+      </div>
 
       {titular && (
         <section className="rounded-xl border border-amber-900 bg-amber-950/40 px-4 py-4">

@@ -39,32 +39,43 @@ export function RelatorioQuociente({ resultado }: { resultado: Proporcional }) {
         ))}
       </View>
 
-      {resultado.partidos.map((p) => {
-        const candidatosDoPartido = resultado.candidatosComSituacao.filter(
-          (c) => c.partido.id === p.partidoId
-        );
-        return (
-          <View key={p.partidoId} wrap={false}>
-            <SectionTitle>
-              {p.sigla} — eleitos e suplentes
-            </SectionTitle>
-            <View style={styles.table}>
-              <TableHeader columns={["Candidato", "Número", "Votos", "Situação"]} />
-              {candidatosDoPartido.map((c) => (
-                <TableRow
-                  key={c.id}
-                  cells={[
-                    c.nome,
-                    String(c.numero),
-                    c.votos.toLocaleString("pt-BR"),
-                    c.situacao === "eleito" ? "Eleito" : `${c.ordemSuplencia}º suplente`,
-                  ]}
-                />
-              ))}
+      {[...resultado.partidos]
+        .sort((a, b) => b.cadeirasOficiais - a.cadeirasOficiais || b.votos - a.votos)
+        .map((p) => {
+          const candidatosDoPartido = resultado.candidatosComSituacao.filter(
+            (c) => c.partido.id === p.partidoId
+          );
+          if (candidatosDoPartido.length === 0) return null;
+          const temCadeira = p.cadeirasOficiais > 0;
+          return (
+            <View key={p.partidoId} wrap={false}>
+              <SectionTitle>
+                {p.sigla} —{" "}
+                {temCadeira
+                  ? `${p.cadeirasOficiais} cadeira${p.cadeirasOficiais > 1 ? "s" : ""} (eleitos e suplentes)`
+                  : "sem cadeira (não eleitos)"}
+              </SectionTitle>
+              <View style={styles.table}>
+                <TableHeader columns={["Candidato", "Número", "Votos", "Situação"]} />
+                {candidatosDoPartido.map((c) => (
+                  <TableRow
+                    key={c.id}
+                    cells={[
+                      c.nome,
+                      String(c.numero),
+                      c.votos.toLocaleString("pt-BR"),
+                      c.situacao === "eleito"
+                        ? "Eleito"
+                        : temCadeira
+                          ? `${c.ordemSuplencia}º suplente`
+                          : "Não eleito",
+                    ]}
+                  />
+                ))}
+              </View>
             </View>
-          </View>
-        );
-      })}
+          );
+        })}
 
       <Text style={{ marginTop: 12, fontSize: 8, color: "#9ca3af" }}>
         Cálculo conforme Lei 4.737/65, arts. 106-109 (quociente eleitoral, quociente partidário e
