@@ -28,20 +28,20 @@ export default async function EleitosPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-3">
         <div>
           <h1 className="text-lg font-semibold">Eleitos</h1>
           <p className="text-sm text-neutral-500">
-            Situação oficial do TSE · escolha o cargo e o município (você também pode favorititar candidatos não-eleitos em Favoritos)
+            Situação oficial do TSE · escolha o cargo e o município (você também pode favoritar candidatos não-eleitos em Favoritos)
           </p>
         </div>
         {anoSelecionado && (
-          <div className="flex items-center gap-2">
-            <PdfEleitosMunicipio ano={anoSelecionado} municipios={municipiosOpcoes} />
-            <PdfDownloadLink href={`/api/pdf/eleitos/${anoSelecionado}`} />
+          <div className="flex flex-wrap items-center gap-2">
             <div className="w-32">
               <AnoSelectorSimples anos={anosDisponiveis} selecionado={anoSelecionado} />
             </div>
+            <PdfDownloadLink href={`/api/pdf/eleitos/${anoSelecionado}`} />
+            <PdfEleitosMunicipio ano={anoSelecionado} municipios={municipiosOpcoes} />
           </div>
         )}
       </div>
