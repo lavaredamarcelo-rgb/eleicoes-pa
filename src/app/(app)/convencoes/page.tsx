@@ -3,31 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { verifySession } from "@/lib/dal";
 import { ConvencaoCard } from "@/components/ConvencaoCard";
 import { NovaConvencaoPartido } from "@/components/NovaConvencaoPartido";
-import { CandidatosTSE } from "@/components/CandidatosTSE";
 
 export default async function ConvencoesPage() {
   const session = await verifySession();
   const podeEditar = session.role === "ADMIN";
 
-  const [partidos, convencoes, candidatos] = await Promise.all([
+  const [partidos, convencoes] = await Promise.all([
     prisma.partido.findMany({ orderBy: { sigla: "asc" } }),
     prisma.convencao.findMany(),
-    prisma.candidato.findMany({
-      where: {
-        cargo: {
-          nome: {
-            in: [
-              "Governador",
-              "Vice-Governador",
-              "Senador",
-              "Deputado Federal",
-              "Deputado Estadual",
-            ],
-          },
-        },
-      },
-      include: { partido: true, cargo: true },
-    }),
   ]);
 
   const convencaoPorPartido = new Map(convencoes.map((c) => [c.partidoId, c]));
@@ -47,8 +30,6 @@ export default async function ConvencoesPage() {
         </p>
       </div>
 
-
-      <CandidatosTSE candidatos={candidatos} />
 
       <section className="flex flex-col gap-3">
         {comMovimento.map((p) => (
