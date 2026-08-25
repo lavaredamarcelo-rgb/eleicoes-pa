@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { verifySession } from "@/lib/dal";
 import { ConvencaoCard } from "@/components/ConvencaoCard";
 import { NovaConvencaoPartido } from "@/components/NovaConvencaoPartido";
+import { CandidatosTSE } from "@/components/CandidatosTSE";
+import candidatosTSE from "@/data/candidatos-tse-2026.json";
 
 export default async function ConvencoesPage() {
   const session = await verifySession();
@@ -30,6 +32,8 @@ export default async function ConvencoesPage() {
         </p>
       </div>
 
+
+      <CandidatosTSE candidatos={candidatosTSE} />
 
       <section className="flex flex-col gap-3">
         {comMovimento.map((p) => (
