@@ -35,6 +35,11 @@ export async function GET() {
     out.migError = e instanceof Error ? e.message : String(e);
   }
   try {
+    if (fs.existsSync("/data/migrate.log")) {
+      out.migrateLog = fs.readFileSync("/data/migrate.log", "utf-8").slice(-1500);
+    }
+  } catch {}
+  try {
     out.dataDirExists = fs.existsSync("/data");
     out.restoreMarker = fs.existsSync("/data/.restore-20260825-done");
     out.dbFile = fs.existsSync("/data/prod.db")
