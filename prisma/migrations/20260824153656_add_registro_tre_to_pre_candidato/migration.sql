@@ -21,7 +21,7 @@ CREATE TABLE "new_PreCandidato" (
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "PreCandidato_partidoId_fkey" FOREIGN KEY ("partidoId") REFERENCES "Partido" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
-INSERT INTO "new_PreCandidato" ("cargo", "createdAt", "id", "nome", "observacoes", "origem", "partidoId", "situacao") SELECT "cargo", "createdAt", "id", "nome", "observacoes", "origem", "partidoId", "situacao" FROM "PreCandidato";
+INSERT INTO "new_PreCandidato" ("cargo", "createdAt", "id", "nome", "observacoes", "origem", "partidoId", "situacao", "updatedAt") SELECT "cargo", "createdAt", "id", "nome", "observacoes", "origem", "partidoId", "situacao", CURRENT_TIMESTAMP FROM "PreCandidato";
 DROP TABLE "PreCandidato";
 ALTER TABLE "new_PreCandidato" RENAME TO "PreCandidato";
 CREATE UNIQUE INDEX "PreCandidato_partidoId_nome_cargo_key" ON "PreCandidato"("partidoId", "nome", "cargo");
