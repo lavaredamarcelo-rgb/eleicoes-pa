@@ -75,7 +75,53 @@ export function CandidatosTSE({ candidatos }: { candidatos: CandidatoTSE[] }) {
                 )}
               </button>
 
-              {aberto && (
+              {aberto && grupo.cargo.startsWith("Deputado") ? (
+                <div className="mt-1 space-y-2.5 rounded-lg border border-neutral-800 bg-neutral-950 p-2 max-h-96 overflow-y-auto">
+                  {Object.entries(
+                    grupo.lista.reduce<Record<string, CandidatoTSE[]>>(
+                      (acc, c) => {
+                        (acc[c.partido] = acc[c.partido] || []).push(c);
+                        return acc;
+                      },
+                      {}
+                    )
+                  )
+                    .sort(
+                      (a, b) =>
+                        b[1].length - a[1].length ||
+                        a[0].localeCompare(b[0], "pt")
+                    )
+                    .map(([partido, lista]) => (
+                      <div key={partido}>
+                        <p className="mb-1 border-b border-neutral-800/70 pb-0.5 text-[11px] font-semibold text-amber-300/90">
+                          {partido} ({lista.length})
+                        </p>
+                        <div className="space-y-1">
+                          {lista.map((c, i) => (
+                            <div
+                              key={i}
+                              className="flex items-baseline justify-between gap-2 text-xs text-neutral-400"
+                            >
+                              <div>
+                                <span className="font-medium text-neutral-300">
+                                  {c.nome}
+                                </span>
+                                {c.situacao !== "Concorrendo" && (
+                                  <span className="ml-1.5 rounded bg-red-950/60 px-1.5 py-0.5 text-[10px] text-red-400">
+                                    {c.situacao}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="shrink-0 tabular-nums text-neutral-600">
+                                {c.numero}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              ) : aberto ? (
                 <div className="mt-1 space-y-1 rounded-lg border border-neutral-800 bg-neutral-950 p-2 max-h-96 overflow-y-auto">
                   {grupo.lista.map((c, i) => (
                     <div
@@ -87,6 +133,11 @@ export function CandidatosTSE({ candidatos }: { candidatos: CandidatoTSE[] }) {
                           {c.nome}
                         </span>{" "}
                         <span className="text-neutral-600">({c.partido})</span>
+                        {c.situacao !== "Concorrendo" && (
+                          <span className="ml-1.5 rounded bg-red-950/60 px-1.5 py-0.5 text-[10px] text-red-400">
+                            {c.situacao}
+                          </span>
+                        )}
                       </div>
                       <span className="shrink-0 tabular-nums text-neutral-600">
                         {c.numero}
@@ -94,15 +145,16 @@ export function CandidatosTSE({ candidatos }: { candidatos: CandidatoTSE[] }) {
                     </div>
                   ))}
                 </div>
-              )}
+              ) : null}
             </div>
           );
         })}
       </div>
 
       <p className="text-[10px] text-neutral-600">
-        Fonte: DivulgaCand/TSE, exportado em 24/08/2026. Situação:
-        &quot;Concorrendo&quot;.
+        Fonte: DivulgaCand/TSE, exportado em 24/08/2026. Senado: apenas
+        titulares (suplentes não listados). Candidatos inaptos/substituídos
+        aparecem marcados.
       </p>
     </div>
   );
