@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { SeletorCargoSimulacao } from "@/components/simuladores/SeletorCargoSimulacao";
 import { SimuladorMetaManual } from "@/components/simuladores/SimuladorMetaManual";
-import { CriadorCenario } from "@/components/CriadorCenario";
 import { CriadorCenarioMajoritario } from "@/components/CriadorCenarioMajoritario";
 import {
   CriadorEleicaoCompleta,
@@ -19,9 +18,8 @@ import { prisma } from "@/lib/prisma";
 import { verifySession } from "@/lib/dal";
 
 const MODOS = [
-  { chave: "chapa", rotulo: "Trocar chapa de partido" },
-  { chave: "meta", rotulo: "Meta por município (manual)" },
   { chave: "eleicao", rotulo: "Eleição completa (todos os candidatos)" },
+  { chave: "meta", rotulo: "Meta por município (manual)" },
 ] as const;
 
 export default async function CriarCenarioPage({
@@ -30,8 +28,7 @@ export default async function CriarCenarioPage({
   searchParams: Promise<{ cargo?: string; modo?: string }>;
 }) {
   const { cargo: cargoId, modo: modoParam } = await searchParams;
-  const modo =
-    modoParam === "meta" ? "meta" : modoParam === "eleicao" ? "eleicao" : "chapa";
+  const modo = modoParam === "meta" ? "meta" : "eleicao";
   const cargosReais = await getCargosParaSimulacao({});
 
   // Disputas futuras: para cada cargo estadual do ano mais recente
@@ -84,6 +81,10 @@ export default async function CriarCenarioPage({
   let sugestoesEleicao: Record<string, number> = {};
   let pesquisaEleicao: Record<string, number> = {};
   let rotuloPesquisaEleicao: string | null = null;
+  let curvasEleicao: Record<string, number[]> = {};
+  let curvaGlobalEleicao: number[] = [];
+  let legendaShareEleicao: Record<string, number> = {};
+  let referenciaEleicao: { ano: number; validos: number; qe: number } | null = null;
   let cenariosEleicaoSalvos: {
     id: string;
     titulo: string;
@@ -146,6 +147,39 @@ export default async function CriarCenarioPage({
     const siglas2026 = new Set(tse.map((c) => c.partido));
     for (const sigla of siglas2026) {
       sugestoesEleicao[sigla] = Math.round(porSigla[sigla] ?? 0);
+    }
+
+    // Curvas históricas (votação de 2022 escalada, ordenada) — a geração
+    // segue esse formato real: o topo do cenário não foge do topo real.
+    for (const c of dados.candidatos) {
+      if (c.votos > 0) (curvasEleicao[c.partidoSigla] ??= []).push(c.votos);
+    }
+    for (const sigla of Object.keys(curvasEleicao)) {
+      curvasEleicao[sigla].sort((a, b) => b - a);
+    }
+    curvaGlobalEleicao = dados.candidatos
+      .map((c) => c.votos)
+      .filter((v) => v > 0)
+      .sort((a, b) => b - a);
+
+    // Fatia de legenda de cada partido em 2022 (legenda / total do partido).
+    const nominalPorSigla: Record<string, number> = {};
+    for (const c of dados.candidatos) {
+      nominalPorSigla[c.partidoSigla] = (nominalPorSigla[c.partidoSigla] ?? 0) + c.votos;
+    }
+    for (const [pid, v] of Object.entries(votosLegenda)) {
+      const sigla = siglaPorId.get(pid);
+      if (!sigla) continue;
+      const nominal = nominalPorSigla[sigla] ?? 0;
+      const legenda = v as number;
+      if (nominal + legenda > 0) legendaShareEleicao[sigla] = legenda / (nominal + legenda);
+    }
+
+    // Última eleição real do cargo (válidos e QE de verdade) — comparativo.
+    const refs = await getReferenciaisViabilidade(carga!.baseCargoId);
+    if (refs && refs.referencias.length > 0) {
+      const ultima = [...refs.referencias].sort((a, b) => b.ano - a.ano)[0];
+      referenciaEleicao = { ano: ultima.ano, validos: ultima.validos, qe: ultima.qe };
     }
 
     // Pesquisa mais recente da disputa entra como peso extra na geração:
@@ -281,6 +315,10 @@ export default async function CriarCenarioPage({
                 pesquisa={pesquisaEleicao}
                 rotuloPesquisa={rotuloPesquisaEleicao}
                 cenariosSalvos={cenariosEleicaoSalvos}
+                curvas={curvasEleicao}
+                curvaGlobal={curvaGlobalEleicao}
+                legendaShare={legendaShareEleicao}
+                referencia={referenciaEleicao}
               />
             ) : (
               <p className="rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-3 text-xs text-neutral-500">
@@ -289,18 +327,6 @@ export default async function CriarCenarioPage({
                 de preferência a projeção 2026.
               </p>
             )
-          ) : modo === "chapa" ? (
-            <CriadorCenario
-              key={dados.cargoId}
-              cargoId={dados.cargoId}
-              rotulo={rotuloDisputa}
-              candidatos={dados.candidatos}
-              partidos={partidos}
-              vagas={dados.vagas}
-              quocienteOficial={dados.quocienteEleitoral}
-              votosLegenda={votosLegenda}
-              aprovadosPorPartido={aprovadosPorPartido}
-            />
           ) : (
             municipios &&
             referenciais && (

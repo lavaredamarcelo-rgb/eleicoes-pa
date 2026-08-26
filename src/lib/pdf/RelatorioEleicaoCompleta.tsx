@@ -6,6 +6,7 @@ export type PartidoEleicaoPdf = {
   sigla: string;
   cadeiras: number;
   totalVotos: number;
+  votosLegenda: number;
   candidatos: {
     nome: string;
     numero: number;
@@ -40,13 +41,18 @@ export function RelatorioEleicaoCompleta({
 
       <SectionTitle>Composição da casa</SectionTitle>
       <View style={styles.table}>
-        <TableHeader columns={["Partido", "Votos", "Cadeiras"]} />
+        <TableHeader columns={["Partido", "Votos (c/ legenda)", "Legenda", "Cadeiras"]} />
         {partidos
           .filter((p) => p.totalVotos > 0)
           .map((p) => (
             <TableRow
               key={p.sigla}
-              cells={[p.sigla, p.totalVotos.toLocaleString("pt-BR"), String(p.cadeiras)]}
+              cells={[
+                p.sigla,
+                p.totalVotos.toLocaleString("pt-BR"),
+                p.votosLegenda.toLocaleString("pt-BR"),
+                String(p.cadeiras),
+              ]}
             />
           ))}
       </View>

@@ -43,6 +43,10 @@ export function CriadorEleicaoCompleta({
   pesquisa,
   rotuloPesquisa,
   cenariosSalvos,
+  curvas,
+  curvaGlobal,
+  legendaShare,
+  referencia,
 }: {
   rotulo: string;
   cargoNome: string;
@@ -52,15 +56,19 @@ export function CriadorEleicaoCompleta({
   pesquisa: Record<string, number>;
   rotuloPesquisa: string | null;
   cenariosSalvos: CenarioSalvo[];
+  curvas: Record<string, number[]>;
+  curvaGlobal: number[];
+  legendaShare: Record<string, number>;
+  referencia: { ano: number; validos: number; qe: number } | null;
 }) {
   const router = useRouter();
 
-  const maxPesquisa = useMemo(
-    () => Math.max(0, ...Object.values(pesquisa)),
-    [pesquisa]
-  );
-  const pctPesquisaDe = (c: CandidatoEleicao) =>
-    pesquisa[c.nome.trim().toUpperCase()] ?? null;
+  const maxPesquisa = useMemo(() => Math.max(0, ...Object.values(pesquisa)), [pesquisa]);
+  const pctPesquisaDe = (c: CandidatoEleicao) => pesquisa[c.nome.trim().toUpperCase()] ?? null;
+
+  // Teto realista: ninguém foge muito do campeão de votos da última
+  // eleição (escalado) — ex.: Dep. Estadual 2022 ≈ 109 mil.
+  const tetoRealista = curvaGlobal.length > 0 ? Math.round(curvaGlobal[0] * 1.1) : Infinity;
 
   const porPartido = useMemo(() => {
     const mapa = new Map<string, CandidatoEleicao[]>();
@@ -86,6 +94,7 @@ export function CriadorEleicaoCompleta({
     return t;
   });
   const [votos, setVotos] = useState<Record<number, number>>({});
+  const [legendaGerada, setLegendaGerada] = useState<Record<string, number>>({});
   const [abertos, setAbertos] = useState<Record<string, boolean>>({});
   const [titulo, setTitulo] = useState("");
   const [cenarioAberto, setCenarioAberto] = useState<string | null>(null);
@@ -96,26 +105,39 @@ export function CriadorEleicaoCompleta({
 
   const chave = (c: CandidatoEleicao) => c.numero;
 
-  // Distribuição inteligente dentro de um partido: histórico real pesa
-  // (votação anterior, mandato) e a pesquisa mais recente da disputa dá
-  // impulso extra; estreante sem pesquisa entra na cauda longa aleatória.
-  function gerarPartido(sigla: string, base?: Record<number, number>) {
+  // Geração realista por partido:
+  // 1) O total informado separa a fatia de LEGENDA (mesma proporção de 2022).
+  // 2) O peso de cada candidato (histórico real + mandato + pesquisa +
+  //    aleatoriedade) define a ORDEM na lista.
+  // 3) Os VALORES seguem a curva real de votação de 2022 do próprio partido
+  //    (ou a curva geral da disputa), com teto no campeão histórico.
+  function gerarPartido(
+    sigla: string,
+    baseVotos?: Record<number, number>,
+    baseLegenda?: Record<string, number>
+  ) {
     const grupo = porPartido.find((p) => p.sigla === sigla);
-    if (!grupo) return {};
+    const novoVotos: Record<number, number> = baseVotos ?? {};
+    const novaLegenda: Record<string, number> = baseLegenda ?? {};
+    if (!grupo) return { novoVotos, novaLegenda };
     const alvo = Math.round(Number((totais[sigla] || "").replace(/\D/g, "")) || 0);
-    const novo: Record<number, number> = base ?? {};
-    if (alvo <= 0) return novo;
+    if (alvo <= 0) return { novoVotos, novaLegenda };
 
     const aptos = grupo.lista.filter((c) => c.situacao === "Concorrendo");
-    if (aptos.length === 0) return novo;
+    if (aptos.length === 0) return { novoVotos, novaLegenda };
 
+    const share = legendaShare[sigla] ?? 0.05;
+    const votosLegenda = Math.round(alvo * share);
+    const nominalAlvo = alvo - votosLegenda;
+    novaLegenda[sigla] = votosLegenda;
+
+    // Pesos → ordem dos candidatos.
     const historicos = aptos.filter((c) => c.histVotos > 0);
     const mediaHist =
       historicos.length > 0
         ? historicos.reduce((s, c) => s + c.histVotos, 0) / historicos.length
         : 3000;
     const baseNovato = Math.max(300, mediaHist * 0.2);
-
     const pesos = aptos.map((c) => {
       let peso: number;
       if (c.histVotos > 0) {
@@ -123,47 +145,94 @@ export function CriadorEleicaoCompleta({
       } else {
         peso = baseNovato * (0.1 + Math.pow(Math.random(), 1.7) * 1.9);
       }
-      // Impulso da pesquisa: o líder da pesquisa pode até dobrar o peso;
-      // um estreante bem pontuado sobe para perto da média histórica.
       const pct = pctPesquisaDe(c);
       if (pct != null && maxPesquisa > 0) {
         peso = Math.max(peso, mediaHist * 0.5) * (1 + pct / maxPesquisa);
       }
       return { numero: c.numero, peso };
     });
-    const soma = pesos.reduce((s, p) => s + p.peso, 0);
+    pesos.sort((a, b) => b.peso - a.peso);
+
+    // Curva de valores: a votação real de 2022 do partido (escalada) —
+    // ou a curva geral da disputa quando o partido é novo.
+    const curvaBase =
+      (curvas[sigla]?.length ?? 0) >= 5 ? curvas[sigla] : curvaGlobal;
+    const n = pesos.length;
+    const curvaVals: number[] = [];
+    for (let i = 0; i < n; i++) {
+      if (i < curvaBase.length) curvaVals.push(curvaBase[i]);
+      else {
+        const ultimo = curvaVals[curvaVals.length - 1] ?? 1000;
+        curvaVals.push(Math.max(50, ultimo * 0.85));
+      }
+    }
+    const somaCurva = curvaVals.reduce((s, v) => s + v, 0);
+    const somaPesos = pesos.reduce((s, p) => s + p.peso, 0);
+
+    // Mistura: 60% formato histórico + 40% peso individual, fechando no
+    // total nominal do partido.
+    let valores = pesos.map((p, i) => {
+      const daCurva = somaCurva > 0 ? (curvaVals[i] / somaCurva) * nominalAlvo : 0;
+      const doPeso = somaPesos > 0 ? (p.peso / somaPesos) * nominalAlvo : 0;
+      return 0.6 * daCurva + 0.4 * doPeso;
+    });
+
+    // Teto realista no topo — o excedente desce para os demais.
+    if (valores[0] > tetoRealista) {
+      const excedente = valores[0] - tetoRealista;
+      valores[0] = tetoRealista;
+      const somaResto = valores.slice(1).reduce((s, v) => s + v, 0);
+      if (somaResto > 0) {
+        valores = valores.map((v, i) =>
+          i === 0 ? v : v + (excedente * v) / somaResto
+        );
+      }
+    }
+
     let acumulado = 0;
-    for (const p of pesos) {
-      const v = Math.round((alvo * p.peso) / soma);
-      novo[p.numero] = v;
-      acumulado += v;
+    valores.forEach((v, i) => {
+      const arred = Math.max(0, Math.round(v));
+      novoVotos[pesos[i].numero] = arred;
+      acumulado += arred;
+    });
+    const dif = nominalAlvo - acumulado;
+    if (dif !== 0 && pesos.length > 1) {
+      const idx = valores[0] >= tetoRealista ? 1 : 0;
+      novoVotos[pesos[idx].numero] = Math.max(0, (novoVotos[pesos[idx].numero] ?? 0) + dif);
     }
-    const dif = alvo - acumulado;
-    if (dif !== 0) {
-      const maior = [...pesos].sort((a, b) => b.peso - a.peso)[0];
-      novo[maior.numero] = Math.max(0, (novo[maior.numero] ?? 0) + dif);
-    }
-    return novo;
+    return { novoVotos, novaLegenda };
   }
 
   function gerarUmPartido(sigla: string) {
-    setVotos((atual) => ({ ...atual, ...gerarPartido(sigla) }));
+    const { novoVotos, novaLegenda } = gerarPartido(sigla, { ...votos }, { ...legendaGerada });
+    setVotos(novoVotos);
+    setLegendaGerada(novaLegenda);
     setAbertos((a) => ({ ...a, [sigla]: true }));
   }
 
   function gerarTodos() {
-    let novo: Record<number, number> = {};
-    for (const p of porPartido) novo = gerarPartido(p.sigla, novo);
-    setVotos(novo);
+    let v: Record<number, number> = {};
+    let l: Record<string, number> = {};
+    for (const p of porPartido) {
+      const r = gerarPartido(p.sigla, v, l);
+      v = r.novoVotos;
+      l = r.novaLegenda;
+    }
+    setVotos(v);
+    setLegendaGerada(l);
   }
 
-  const totalGeral = useMemo(
+  const totalNominal = useMemo(
     () => Object.values(votos).reduce((s, v) => s + (v > 0 ? v : 0), 0),
     [votos]
   );
+  const totalLegenda = useMemo(
+    () => Object.values(legendaGerada).reduce((s, v) => s + (v > 0 ? v : 0), 0),
+    [legendaGerada]
+  );
 
   const resultado = useMemo(() => {
-    if (totalGeral <= 0) return null;
+    if (totalNominal <= 0) return null;
     const partidoById = new Map(
       porPartido.map((p) => [p.sigla, { id: p.sigla, sigla: p.sigla }])
     );
@@ -177,18 +246,30 @@ export function CriadorEleicaoCompleta({
         partidoId: c.partido,
         partidoSigla: c.partido,
       }));
-    return calcularSimulacao(sims, vagas, new Map(), partidoById as any, {});
-  }, [candidatos, votos, totalGeral, vagas, porPartido]);
+    return calcularSimulacao(sims, vagas, new Map(), partidoById as any, legendaGerada);
+  }, [candidatos, votos, totalNominal, vagas, porPartido, legendaGerada]);
 
   const situacaoDe = (c: CandidatoEleicao) => resultado?.situacao.get(String(c.numero));
 
   function abrirCenario(c: CenarioSalvo) {
-    const novo: Record<number, number> = {};
-    for (const [numero, v] of Object.entries(c.votos)) novo[Number(numero)] = v;
-    setVotos(novo);
+    const novoVotos: Record<number, number> = {};
+    const novaLegenda: Record<string, number> = {};
+    for (const [k, v] of Object.entries(c.votos)) {
+      if (k.startsWith("legenda:")) novaLegenda[k.slice(8)] = v;
+      else novoVotos[Number(k)] = v;
+    }
+    setVotos(novoVotos);
+    setLegendaGerada(novaLegenda);
     setTitulo(c.titulo);
     setCenarioAberto(c.id);
     setMsg(null);
+  }
+
+  function montarVotosParaSalvar() {
+    const votosStr: Record<string, number> = {};
+    for (const [n, v] of Object.entries(votos)) if (v > 0) votosStr[n] = v;
+    for (const [s, v] of Object.entries(legendaGerada)) if (v > 0) votosStr[`legenda:${s}`] = v;
+    return votosStr;
   }
 
   async function salvar(comoNovo: boolean) {
@@ -196,13 +277,11 @@ export function CriadorEleicaoCompleta({
     setSalvando(true);
     setMsg(null);
     try {
-      const votosStr: Record<string, number> = {};
-      for (const [n, v] of Object.entries(votos)) if (v > 0) votosStr[n] = v;
       const { id } = await salvarCenarioEleicao({
         id: comoNovo ? undefined : cenarioAberto ?? undefined,
         cargoNome,
         titulo,
-        votos: votosStr,
+        votos: montarVotosParaSalvar(),
       });
       setCenarioAberto(id);
       setMsg("✓ Cenário salvo.");
@@ -214,8 +293,8 @@ export function CriadorEleicaoCompleta({
     }
   }
 
-  async function baixarPdf() {
-    if (gerandoPdf || totalGeral === 0) return;
+  async function baixarPdf(sigla?: string) {
+    if (gerandoPdf || totalNominal === 0) return;
     setGerandoPdf(true);
     try {
       const votosStr: Record<string, number> = {};
@@ -223,7 +302,14 @@ export function CriadorEleicaoCompleta({
       const resp = await fetch("/api/pdf/eleicao-completa", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cargoNome, vagas, titulo: titulo.trim(), votos: votosStr }),
+        body: JSON.stringify({
+          cargoNome,
+          vagas,
+          titulo: titulo.trim(),
+          votos: votosStr,
+          legenda: legendaGerada,
+          ...(sigla ? { sigla } : {}),
+        }),
       });
       if (!resp.ok) throw new Error("Falha ao gerar o PDF.");
       setPdfAberto(URL.createObjectURL(await resp.blob()));
@@ -254,17 +340,17 @@ export function CriadorEleicaoCompleta({
           Eleição completa — {rotulo}
         </p>
         <p className="mt-1 text-xs text-neutral-500">
-          Todos os candidatos registrados no TSE, agrupados por partido. O total sugerido de cada
-          partido vem de 2022 escalado para 2026 — edite à vontade. &quot;Gerar&quot; distribui os
-          votos pelo histórico real de cada candidato
-          {rotuloPesquisa ? " e pela pesquisa mais recente da disputa" : ""}; depois ajuste
-          qualquer um à mão — a composição recalcula na hora.
+          Todos os candidatos do TSE por partido. A geração separa a fatia de votos de legenda
+          (proporção real de 2022), distribui o nominal seguindo a curva de votação histórica do
+          partido — com teto no campeão da última eleição
+          {tetoRealista !== Infinity ? ` (≈ ${tetoRealista.toLocaleString("pt-BR")})` : ""} — e
+          usa histórico individual{rotuloPesquisa ? " + pesquisa" : ""} para ordenar quem puxa
+          mais. Tudo editável depois.
         </p>
         {rotuloPesquisa && (
           <p className="mt-1.5 text-[11px] text-emerald-400">
             <TrendingUp size={11} className="mr-1 inline" />
-            Peso extra ativo: pesquisa {rotuloPesquisa} — quem pontua bem puxa mais votos na
-            geração.
+            Peso extra ativo: pesquisa {rotuloPesquisa}.
           </p>
         )}
         <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -275,30 +361,48 @@ export function CriadorEleicaoCompleta({
             🎲 Gerar eleição completa (todos os partidos)
           </button>
           <button
-            onClick={baixarPdf}
-            disabled={gerandoPdf || totalGeral === 0}
+            onClick={() => baixarPdf()}
+            disabled={gerandoPdf || totalNominal === 0}
             className="flex items-center gap-1.5 rounded-lg border border-neutral-700 px-3 py-2 text-xs text-neutral-300 transition-colors hover:border-neutral-500 disabled:opacity-40"
           >
             <FileDown size={13} />
             {gerandoPdf ? "Gerando PDF…" : "PDF do cenário"}
           </button>
-          {totalGeral > 0 && (
-            <p className="text-xs text-neutral-400">
-              Votos válidos:{" "}
-              <strong className="text-sky-300">{totalGeral.toLocaleString("pt-BR")}</strong>
-              {resultado && (
-                <>
-                  {" "}
-                  · QE:{" "}
-                  <strong className="text-sky-300">
-                    {resultado.quocienteEleitoral.toLocaleString("pt-BR")}
-                  </strong>{" "}
-                  · {vagas} vagas
-                </>
-              )}
-            </p>
-          )}
         </div>
+        {totalNominal > 0 && resultado && (
+          <div className="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
+            <div className="rounded-lg border border-sky-900/50 bg-neutral-950 px-3 py-2">
+              <p className="text-[11px] text-sky-300">Cenário gerado</p>
+              <p className="text-neutral-200">
+                <strong>{resultado.votosValidos.toLocaleString("pt-BR")}</strong> válidos
+                {totalLegenda > 0 && (
+                  <span className="text-neutral-500">
+                    {" "}
+                    ({totalLegenda.toLocaleString("pt-BR")} de legenda)
+                  </span>
+                )}{" "}
+                · QE <strong>{resultado.quocienteEleitoral.toLocaleString("pt-BR")}</strong> ·{" "}
+                {vagas} vagas
+              </p>
+            </div>
+            {referencia && (
+              <div className="rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2">
+                <p className="text-[11px] text-neutral-500">
+                  Última eleição real ({referencia.ano}) — comparativo
+                </p>
+                <p className="text-neutral-400">
+                  <strong className="text-neutral-300">
+                    {referencia.validos.toLocaleString("pt-BR")}
+                  </strong>{" "}
+                  válidos · QE{" "}
+                  <strong className="text-neutral-300">
+                    {referencia.qe.toLocaleString("pt-BR")}
+                  </strong>
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="rounded-xl border border-amber-900/40 bg-amber-950/10 p-4">
@@ -317,7 +421,10 @@ export function CriadorEleicaoCompleta({
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-neutral-200">{c.titulo}</p>
                   <p className="text-xs text-neutral-500">
-                    {Object.keys(c.votos).length} candidatos ·{" "}
+                    {
+                      Object.keys(c.votos).filter((k) => !k.startsWith("legenda:")).length
+                    }{" "}
+                    candidatos ·{" "}
                     {Object.values(c.votos)
                       .reduce((s, v) => s + v, 0)
                       .toLocaleString("pt-BR")}{" "}
@@ -364,7 +471,7 @@ export function CriadorEleicaoCompleta({
           </div>
           <button
             onClick={() => salvar(false)}
-            disabled={salvando || !titulo.trim() || totalGeral === 0}
+            disabled={salvando || !titulo.trim() || totalNominal === 0}
             className="flex items-center justify-center gap-1.5 rounded-lg bg-amber-400 px-3 py-2 text-xs font-semibold text-neutral-950 transition-opacity disabled:opacity-40"
           >
             <Save size={13} />
@@ -373,7 +480,7 @@ export function CriadorEleicaoCompleta({
           {cenarioAberto && (
             <button
               onClick={() => salvar(true)}
-              disabled={salvando || !titulo.trim() || totalGeral === 0}
+              disabled={salvando || !titulo.trim() || totalNominal === 0}
               className="rounded-lg border border-amber-800 px-3 py-2 text-xs font-medium text-amber-300 transition-colors hover:border-amber-600 disabled:opacity-40"
             >
               Salvar como novo
@@ -418,6 +525,7 @@ export function CriadorEleicaoCompleta({
       <div className="flex flex-col gap-2">
         {porPartido.map((p) => {
           const somaPartido = p.lista.reduce((s, c) => s + (votos[chave(c)] ?? 0), 0);
+          const legendaP = legendaGerada[p.sigla] ?? 0;
           const cadeiras =
             resultado?.partidos.find((x) => x.partidoId === p.sigla)?.quocientePartidario ?? 0;
           return (
@@ -435,7 +543,8 @@ export function CriadorEleicaoCompleta({
                   <span className="text-sm font-medium text-neutral-200">{p.sigla}</span>
                   <span className="text-xs text-neutral-500">
                     {p.lista.length} candidatos
-                    {somaPartido > 0 ? ` · ${somaPartido.toLocaleString("pt-BR")} votos` : ""}
+                    {somaPartido > 0 ? ` · ${somaPartido.toLocaleString("pt-BR")} nominais` : ""}
+                    {legendaP > 0 ? ` + ${legendaP.toLocaleString("pt-BR")} legenda` : ""}
                   </span>
                   {cadeiras > 0 && (
                     <span className="rounded bg-amber-950/60 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300">
@@ -458,6 +567,14 @@ export function CriadorEleicaoCompleta({
                 >
                   Gerar
                 </button>
+                <button
+                  onClick={() => baixarPdf(p.sigla)}
+                  disabled={gerandoPdf || somaPartido === 0}
+                  title={`PDF só do ${p.sigla} dentro do cenário atual`}
+                  className="rounded-lg border border-neutral-700 px-2.5 py-1.5 text-xs text-neutral-300 transition-colors hover:border-neutral-500 disabled:opacity-40"
+                >
+                  PDF
+                </button>
               </div>
 
               {abertos[p.sigla] && (
@@ -469,7 +586,7 @@ export function CriadorEleicaoCompleta({
                       <div
                         key={c.numero}
                         className="grid items-center gap-2 border-b border-neutral-800/50 px-3 py-1.5 text-xs last:border-0"
-                        style={{ gridTemplateColumns: "2.2fr 1.4fr 1fr auto" }}
+                        style={{ gridTemplateColumns: "minmax(0,2fr) minmax(0,1.1fr) 7.5rem 5rem" }}
                       >
                         <span className="truncate text-neutral-300">
                           {c.nome}{" "}
@@ -499,9 +616,9 @@ export function CriadorEleicaoCompleta({
                               [chave(c)]: Math.max(0, Number(e.target.value)),
                             }))
                           }
-                          className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-2 py-1 text-right text-xs text-neutral-100"
+                          className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-2 py-1.5 text-right text-sm font-medium tabular-nums text-amber-300"
                         />
-                        <span className="w-20 text-right">
+                        <span className="text-right">
                           {sit?.situacao === "eleito" ? (
                             <span className="rounded bg-emerald-950/60 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400">
                               Eleito
@@ -525,10 +642,9 @@ export function CriadorEleicaoCompleta({
       </div>
 
       <p className="text-xs text-neutral-600">
-        Cenário fictício — nada altera os dados reais. A coluna do meio mostra o histórico que
-        alimenta a inteligência da distribuição (melhor votação anterior e mandato); o selo verde
-        indica presença na pesquisa mais recente. Candidatos inaptos não recebem votos na geração
-        automática.
+        Cenário fictício — nada altera os dados reais. Geração calibrada pela última eleição:
+        curva de votação por partido, fatia de legenda e teto do campeão histórico. Inaptos não
+        recebem votos na geração automática.
       </p>
     </div>
   );

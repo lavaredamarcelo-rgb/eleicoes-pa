@@ -13,7 +13,14 @@ import candidatosTSE from "@/data/candidatos-tse-2026.json";
 export async function POST(req: NextRequest) {
   await verifySession();
 
-  let body: { cargoNome?: string; vagas?: number; titulo?: string; votos?: Record<string, number> };
+  let body: {
+    cargoNome?: string;
+    vagas?: number;
+    titulo?: string;
+    votos?: Record<string, number>;
+    legenda?: Record<string, number>;
+    sigla?: string;
+  };
   try {
     body = await req.json();
   } catch {
@@ -43,9 +50,11 @@ export async function POST(req: NextRequest) {
 
   const siglas = [...new Set(tse.map((c) => c.partido))];
   const partidoById = new Map(siglas.map((s) => [s, { id: s, sigla: s }]));
-  const resultado = calcularSimulacao(sims, vagas, new Map(), partidoById as any, {});
+  const legenda = body.legenda ?? {};
+  const resultado = calcularSimulacao(sims, vagas, new Map(), partidoById as any, legenda);
 
   const partidos: PartidoEleicaoPdf[] = siglas
+    .filter((s) => !body.sigla || s === body.sigla)
     .map((sigla) => {
       const doPartido = sims
         .filter((c) => c.partidoId === sigla)
@@ -54,7 +63,8 @@ export async function POST(req: NextRequest) {
       return {
         sigla,
         cadeiras: info?.quocientePartidario ?? 0,
-        totalVotos: doPartido.reduce((s, c) => s + c.votos, 0),
+        totalVotos: doPartido.reduce((s, c) => s + c.votos, 0) + (legenda[sigla] ?? 0),
+        votosLegenda: legenda[sigla] ?? 0,
         candidatos: doPartido.map((c) => {
           const sit = resultado.situacao.get(c.id);
           return {
@@ -69,9 +79,11 @@ export async function POST(req: NextRequest) {
     })
     .sort((a, b) => b.cadeiras - a.cadeiras || b.totalVotos - a.totalVotos);
 
-  const titulo = body.titulo?.trim()
-    ? `Cenário — ${body.titulo.trim()}`
-    : `Cenário Eleição Completa — ${cargoNome}`;
+  const titulo = body.sigla
+    ? `Cenário ${body.sigla} — ${cargoNome}${body.titulo?.trim() ? ` (${body.titulo.trim()})` : ""}`
+    : body.titulo?.trim()
+      ? `Cenário — ${body.titulo.trim()}`
+      : `Cenário Eleição Completa — ${cargoNome}`;
 
   return pdfResponse(
     <RelatorioEleicaoCompleta
@@ -82,6 +94,6 @@ export async function POST(req: NextRequest) {
       quociente={resultado.quocienteEleitoral}
       partidos={partidos}
     />,
-    nomeArquivo("cenario-eleicao", cargoNome, body.titulo || "")
+    nomeArquivo("cenario-eleicao", cargoNome, body.sigla || "", body.titulo || "")
   );
 }
