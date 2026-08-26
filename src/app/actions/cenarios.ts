@@ -69,3 +69,57 @@ export async function excluirCenarioMeta(id: string) {
   await prisma.cenarioMeta.delete({ where: { id } });
   revalidatePath("/criar-cenario");
 }
+
+// Cenários salvos da Eleição Completa — votos por número de candidato.
+
+export async function salvarCenarioEleicao(entrada: {
+  id?: string;
+  cargoNome: string;
+  titulo: string;
+  votos: Record<string, number>;
+}) {
+  const session = await verifySession();
+  const userId = String(session.userId);
+
+  const titulo = entrada.titulo.trim().slice(0, 80);
+  if (!titulo) throw new Error("Dê um título ao cenário (ex.: Cenário base agosto).");
+
+  const votosLimpos: Record<string, number> = {};
+  for (const [numero, v] of Object.entries(entrada.votos ?? {})) {
+    if (Number.isFinite(v) && v > 0) votosLimpos[numero] = Math.round(v);
+  }
+  if (Object.keys(votosLimpos).length === 0) {
+    throw new Error("Gere ou alimente votos antes de salvar.");
+  }
+
+  const dados = {
+    titulo,
+    cargoNome: entrada.cargoNome,
+    votos: JSON.stringify(votosLimpos),
+  };
+
+  let salvo;
+  if (entrada.id) {
+    const existente = await prisma.cenarioEleicao.findUnique({ where: { id: entrada.id } });
+    if (!existente || existente.userId !== userId) {
+      throw new Error("Cenário não encontrado.");
+    }
+    salvo = await prisma.cenarioEleicao.update({ where: { id: entrada.id }, data: dados });
+  } else {
+    salvo = await prisma.cenarioEleicao.create({ data: { ...dados, userId } });
+  }
+
+  revalidatePath("/criar-cenario");
+  return { id: salvo.id };
+}
+
+export async function excluirCenarioEleicao(id: string) {
+  const session = await verifySession();
+  const cenario = await prisma.cenarioEleicao.findUnique({ where: { id } });
+  if (!cenario) return;
+  if (cenario.userId !== String(session.userId) && session.role !== "ADMIN") {
+    throw new Error("Sem permissão para excluir este cenário.");
+  }
+  await prisma.cenarioEleicao.delete({ where: { id } });
+  revalidatePath("/criar-cenario");
+}

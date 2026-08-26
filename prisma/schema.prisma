@@ -56,6 +56,7 @@ model User {
   favoritosPoliticos PoliticoFavorito[]
   relatorios        Relatorio[]
   cenariosMeta      CenarioMeta[]
+  cenariosEleicao   CenarioEleicao[]
   createdAt         DateTime           @default(now())
 }
 
@@ -416,4 +417,17 @@ model PesquisaResultado {
   partido    String?
   percentual Float
   ordem      Int               @default(0)
+}
+
+// Cenário salvo da Eleição Completa (Criar Cenário): votos por número de
+// candidato (JSON) para uma disputa proporcional 2026.
+model CenarioEleicao {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  cargoNome String
+  titulo    String
+  votos     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

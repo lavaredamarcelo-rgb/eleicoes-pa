@@ -82,6 +82,14 @@ export default async function CriarCenarioPage({
     ["Deputado Estadual", "Deputado Federal"].includes(dados.cargoNome);
   let candidatosEleicao: CandidatoEleicao[] = [];
   let sugestoesEleicao: Record<string, number> = {};
+  let pesquisaEleicao: Record<string, number> = {};
+  let rotuloPesquisaEleicao: string | null = null;
+  let cenariosEleicaoSalvos: {
+    id: string;
+    titulo: string;
+    atualizadoEm: string;
+    votos: Record<string, number>;
+  }[] = [];
   if (modo === "eleicao" && suportaEleicao && dados) {
     const tse = (candidatosTSE as any[]).filter((c) => c.cargo === dados.cargoNome);
     const nomes = [...new Set(tse.map((c) => c.nome))];
@@ -139,6 +147,33 @@ export default async function CriarCenarioPage({
     for (const sigla of siglas2026) {
       sugestoesEleicao[sigla] = Math.round(porSigla[sigla] ?? 0);
     }
+
+    // Pesquisa mais recente da disputa entra como peso extra na geração:
+    // quem pontua bem na pesquisa puxa mais votos na distribuição.
+    const ultimaPesquisa = await prisma.pesquisaEleitoral.findFirst({
+      where: { disputa: dados.cargoNome, turno: 1, tipo: "estimulada" },
+      orderBy: { dataDivulgacao: "desc" },
+      include: { resultados: true },
+    });
+    if (ultimaPesquisa) {
+      rotuloPesquisaEleicao = `${ultimaPesquisa.instituto} (${ultimaPesquisa.dataDivulgacao.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "UTC" })}${ultimaPesquisa.cenario ? ` · ${ultimaPesquisa.cenario}` : ""})`;
+      for (const r of ultimaPesquisa.resultados) {
+        pesquisaEleicao[r.nome.trim().toUpperCase()] = r.percentual;
+      }
+    }
+
+    const sessaoEleicao = await verifySession();
+    cenariosEleicaoSalvos = (
+      await prisma.cenarioEleicao.findMany({
+        where: { userId: String(sessaoEleicao.userId), cargoNome: dados.cargoNome },
+        orderBy: { updatedAt: "desc" },
+      })
+    ).map((c) => ({
+      id: c.id,
+      titulo: c.titulo,
+      atualizadoEm: c.updatedAt.toLocaleDateString("pt-BR"),
+      votos: JSON.parse(c.votos) as Record<string, number>,
+    }));
   }
 
   const session = await verifySession();
@@ -239,9 +274,13 @@ export default async function CriarCenarioPage({
               <CriadorEleicaoCompleta
                 key={dados.cargoId}
                 rotulo={rotuloDisputa}
+                cargoNome={dados.cargoNome}
                 vagas={dados.vagas}
                 candidatos={candidatosEleicao}
                 sugestoes={sugestoesEleicao}
+                pesquisa={pesquisaEleicao}
+                rotuloPesquisa={rotuloPesquisaEleicao}
+                cenariosSalvos={cenariosEleicaoSalvos}
               />
             ) : (
               <p className="rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-3 text-xs text-neutral-500">
