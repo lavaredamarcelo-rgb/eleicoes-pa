@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Users } from "lucide-react";
+import { ChevronDown, ChevronUp, Users, History } from "lucide-react";
+import { PdfDownloadLink } from "@/components/PdfDownloadLink";
 
 const CARGOS_ORDEM = [
   "Governador",
@@ -20,9 +21,138 @@ type CandidatoTSE = {
   situacao: string;
 };
 
+type Historico = {
+  candidaturas: {
+    ano: number;
+    cargo: string;
+    municipio: string | null;
+    partido: string;
+    numero: number;
+    votos: number;
+    eleito: boolean;
+    nomeCompleto: string | null;
+  }[];
+  trocas: { data: string; de: string; para: string; motivo: string | null }[];
+  partidos: string[];
+};
+
+function LinhaCandidato({ c }: { c: CandidatoTSE }) {
+  const [aberto, setAberto] = useState(false);
+  const [hist, setHist] = useState<Historico | null>(null);
+  const [carregando, setCarregando] = useState(false);
+
+  const toggle = async () => {
+    const abrir = !aberto;
+    setAberto(abrir);
+    if (abrir && !hist && !carregando) {
+      setCarregando(true);
+      try {
+        const res = await fetch(
+          `/api/candidatos-tse/historico?nome=${encodeURIComponent(c.nome)}`
+        );
+        if (res.ok) setHist(await res.json());
+      } catch {
+        // sem histórico — painel mostra a mensagem padrão
+      } finally {
+        setCarregando(false);
+      }
+    }
+  };
+
+  return (
+    <div>
+      <button
+        onClick={toggle}
+        className="flex w-full items-baseline justify-between gap-2 rounded px-1 py-0.5 text-left text-xs text-neutral-400 transition hover:bg-neutral-900"
+        title="Ver histórico político"
+      >
+        <div>
+          <span className="font-medium text-neutral-300">{c.nome}</span>{" "}
+          {!c.cargo.startsWith("Deputado") && (
+            <span className="text-neutral-600">({c.partido})</span>
+          )}
+          {c.situacao !== "Concorrendo" && (
+            <span className="ml-1.5 rounded bg-red-950/60 px-1.5 py-0.5 text-[10px] text-red-400">
+              {c.situacao}
+            </span>
+          )}
+        </div>
+        <span className="shrink-0 tabular-nums text-neutral-600">{c.numero}</span>
+      </button>
+
+      {aberto && (
+        <div className="mb-1 ml-1 mt-0.5 rounded-lg border border-neutral-800/70 bg-neutral-900/60 p-2.5 text-xs">
+          {carregando ? (
+            <p className="text-neutral-500">Buscando histórico...</p>
+          ) : !hist || hist.candidaturas.length === 0 ? (
+            <p className="text-neutral-500">
+              <History size={11} className="mr-1 inline" />
+              Sem candidaturas anteriores no sistema (eleições importadas:
+              2022/2024). Estreante ou nome de urna diferente.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {hist.candidaturas[0]?.nomeCompleto && (
+                <p className="text-[11px] text-neutral-500">
+                  {hist.candidaturas[0].nomeCompleto}
+                </p>
+              )}
+              <div>
+                <p className="mb-1 font-semibold text-amber-300/90">
+                  Candidaturas anteriores
+                </p>
+                {hist.candidaturas.map((h, i) => (
+                  <p key={i} className="text-neutral-400">
+                    <span className="text-neutral-300">
+                      {h.ano} · {h.cargo}
+                    </span>
+                    {h.municipio ? ` (${h.municipio})` : ""} · {h.partido} ·{" "}
+                    {h.votos.toLocaleString("pt-BR")} votos
+                    {h.eleito && (
+                      <span className="ml-1.5 rounded bg-emerald-950/60 px-1.5 py-0.5 text-[10px] text-emerald-400">
+                        Eleito
+                      </span>
+                    )}
+                  </p>
+                ))}
+              </div>
+              {hist.trocas.length > 0 && (
+                <div>
+                  <p className="mb-1 font-semibold text-amber-300/90">
+                    Trocas de partido registradas
+                  </p>
+                  {hist.trocas.map((t, i) => (
+                    <p key={i} className="text-neutral-400">
+                      {new Date(t.data).toLocaleDateString("pt-BR")}: {t.de} →{" "}
+                      {t.para}
+                      {t.motivo ? ` (${t.motivo})` : ""}
+                    </p>
+                  ))}
+                </div>
+              )}
+              {hist.partidos.length > 0 && (
+                <p className="text-neutral-500">
+                  Partidos no histórico:{" "}
+                  <span className="text-neutral-400">
+                    {hist.partidos.join(", ")}
+                  </span>
+                  {c.partido && !hist.partidos.includes(c.partido) && (
+                    <span className="text-neutral-400"> → {c.partido} (2026)</span>
+                  )}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function CandidatosTSE({ candidatos }: { candidatos: CandidatoTSE[] }) {
   const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
   const [busca, setBusca] = useState("");
+  const [cargoPdf, setCargoPdf] = useState("");
 
   const filtrados = busca.trim()
     ? candidatos.filter((c) =>
@@ -41,10 +171,30 @@ export function CandidatosTSE({ candidatos }: { candidatos: CandidatoTSE[] }) {
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-emerald-900/50 bg-emerald-950/10 p-4">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-sm font-semibold text-emerald-300">
           <Users size={16} />
           Candidaturas registradas no TSE · 2026 ({candidatos.length})
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={cargoPdf}
+            onChange={(e) => setCargoPdf(e.target.value)}
+            className="rounded-lg border border-neutral-800 bg-neutral-950 px-2 py-1.5 text-xs text-neutral-200 outline-none focus:border-emerald-800"
+          >
+            <option value="">PDF geral</option>
+            {CARGOS_ORDEM.map((c) => (
+              <option key={c} value={c}>
+                PDF · {c}
+              </option>
+            ))}
+          </select>
+          <PdfDownloadLink
+            href={`/api/pdf/candidatos-tse${
+              cargoPdf ? `?cargo=${encodeURIComponent(cargoPdf)}` : ""
+            }`}
+            label="Gerar"
+          />
         </div>
       </div>
 
@@ -52,7 +202,7 @@ export function CandidatosTSE({ candidatos }: { candidatos: CandidatoTSE[] }) {
         type="text"
         value={busca}
         onChange={(e) => setBusca(e.target.value)}
-        placeholder="Buscar candidato pelo nome..."
+        placeholder="Buscar candidato pelo nome... (clique no nome para ver o histórico político)"
         className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-xs text-neutral-200 placeholder-neutral-600 outline-none focus:border-emerald-800"
       />
 
@@ -96,53 +246,18 @@ export function CandidatosTSE({ candidatos }: { candidatos: CandidatoTSE[] }) {
                         <p className="mb-1 border-b border-neutral-800/70 pb-0.5 text-[11px] font-semibold text-amber-300/90">
                           {partido} ({lista.length})
                         </p>
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                           {lista.map((c, i) => (
-                            <div
-                              key={i}
-                              className="flex items-baseline justify-between gap-2 text-xs text-neutral-400"
-                            >
-                              <div>
-                                <span className="font-medium text-neutral-300">
-                                  {c.nome}
-                                </span>
-                                {c.situacao !== "Concorrendo" && (
-                                  <span className="ml-1.5 rounded bg-red-950/60 px-1.5 py-0.5 text-[10px] text-red-400">
-                                    {c.situacao}
-                                  </span>
-                                )}
-                              </div>
-                              <span className="shrink-0 tabular-nums text-neutral-600">
-                                {c.numero}
-                              </span>
-                            </div>
+                            <LinhaCandidato key={i} c={c} />
                           ))}
                         </div>
                       </div>
                     ))}
                 </div>
               ) : aberto ? (
-                <div className="mt-1 space-y-1 rounded-lg border border-neutral-800 bg-neutral-950 p-2 max-h-96 overflow-y-auto">
+                <div className="mt-1 space-y-0.5 rounded-lg border border-neutral-800 bg-neutral-950 p-2 max-h-96 overflow-y-auto">
                   {grupo.lista.map((c, i) => (
-                    <div
-                      key={i}
-                      className="flex items-baseline justify-between gap-2 text-xs text-neutral-400"
-                    >
-                      <div>
-                        <span className="font-medium text-neutral-300">
-                          {c.nome}
-                        </span>{" "}
-                        <span className="text-neutral-600">({c.partido})</span>
-                        {c.situacao !== "Concorrendo" && (
-                          <span className="ml-1.5 rounded bg-red-950/60 px-1.5 py-0.5 text-[10px] text-red-400">
-                            {c.situacao}
-                          </span>
-                        )}
-                      </div>
-                      <span className="shrink-0 tabular-nums text-neutral-600">
-                        {c.numero}
-                      </span>
-                    </div>
+                    <LinhaCandidato key={i} c={c} />
                   ))}
                 </div>
               ) : null}
@@ -154,7 +269,8 @@ export function CandidatosTSE({ candidatos }: { candidatos: CandidatoTSE[] }) {
       <p className="text-[10px] text-neutral-600">
         Fonte: DivulgaCand/TSE, exportado em 24/08/2026. Senado: apenas
         titulares (suplentes não listados). Candidatos inaptos/substituídos
-        aparecem marcados.
+        aparecem marcados. Clique em um nome para ver o histórico político
+        (candidaturas 2022/2024 e trocas de partido registradas no sistema).
       </p>
     </div>
   );
