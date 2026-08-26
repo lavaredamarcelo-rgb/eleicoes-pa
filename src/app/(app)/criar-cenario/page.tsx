@@ -4,6 +4,11 @@ import { SimuladorMetaManual } from "@/components/simuladores/SimuladorMetaManua
 import { CriadorCenario } from "@/components/CriadorCenario";
 import { CriadorCenarioMajoritario } from "@/components/CriadorCenarioMajoritario";
 import {
+  CriadorEleicaoCompleta,
+  type CandidatoEleicao,
+} from "@/components/CriadorEleicaoCompleta";
+import candidatosTSE from "@/data/candidatos-tse-2026.json";
+import {
   getCargosParaSimulacao,
   getDadosSimulacaoCargoOuProjetado,
   getMunicipiosParaMeta,
@@ -16,6 +21,7 @@ import { verifySession } from "@/lib/dal";
 const MODOS = [
   { chave: "chapa", rotulo: "Trocar chapa de partido" },
   { chave: "meta", rotulo: "Meta por município (manual)" },
+  { chave: "eleicao", rotulo: "Eleição completa (todos os candidatos)" },
 ] as const;
 
 export default async function CriarCenarioPage({
@@ -24,7 +30,8 @@ export default async function CriarCenarioPage({
   searchParams: Promise<{ cargo?: string; modo?: string }>;
 }) {
   const { cargo: cargoId, modo: modoParam } = await searchParams;
-  const modo = modoParam === "meta" ? "meta" : "chapa";
+  const modo =
+    modoParam === "meta" ? "meta" : modoParam === "eleicao" ? "eleicao" : "chapa";
   const cargosReais = await getCargosParaSimulacao({});
 
   // Disputas futuras: para cada cargo estadual do ano mais recente
@@ -64,6 +71,74 @@ export default async function CriarCenarioPage({
   const aprovadosPorPartido: Record<string, { nome: string; cargo: string }[]> = {};
   for (const pc of aprovados) {
     (aprovadosPorPartido[pc.partidoId] ??= []).push({ nome: pc.nome, cargo: pc.cargo });
+  }
+
+  // Eleição completa: candidatos TSE 2026 da disputa + histórico real de
+  // cada um (melhor votação anterior, mandato) e sugestão de total por
+  // partido a partir de 2022 escalado (dados já vêm escalados no "proj:").
+  const suportaEleicao =
+    !!dados &&
+    dados.tipoApuracao === "PROPORCIONAL" &&
+    ["Deputado Estadual", "Deputado Federal"].includes(dados.cargoNome);
+  let candidatosEleicao: CandidatoEleicao[] = [];
+  let sugestoesEleicao: Record<string, number> = {};
+  if (modo === "eleicao" && suportaEleicao && dados) {
+    const tse = (candidatosTSE as any[]).filter((c) => c.cargo === dados.cargoNome);
+    const nomes = [...new Set(tse.map((c) => c.nome))];
+    const historicos = await prisma.candidato.findMany({
+      where: { nome: { in: nomes }, cargo: { eleicao: { ano: { lt: 2026 } } } },
+      select: {
+        nome: true,
+        eleito: true,
+        partido: { select: { sigla: true } },
+        cargo: {
+          select: { nome: true, eleicao: { select: { ano: true } } },
+        },
+        resultados: { select: { votos: true } },
+      },
+    });
+    const melhorPorNome = new Map<
+      string,
+      { votos: number; eleito: boolean; resumo: string }
+    >();
+    for (const h of historicos) {
+      const votosH = h.resultados.reduce((s, r) => s + r.votos, 0);
+      const atual = melhorPorNome.get(h.nome);
+      if (!atual || votosH > atual.votos || (h.eleito && !atual.eleito)) {
+        melhorPorNome.set(h.nome, {
+          votos: Math.max(votosH, atual?.votos ?? 0),
+          eleito: h.eleito || (atual?.eleito ?? false),
+          resumo: `${h.cargo.eleicao.ano} · ${h.cargo.nome} · ${h.partido.sigla} · ${votosH.toLocaleString("pt-BR")} votos${h.eleito ? " (eleito)" : ""}`,
+        });
+      }
+    }
+    candidatosEleicao = tse.map((c) => {
+      const h = melhorPorNome.get(c.nome);
+      return {
+        nome: c.nome,
+        numero: c.numero,
+        partido: c.partido,
+        situacao: c.situacao,
+        histVotos: h?.votos ?? 0,
+        histEleito: h?.eleito ?? false,
+        histResumo: h?.resumo ?? null,
+      };
+    });
+    // Sugestão por sigla: soma dos votos 2022 escalados (nominais + legenda)
+    // dos partidos de mesma sigla.
+    const siglaPorId = new Map(partidos.map((p: any) => [p.id, p.sigla]));
+    const porSigla: Record<string, number> = {};
+    for (const c of dados.candidatos) {
+      porSigla[c.partidoSigla] = (porSigla[c.partidoSigla] ?? 0) + c.votos;
+    }
+    for (const [pid, v] of Object.entries(votosLegenda)) {
+      const sigla = siglaPorId.get(pid);
+      if (sigla) porSigla[sigla] = (porSigla[sigla] ?? 0) + (v as number);
+    }
+    const siglas2026 = new Set(tse.map((c) => c.partido));
+    for (const sigla of siglas2026) {
+      sugestoesEleicao[sigla] = Math.round(porSigla[sigla] ?? 0);
+    }
   }
 
   const session = await verifySession();
@@ -159,6 +234,22 @@ export default async function CriarCenarioPage({
                 .filter((pc) => pc.cargo === dados.cargoNome)
                 .map((pc) => ({ nome: pc.nome, partidoSigla: pc.partido.sigla }))}
             />
+          ) : modo === "eleicao" ? (
+            suportaEleicao ? (
+              <CriadorEleicaoCompleta
+                key={dados.cargoId}
+                rotulo={rotuloDisputa}
+                vagas={dados.vagas}
+                candidatos={candidatosEleicao}
+                sugestoes={sugestoesEleicao}
+              />
+            ) : (
+              <p className="rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-3 text-xs text-neutral-500">
+                A Eleição Completa está disponível para Deputado Estadual e Deputado Federal
+                (candidatos registrados no TSE 2026). Selecione uma dessas disputas acima —
+                de preferência a projeção 2026.
+              </p>
+            )
           ) : modo === "chapa" ? (
             <CriadorCenario
               key={dados.cargoId}

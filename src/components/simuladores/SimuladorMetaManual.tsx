@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileDown, FolderOpen, Save, Search, Shuffle } from "lucide-react";
+import { FileDown, FolderOpen, Lock, LockOpen, Save, Scale, Search, Shuffle } from "lucide-react";
 import { calcularSimulacao, type CandidatoSimulacao } from "@/lib/simulacaoPartido";
 import { VisorPdf } from "@/components/VisorPdf";
 import { salvarCenarioMeta, excluirCenarioMeta } from "@/app/actions/cenarios";
@@ -68,6 +68,7 @@ export function SimuladorMetaManual({
   const [titulo, setTitulo] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [msgCenario, setMsgCenario] = useState<string | null>(null);
+  const [travados, setTravados] = useState<Record<string, boolean>>({});
   const [votos, setVotos] = useState<Record<string, number>>(() => {
     if (!votosIniciais) return {};
     const porNome: Record<string, number> = {};
@@ -109,6 +110,66 @@ export function SimuladorMetaManual({
       else delete novo[id];
       return novo;
     });
+    // Edição manual trava o município: a redistribuição não mexe mais nele.
+    setTravados((t) => ({ ...t, [id]: true }));
+  }
+
+  function alternarTrava(id: string) {
+    setTravados((t) => ({ ...t, [id]: !t[id] }));
+  }
+
+  const meta = Math.round(Number(totalDistribuir.replace(/\D/g, "")) || 0);
+  const somaTravados = useMemo(
+    () =>
+      municipios.reduce(
+        (s, m) => (travados[m.id] ? s + (votos[m.id] ?? 0) : s),
+        0
+      ),
+    [municipios, travados, votos]
+  );
+
+  // Reequilibra os municípios NÃO travados para o total fechar na meta,
+  // preservando as proporções atuais entre eles.
+  function fecharNaMeta() {
+    if (meta <= 0) return;
+    const alvoLivres = meta - somaTravados;
+    if (alvoLivres < 0) {
+      setMsgCenario(
+        "Os municípios travados sozinhos já passam da meta — destrave algum ou aumente a meta."
+      );
+      return;
+    }
+    const livres = municipios.filter((m) => !travados[m.id]);
+    const somaLivres = livres.reduce((s, m) => s + (votos[m.id] ?? 0), 0);
+    const pesos = livres.map((m) => ({
+      id: m.id,
+      peso:
+        somaLivres > 0 ? votos[m.id] ?? 0 : Math.max(1, m.eleitores),
+    }));
+    const somaPesos = pesos.reduce((s, p) => s + p.peso, 0);
+    const novo: Record<string, number> = {};
+    for (const m of municipios) {
+      if (travados[m.id] && (votos[m.id] ?? 0) > 0) novo[m.id] = votos[m.id];
+    }
+    let acumulado = 0;
+    for (const p of pesos) {
+      const v = somaPesos > 0 ? Math.round((alvoLivres * p.peso) / somaPesos) : 0;
+      if (v > 0) {
+        novo[p.id] = v;
+        acumulado += v;
+      }
+    }
+    const diferenca = alvoLivres - acumulado;
+    if (diferenca !== 0 && pesos.length > 0) {
+      const maior = [...pesos].sort((a, b) => b.peso - a.peso)[0];
+      novo[maior.id] = Math.max(0, (novo[maior.id] ?? 0) + diferenca);
+    }
+    setVotos(novo);
+    setMsgCenario(null);
+  }
+
+  function adotarTotalComoMeta() {
+    setTotalDistribuir(String(total));
   }
 
   // Distribui um total pelos 144 municípios. "Proporcional" segue o
@@ -117,7 +178,17 @@ export function SimuladorMetaManual({
   function distribuirTotal() {
     const alvo = Math.round(Number(totalDistribuir.replace(/\D/g, "")));
     if (!Number.isFinite(alvo) || alvo <= 0) return;
-    const pesos = municipios.map((m) => {
+    // Municípios travados mantêm o valor digitado; o restante do total é
+    // sorteado apenas entre os livres.
+    const alvoLivres = alvo - somaTravados;
+    if (alvoLivres < 0) {
+      setMsgCenario(
+        "Os municípios travados sozinhos já passam do total — destrave algum ou aumente o total."
+      );
+      return;
+    }
+    const livres = municipios.filter((m) => !travados[m.id]);
+    const pesos = livres.map((m) => {
       const base =
         modoDistribuicao === "aleatoria" ? Math.random() + 0.02 : Math.max(1, m.eleitores);
       const fator =
@@ -126,9 +197,12 @@ export function SimuladorMetaManual({
     });
     const soma = pesos.reduce((s, p) => s + p.peso, 0);
     const novo: Record<string, number> = {};
+    for (const m of municipios) {
+      if (travados[m.id] && (votos[m.id] ?? 0) > 0) novo[m.id] = votos[m.id];
+    }
     let acumulado = 0;
     for (const p of pesos) {
-      const v = Math.round((alvo * p.peso) / soma);
+      const v = soma > 0 ? Math.round((alvoLivres * p.peso) / soma) : 0;
       if (v > 0) {
         novo[p.id] = v;
         acumulado += v;
@@ -136,12 +210,13 @@ export function SimuladorMetaManual({
     }
     // A sobra do arredondamento vai para o município de maior peso, para o
     // total fechar exatamente no valor pedido.
-    const diferenca = alvo - acumulado;
-    if (diferenca !== 0) {
+    const diferenca = alvoLivres - acumulado;
+    if (diferenca !== 0 && pesos.length > 0) {
       const maior = [...pesos].sort((a, b) => b.peso - a.peso)[0];
       novo[maior.id] = Math.max(0, (novo[maior.id] ?? 0) + diferenca);
     }
     setVotos(novo);
+    setMsgCenario(null);
   }
 
   function abrirCenario(c: CenarioSalvo) {
@@ -387,10 +462,47 @@ export function SimuladorMetaManual({
           </div>
         </div>
 
+        {meta > 0 && meta !== total && total > 0 && (
+          <div className="mt-3 flex flex-col gap-2 rounded-lg border border-orange-900/60 bg-orange-950/20 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-orange-300">
+              <Scale size={12} className="mr-1 inline" />
+              Total atual ({total.toLocaleString("pt-BR")}) difere da meta (
+              {meta.toLocaleString("pt-BR")}) em{" "}
+              <strong>
+                {total > meta ? "+" : "−"}
+                {Math.abs(total - meta).toLocaleString("pt-BR")}
+              </strong>
+              . O que fazer?
+            </p>
+            <div className="flex shrink-0 gap-2">
+              <button
+                onClick={fecharNaMeta}
+                className="rounded-lg bg-orange-800 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-orange-700"
+                title="Reajusta proporcionalmente os municípios não travados para o total fechar na meta"
+              >
+                Fechar na meta
+              </button>
+              <button
+                onClick={adotarTotalComoMeta}
+                className="rounded-lg border border-orange-800 px-3 py-1.5 text-xs font-medium text-orange-300 transition-colors hover:border-orange-600"
+                title="Aceita o total atual como a nova meta"
+              >
+                Adotar novo total
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
           <div className="rounded-lg border border-amber-900 bg-amber-950/20 px-3 py-2">
             <p className="text-[11px] text-amber-300">Total de votos</p>
             <p className="text-lg font-bold text-amber-300">{total.toLocaleString("pt-BR")}</p>
+            {meta > 0 && (
+              <p className="text-[10px] text-neutral-500">
+                meta: {meta.toLocaleString("pt-BR")}
+                {meta === total ? " ✓" : ""}
+              </p>
+            )}
           </div>
           <div className="rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2">
             <p className="text-[11px] text-neutral-500">Municípios alimentados</p>
@@ -562,8 +674,9 @@ export function SimuladorMetaManual({
             </button>
           </div>
           <p className="text-[11px] text-neutral-600">
-            A distribuição substitui os votos já digitados. Clique em Distribuir de novo para
-            sortear outra combinação com o mesmo total.
+            Municípios com 🔒 (editados à mão) são preservados — a distribuição sorteia só os
+            demais. Se o total sair da meta depois de uma edição, use &quot;Fechar na meta&quot;
+            para reequilibrar ou &quot;Adotar novo total&quot; para aceitar o valor.
           </p>
         </div>
         <div className="border-b border-neutral-800 p-3">
@@ -583,11 +696,26 @@ export function SimuladorMetaManual({
             <div
               key={m.id}
               className="grid items-center gap-2 border-b border-neutral-800/50 px-4 py-1.5 text-xs last:border-0"
-              style={{ gridTemplateColumns: "2fr 1fr" }}
+              style={{ gridTemplateColumns: "2fr auto 1fr" }}
             >
               <span className="text-neutral-300">
                 {m.nome} <span className="text-[10px] text-neutral-600">{m.regiaoNome}</span>
               </span>
+              <button
+                onClick={() => alternarTrava(m.id)}
+                title={
+                  travados[m.id]
+                    ? "Travado: a redistribuição não mexe neste município (clique para destravar)"
+                    : "Livre: a redistribuição pode ajustar este município (clique para travar)"
+                }
+                className={`rounded p-1 transition ${
+                  travados[m.id]
+                    ? "text-amber-400 hover:text-amber-300"
+                    : "text-neutral-700 hover:text-neutral-500"
+                }`}
+              >
+                {travados[m.id] ? <Lock size={12} /> : <LockOpen size={12} />}
+              </button>
               <input
                 type="number"
                 min={0}
