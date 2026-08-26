@@ -21,20 +21,23 @@ type CandidatoTSE = {
   situacao: string;
 };
 
-type Historico = {
+type Pessoa = {
+  nomeCompleto: string | null;
+  nomesUrna: string[];
   candidaturas: {
     ano: number;
     cargo: string;
     municipio: string | null;
     partido: string;
-    numero: number;
+    nomeUrna: string;
     votos: number;
     eleito: boolean;
-    nomeCompleto: string | null;
   }[];
   trocas: { data: string; de: string; para: string; motivo: string | null }[];
   partidos: string[];
 };
+
+type Historico = { pessoas: Pessoa[] };
 
 function LinhaCandidato({ c }: { c: CandidatoTSE }) {
   const [aberto, setAberto] = useState(false);
@@ -84,63 +87,80 @@ function LinhaCandidato({ c }: { c: CandidatoTSE }) {
         <div className="mb-1 ml-1 mt-0.5 rounded-lg border border-neutral-800/70 bg-neutral-900/60 p-2.5 text-xs">
           {carregando ? (
             <p className="text-neutral-500">Buscando histórico...</p>
-          ) : !hist || hist.candidaturas.length === 0 ? (
+          ) : !hist || hist.pessoas.length === 0 ? (
             <p className="text-neutral-500">
               <History size={11} className="mr-1 inline" />
               Sem candidaturas anteriores no sistema (eleições importadas:
-              2022/2024). Estreante ou nome de urna diferente.
+              2022 e 2024). Estreante ou nome de urna diferente do usado antes.
             </p>
           ) : (
-            <div className="flex flex-col gap-2">
-              {hist.candidaturas[0]?.nomeCompleto && (
-                <p className="text-[11px] text-neutral-500">
-                  {hist.candidaturas[0].nomeCompleto}
+            <div className="flex flex-col gap-3">
+              {hist.pessoas.length > 1 && (
+                <p className="rounded bg-amber-950/40 px-2 py-1 text-[11px] text-amber-300">
+                  ⚠ {hist.pessoas.length} políticos diferentes usam nome de urna
+                  parecido — confira o nome civil e o município de cada um.
                 </p>
               )}
-              <div>
-                <p className="mb-1 font-semibold text-amber-300/90">
-                  Candidaturas anteriores
-                </p>
-                {hist.candidaturas.map((h, i) => (
-                  <p key={i} className="text-neutral-400">
-                    <span className="text-neutral-300">
-                      {h.ano} · {h.cargo}
+              {hist.pessoas.map((p, pi) => (
+                <div
+                  key={pi}
+                  className={
+                    hist.pessoas.length > 1
+                      ? "rounded-lg border border-neutral-800/70 p-2"
+                      : ""
+                  }
+                >
+                  <p className="mb-1 text-[11px] font-semibold text-neutral-300">
+                    {p.nomeCompleto || "Nome civil não informado"}
+                    <span className="ml-1 font-normal text-neutral-600">
+                      (urna: {p.nomesUrna.join(", ")})
                     </span>
-                    {h.municipio ? ` (${h.municipio})` : ""} · {h.partido} ·{" "}
-                    {h.votos.toLocaleString("pt-BR")} votos
-                    {h.eleito && (
-                      <span className="ml-1.5 rounded bg-emerald-950/60 px-1.5 py-0.5 text-[10px] text-emerald-400">
-                        Eleito
-                      </span>
-                    )}
                   </p>
-                ))}
-              </div>
-              {hist.trocas.length > 0 && (
-                <div>
-                  <p className="mb-1 font-semibold text-amber-300/90">
-                    Trocas de partido registradas
-                  </p>
-                  {hist.trocas.map((t, i) => (
-                    <p key={i} className="text-neutral-400">
-                      {new Date(t.data).toLocaleDateString("pt-BR")}: {t.de} →{" "}
-                      {t.para}
-                      {t.motivo ? ` (${t.motivo})` : ""}
-                    </p>
-                  ))}
-                </div>
-              )}
-              {hist.partidos.length > 0 && (
-                <p className="text-neutral-500">
-                  Partidos no histórico:{" "}
-                  <span className="text-neutral-400">
-                    {hist.partidos.join(", ")}
-                  </span>
-                  {c.partido && !hist.partidos.includes(c.partido) && (
-                    <span className="text-neutral-400"> → {c.partido} (2026)</span>
+                  {p.candidaturas.length > 0 && (
+                    <div className="mb-1.5">
+                      <p className="mb-0.5 font-semibold text-amber-300/90">
+                        Candidaturas anteriores
+                      </p>
+                      {p.candidaturas.map((h, i) => (
+                        <p key={i} className="text-neutral-400">
+                          <span className="text-neutral-300">
+                            {h.ano} · {h.cargo}
+                          </span>
+                          {h.municipio ? ` (${h.municipio})` : ""} · {h.partido}{" "}
+                          · {h.votos.toLocaleString("pt-BR")} votos
+                          {h.eleito && (
+                            <span className="ml-1.5 rounded bg-emerald-950/60 px-1.5 py-0.5 text-[10px] text-emerald-400">
+                              Eleito
+                            </span>
+                          )}
+                        </p>
+                      ))}
+                    </div>
                   )}
-                </p>
-              )}
+                  {p.trocas.length > 0 && (
+                    <div className="mb-1.5">
+                      <p className="mb-0.5 font-semibold text-amber-300/90">
+                        Trocas de partido registradas
+                      </p>
+                      {p.trocas.map((t, i) => (
+                        <p key={i} className="text-neutral-400">
+                          {new Date(t.data).toLocaleDateString("pt-BR")}: {t.de}{" "}
+                          → {t.para}
+                          {t.motivo ? ` (${t.motivo})` : ""}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                  {p.partidos.length > 0 && (
+                    <p className="text-neutral-500">
+                      Partidos no histórico:{" "}
+                      <span className="text-neutral-400">
+                        {p.partidos.join(", ")}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
