@@ -59,10 +59,23 @@ export const CALENDARIO_2026: MarcoEleitoral[] = [
     descricao: "Liberada a propaganda nas ruas e na internet.",
   },
   {
+    inicio: "2026-08-09",
+    fim: "2026-09-29",
+    titulo: "Debates na TV (1º turno)",
+    descricao:
+      "Janela dos debates televisionados (Band, Record, Globo, CNN) para presidente e governadores — emissoras convidam os mais bem colocados nas pesquisas.",
+  },
+  {
     inicio: "2026-08-28",
     fim: "2026-10-01",
     titulo: "Horário eleitoral gratuito (1º turno)",
     descricao: "Propaganda gratuita no rádio e na televisão.",
+  },
+  {
+    inicio: "2026-09-14",
+    titulo: "Julgamento dos registros de candidatura",
+    descricao:
+      "Data-limite para a Justiça Eleitoral julgar todos os pedidos de registro (20 dias antes da eleição, art. 16 da Lei 9.504/97).",
   },
   {
     inicio: "2026-10-04",
