@@ -72,20 +72,54 @@ export const CALENDARIO_2026: MarcoEleitoral[] = [
     descricao: "Propaganda gratuita no rádio e na televisão.",
   },
   {
+    inicio: "2026-08-16",
+    fim: "2026-10-01",
+    titulo: "Comícios e reuniões — regras de horário",
+    descricao:
+      "Comícios permitidos das 8h às 24h (o de encerramento de campanha pode avançar até 2h, com aparelhagem fixa). Proibidos nas 48 horas que antecedem a votação — último dia: 1º/10 (art. 39, Lei 9.504/97).",
+  },
+  {
     inicio: "2026-09-14",
     titulo: "Julgamento dos registros de candidatura",
     descricao:
       "Data-limite para a Justiça Eleitoral julgar todos os pedidos de registro (20 dias antes da eleição, art. 16 da Lei 9.504/97).",
   },
   {
+    inicio: "2026-10-01",
+    titulo: "Últimos comícios, debates e propaganda em rádio/TV",
+    descricao:
+      "Quinta-feira anterior à votação: último dia de comícios, do horário eleitoral gratuito e limite legal para transmissão de debates do 1º turno.",
+  },
+  {
+    inicio: "2026-10-03",
+    titulo: "Véspera — últimos atos de rua",
+    descricao:
+      "Até as 22h: carreatas, caminhadas, distribuição de material gráfico e carros de som/alto-falantes (funcionamento permitido das 8h às 22h, a 200m de hospitais, escolas e quartéis).",
+  },
+  {
     inicio: "2026-10-04",
     titulo: "1º TURNO",
-    descricao: "Votação das 8h às 17h (horário de Brasília).",
+    descricao:
+      "Votação das 8h às 17h (horário de Brasília). Proibidos: boca de urna, comícios, carros de som e aglomeração com material de campanha (crime eleitoral). Permitida a manifestação individual e silenciosa do eleitor (camiseta, bandeira, adesivo).",
+  },
+  {
+    inicio: "2026-10-04",
+    titulo: "Lei seca (a confirmar por decreto)",
+    descricao:
+      "A proibição de venda de bebidas alcoólicas no dia da votação é decisão de cada estado. No Pará, a Segup costuma decretá-la para o horário da votação — confirmar o decreto na semana da eleição.",
+  },
+  {
+    inicio: "2026-10-09",
+    fim: "2026-10-23",
+    titulo: "Horário eleitoral gratuito (2º turno, se houver)",
+    descricao:
+      "Propaganda em rádio e TV recomeça na sexta após o 1º turno e vai até a antevéspera do 2º turno; valem as mesmas regras de comícios e atos de rua (últimos atos até 24/10, 22h).",
   },
   {
     inicio: "2026-10-25",
     titulo: "2º turno (se houver)",
-    descricao: "Para presidente e governadores, quando nenhum candidato atingir maioria absoluta.",
+    descricao:
+      "Para presidente e governadores, quando nenhum candidato atingir maioria absoluta. Votação das 8h às 17h (Brasília), com as mesmas vedações do dia de eleição.",
   },
   {
     inicio: "2026-12-03",
