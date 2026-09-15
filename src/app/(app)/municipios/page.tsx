@@ -34,6 +34,14 @@ export default async function MunicipiosPage() {
         </p>
       </div>
 
+      <CardLink href="/votos-municipio">
+        <p className="text-sm font-medium text-neutral-200">Votos por município</p>
+        <p className="text-xs text-neutral-500">
+          Ranking completo de um cargo (ex.: Deputado Estadual) em qualquer município ou
+          região — todos os candidatos, votos e percentual local, com PDF.
+        </p>
+      </CardLink>
+
       <CardLink href="/comparar">
         <div className="flex items-center gap-3">
           <Scale className="text-amber-400" size={18} />
