@@ -1,4 +1,4 @@
-const CACHE_NAME = "eleicoes-pa-v1";
+const CACHE_NAME = "eleicoes-pa-v2";
 const APP_SHELL = ["/manifest.json", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
@@ -20,6 +20,9 @@ self.addEventListener("activate", (event) => {
 // e mostra dados por usuário/papel, cachear essas respostas poderia servir
 // conteúdo desatualizado ou de outra sessão em um dispositivo compartilhado.
 function isStaticAsset(url) {
+  // Em desenvolvimento (localhost) os arquivos do Next não têm hash no nome:
+  // cachear serviria bundle velho após cada mudança. Só cacheamos em produção.
+  if (self.location.hostname === "localhost") return false;
   return (
     url.origin === self.location.origin &&
     (url.pathname.startsWith("/icons/") ||
