@@ -276,6 +276,9 @@ model Resultado {
   atualizadoEm       DateTime          @updatedAt
 
   @@unique([candidatoId, municipioId, colegioEleitoralId, turno])
+  // Consultas por município (Votos por Município, mapas) filtram por
+  // municipioId+turno; sem este índice a tabela inteira é varrida.
+  @@index([municipioId, turno])
 }
 
 // Votos de legenda (só no partido, sem candidato nominal) por cargo,
