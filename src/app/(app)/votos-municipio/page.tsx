@@ -146,27 +146,32 @@ export default async function VotosMunicipioPage({
             {ranking.map((r, i) => (
               <div
                 key={`${r.numero}-${i}`}
-                className="grid items-center gap-2 border-b border-neutral-800/50 px-4 py-1.5 text-xs last:border-0"
-                style={{ gridTemplateColumns: "2.2rem minmax(0,1fr) 5.5rem 3.5rem" }}
+                className="flex items-start gap-2.5 border-b border-neutral-800/50 px-4 py-2 text-xs last:border-0"
               >
-                <span className="text-right text-neutral-600">{i + 1}º</span>
-                <span className="min-w-0 truncate text-neutral-300">
-                  <span className="font-medium">{r.nome}</span>{" "}
-                  <span className="text-neutral-600">
+                <span className="w-8 shrink-0 pt-0.5 text-right text-neutral-600">
+                  {i + 1}º
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="break-words font-medium leading-snug text-neutral-200">
+                    {r.nome}
+                    {r.eleito && (
+                      <span className="ml-1.5 inline-block rounded bg-emerald-950/60 px-1.5 py-0.5 align-middle text-[10px] font-normal text-emerald-400">
+                        Eleito
+                      </span>
+                    )}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-neutral-600">
                     {r.numero} · {r.partido}
-                  </span>
-                  {r.eleito && (
-                    <span className="ml-1.5 rounded bg-emerald-950/60 px-1.5 py-0.5 text-[10px] text-emerald-400">
-                      Eleito
-                    </span>
-                  )}
-                </span>
-                <span className="text-right font-semibold tabular-nums text-amber-400">
-                  {r.votos.toLocaleString("pt-BR")}
-                </span>
-                <span className="text-right tabular-nums text-neutral-500">
-                  {totalLocal > 0 ? `${((r.votos / totalLocal) * 100).toFixed(1)}%` : "—"}
-                </span>
+                  </p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="font-semibold tabular-nums text-amber-400">
+                    {r.votos.toLocaleString("pt-BR")}
+                  </p>
+                  <p className="mt-0.5 text-[11px] tabular-nums text-neutral-500">
+                    {totalLocal > 0 ? `${((r.votos / totalLocal) * 100).toFixed(1)}%` : "—"}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
