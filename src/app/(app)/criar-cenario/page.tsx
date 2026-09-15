@@ -85,6 +85,7 @@ export default async function CriarCenarioPage({
   let curvaGlobalEleicao: number[] = [];
   let legendaShareEleicao: Record<string, number> = {};
   let referenciaEleicao: { ano: number; validos: number; qe: number } | null = null;
+  let totalProjetadoEleicao = 0;
   let cenariosEleicaoSalvos: {
     id: string;
     titulo: string;
@@ -148,6 +149,35 @@ export default async function CriarCenarioPage({
     for (const sigla of siglas2026) {
       sugestoesEleicao[sigla] = Math.round(porSigla[sigla] ?? 0);
     }
+
+    // Normalização: a soma das sugestões deve bater com o TOTAL de votos
+    // válidos projetados (2022 escalado pelo eleitorado de 2026 = mesmo
+    // comparecimento/abstenção do ano anterior). Votos de partidos que
+    // saíram de cena (siglas extintas/renomeadas sem correspondência) são
+    // redistribuídos entre os partidos de 2026 na proporção do tamanho da
+    // chapa de cada um — nenhum partido fica zerado.
+    const totalProjetado =
+      dados.candidatos.reduce((s, c) => s + c.votos, 0) +
+      Object.values(votosLegenda).reduce((s, v) => s + (v as number), 0);
+    const somaSugestoes = Object.values(sugestoesEleicao).reduce((s, v) => s + v, 0);
+    const faltante = Math.round(totalProjetado - somaSugestoes);
+    if (faltante > 0) {
+      const aptosPorSigla: Record<string, number> = {};
+      let totalAptos = 0;
+      for (const c of tse) {
+        if (c.situacao === "Concorrendo") {
+          aptosPorSigla[c.partido] = (aptosPorSigla[c.partido] ?? 0) + 1;
+          totalAptos++;
+        }
+      }
+      if (totalAptos > 0) {
+        for (const sigla of siglas2026) {
+          const extra = Math.round((faltante * (aptosPorSigla[sigla] ?? 0)) / totalAptos);
+          sugestoesEleicao[sigla] = (sugestoesEleicao[sigla] ?? 0) + extra;
+        }
+      }
+    }
+    totalProjetadoEleicao = Math.round(totalProjetado);
 
     // Curvas históricas (votação de 2022 escalada, ordenada) — a geração
     // segue esse formato real: o topo do cenário não foge do topo real.
@@ -319,6 +349,7 @@ export default async function CriarCenarioPage({
                 curvaGlobal={curvaGlobalEleicao}
                 legendaShare={legendaShareEleicao}
                 referencia={referenciaEleicao}
+                totalProjetado={totalProjetadoEleicao}
               />
             ) : (
               <p className="rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-3 text-xs text-neutral-500">

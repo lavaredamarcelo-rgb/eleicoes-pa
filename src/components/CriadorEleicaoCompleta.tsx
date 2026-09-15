@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronDown,
@@ -47,6 +47,7 @@ export function CriadorEleicaoCompleta({
   curvaGlobal,
   legendaShare,
   referencia,
+  totalProjetado,
 }: {
   rotulo: string;
   cargoNome: string;
@@ -60,6 +61,7 @@ export function CriadorEleicaoCompleta({
   curvaGlobal: number[];
   legendaShare: Record<string, number>;
   referencia: { ano: number; validos: number; qe: number } | null;
+  totalProjetado: number;
 }) {
   const router = useRouter();
 
@@ -102,6 +104,18 @@ export function CriadorEleicaoCompleta({
   const [msg, setMsg] = useState<string | null>(null);
   const [gerandoPdf, setGerandoPdf] = useState(false);
   const [pdfAberto, setPdfAberto] = useState<string | null>(null);
+  // Compensações pendentes: ao mudar o total de um partido ou o voto de um
+  // candidato, o sistema pergunta de onde tirar/para onde levar a diferença.
+  const [compPartido, setCompPartido] = useState<{ sigla: string; delta: number } | null>(null);
+  const [destinoPartido, setDestinoPartido] = useState("todos");
+  const [compCand, setCompCand] = useState<{
+    sigla: string;
+    numero: number;
+    nome: string;
+    delta: number;
+  } | null>(null);
+  const [destinoCand, setDestinoCand] = useState("todos");
+  const focoAnterior = useRef<Record<number, number>>({});
 
   const chave = (c: CandidatoEleicao) => c.numero;
 
@@ -114,13 +128,15 @@ export function CriadorEleicaoCompleta({
   function gerarPartido(
     sigla: string,
     baseVotos?: Record<number, number>,
-    baseLegenda?: Record<string, number>
+    baseLegenda?: Record<string, number>,
+    alvoOverride?: number
   ) {
     const grupo = porPartido.find((p) => p.sigla === sigla);
     const novoVotos: Record<number, number> = baseVotos ?? {};
     const novaLegenda: Record<string, number> = baseLegenda ?? {};
     if (!grupo) return { novoVotos, novaLegenda };
-    const alvo = Math.round(Number((totais[sigla] || "").replace(/\D/g, "")) || 0);
+    const alvo =
+      alvoOverride ?? (Math.round(Number((totais[sigla] || "").replace(/\D/g, "")) || 0));
     if (alvo <= 0) return { novoVotos, novaLegenda };
 
     const aptos = grupo.lista.filter((c) => c.situacao === "Concorrendo");
@@ -203,11 +219,114 @@ export function CriadorEleicaoCompleta({
     return { novoVotos, novaLegenda };
   }
 
-  function gerarUmPartido(sigla: string) {
-    const { novoVotos, novaLegenda } = gerarPartido(sigla, { ...votos }, { ...legendaGerada });
+  const somaNominalDe = (sigla: string) => {
+    const grupo = porPartido.find((p) => p.sigla === sigla);
+    return grupo ? grupo.lista.reduce((s, c) => s + (votos[chave(c)] ?? 0), 0) : 0;
+  };
+  const somaTotalDe = (sigla: string) => somaNominalDe(sigla) + (legendaGerada[sigla] ?? 0);
+
+  function executarGeracao(sigla: string, alvoOverride?: number) {
+    const { novoVotos, novaLegenda } = gerarPartido(
+      sigla,
+      { ...votos },
+      { ...legendaGerada },
+      alvoOverride
+    );
     setVotos(novoVotos);
     setLegendaGerada(novaLegenda);
     setAbertos((a) => ({ ...a, [sigla]: true }));
+  }
+
+  // Gerar em um partido: se o cenário já tem votos e o novo total muda o
+  // bolo, pergunta de onde compensar a diferença antes de aplicar.
+  function gerarUmPartido(sigla: string) {
+    const alvo = Math.round(Number((totais[sigla] || "").replace(/\D/g, "")) || 0);
+    const atual = somaTotalDe(sigla);
+    if (totalNominal === 0 || atual === 0 || alvo === atual || alvo <= 0) {
+      executarGeracao(sigla);
+      return;
+    }
+    setDestinoPartido("todos");
+    setCompPartido({ sigla, delta: alvo - atual });
+  }
+
+  function aplicarCompPartido(destino: "nenhum" | "todos" | string) {
+    if (!compPartido) return;
+    const { sigla, delta } = compPartido;
+    setCompPartido(null);
+    if (destino === "nenhum") {
+      executarGeracao(sigla);
+      return;
+    }
+    // Ajusta os totais dos partidos que absorvem a diferença e regenera
+    // cada um deles junto com o partido editado.
+    const alvoEditado = Math.round(Number((totais[sigla] || "").replace(/\D/g, "")) || 0);
+    const ajustes: Record<string, number> = { [sigla]: alvoEditado };
+    if (destino === "todos") {
+      const outros = porPartido.filter((p) => p.sigla !== sigla && somaTotalDe(p.sigla) > 0);
+      const somaOutros = outros.reduce((s, p) => s + somaTotalDe(p.sigla), 0);
+      for (const p of outros) {
+        const atualP = somaTotalDe(p.sigla);
+        const corte = somaOutros > 0 ? Math.round((delta * atualP) / somaOutros) : 0;
+        ajustes[p.sigla] = Math.max(0, atualP - corte);
+      }
+    } else {
+      ajustes[destino] = Math.max(0, somaTotalDe(destino) - delta);
+    }
+    let v = { ...votos };
+    let l = { ...legendaGerada };
+    const novosTotais = { ...totais };
+    for (const [sg, alvo] of Object.entries(ajustes)) {
+      novosTotais[sg] = String(alvo);
+      const r = gerarPartido(sg, v, l, alvo);
+      v = r.novoVotos;
+      l = r.novaLegenda;
+    }
+    setTotais(novosTotais);
+    setVotos(v);
+    setLegendaGerada(l);
+    setAbertos((a) => ({ ...a, [sigla]: true }));
+  }
+
+  // Edição de candidato: compensa a diferença dentro do próprio partido.
+  function registrarEdicaoCandidato(c: CandidatoEleicao) {
+    const anterior = focoAnterior.current[c.numero] ?? 0;
+    const atual = votos[chave(c)] ?? 0;
+    const delta = atual - anterior;
+    if (delta === 0) return;
+    const grupo = porPartido.find((p) => p.sigla === c.partido);
+    const outrosComVotos = grupo
+      ? grupo.lista.filter((x) => x.numero !== c.numero && (votos[chave(x)] ?? 0) > 0).length
+      : 0;
+    if (outrosComVotos === 0) return;
+    setDestinoCand("todos");
+    setCompCand({ sigla: c.partido, numero: c.numero, nome: c.nome, delta });
+  }
+
+  function aplicarCompCand(destino: "nenhum" | "todos" | string) {
+    if (!compCand) return;
+    const { sigla, numero, delta } = compCand;
+    setCompCand(null);
+    if (destino === "nenhum") return;
+    const grupo = porPartido.find((p) => p.sigla === sigla);
+    if (!grupo) return;
+    const novo = { ...votos };
+    if (destino === "todos") {
+      const outros = grupo.lista.filter(
+        (x) => x.numero !== numero && (novo[chave(x)] ?? 0) > 0
+      );
+      const somaOutros = outros.reduce((s, x) => s + (novo[chave(x)] ?? 0), 0);
+      if (somaOutros > 0) {
+        for (const x of outros) {
+          const corte = Math.round((delta * (novo[chave(x)] ?? 0)) / somaOutros);
+          novo[chave(x)] = Math.max(0, (novo[chave(x)] ?? 0) - corte);
+        }
+      }
+    } else {
+      const alvoNumero = Number(destino);
+      novo[alvoNumero] = Math.max(0, (novo[alvoNumero] ?? 0) - delta);
+    }
+    setVotos(novo);
   }
 
   function gerarTodos() {
@@ -384,6 +503,15 @@ export function CriadorEleicaoCompleta({
                 · QE <strong>{resultado.quocienteEleitoral.toLocaleString("pt-BR")}</strong> ·{" "}
                 {vagas} vagas
               </p>
+              {totalProjetado > 0 && (
+                <p className="mt-0.5 text-[10px] text-neutral-500">
+                  Válidos projetados p/ 2026 (mesmo comparecimento de 2022):{" "}
+                  {totalProjetado.toLocaleString("pt-BR")}
+                  {Math.abs(resultado.votosValidos - totalProjetado) <= totalProjetado * 0.01
+                    ? " ✓"
+                    : ""}
+                </p>
+              )}
             </div>
             {referencia && (
               <div className="rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2">
@@ -577,60 +705,153 @@ export function CriadorEleicaoCompleta({
                 </button>
               </div>
 
+              {compPartido?.sigla === p.sigla && (
+                <div className="flex flex-col gap-2 border-t border-orange-900/50 bg-orange-950/20 px-3 py-2.5">
+                  <p className="text-xs text-orange-300">
+                    O total do {p.sigla} vai{" "}
+                    {compPartido.delta > 0 ? "GANHAR" : "PERDER"}{" "}
+                    <strong>{Math.abs(compPartido.delta).toLocaleString("pt-BR")}</strong>{" "}
+                    votos. De onde {compPartido.delta > 0 ? "sai" : "para onde vai"} essa
+                    diferença?
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      value={destinoPartido}
+                      onChange={(e) => setDestinoPartido(e.target.value)}
+                      className="rounded-lg border border-neutral-700 bg-neutral-950 px-2 py-1.5 text-xs text-neutral-100"
+                    >
+                      <option value="todos">Todos os outros partidos (proporcional)</option>
+                      {porPartido
+                        .filter((x) => x.sigla !== p.sigla && somaTotalDe(x.sigla) > 0)
+                        .map((x) => (
+                          <option key={x.sigla} value={x.sigla}>
+                            {x.sigla} ({somaTotalDe(x.sigla).toLocaleString("pt-BR")})
+                          </option>
+                        ))}
+                    </select>
+                    <button
+                      onClick={() => aplicarCompPartido(destinoPartido)}
+                      className="rounded-lg bg-orange-800 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-orange-700"
+                    >
+                      Compensar e gerar
+                    </button>
+                    <button
+                      onClick={() => aplicarCompPartido("nenhum")}
+                      className="rounded-lg border border-orange-800 px-3 py-1.5 text-xs text-orange-300 transition-colors hover:border-orange-600"
+                    >
+                      Sem compensar (total geral muda)
+                    </button>
+                    <button
+                      onClick={() => setCompPartido(null)}
+                      className="rounded-lg border border-neutral-700 px-3 py-1.5 text-xs text-neutral-400"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {abertos[p.sigla] && (
                 <div className="max-h-96 overflow-y-auto border-t border-neutral-800">
+                  {compCand?.sigla === p.sigla && (
+                    <div className="flex flex-col gap-2 border-b border-orange-900/50 bg-orange-950/20 px-3 py-2.5">
+                      <p className="text-xs text-orange-300">
+                        <strong>{compCand.nome}</strong>{" "}
+                        {compCand.delta > 0 ? "ganhou" : "perdeu"}{" "}
+                        <strong>{Math.abs(compCand.delta).toLocaleString("pt-BR")}</strong>{" "}
+                        votos. {compCand.delta > 0 ? "De quem saem" : "Para quem vão"}, dentro
+                        do {p.sigla}?
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <select
+                          value={destinoCand}
+                          onChange={(e) => setDestinoCand(e.target.value)}
+                          className="max-w-full rounded-lg border border-neutral-700 bg-neutral-950 px-2 py-1.5 text-xs text-neutral-100"
+                        >
+                          <option value="todos">Demais candidatos do partido (proporcional)</option>
+                          {p.lista
+                            .filter(
+                              (x) =>
+                                x.numero !== compCand.numero && (votos[chave(x)] ?? 0) > 0
+                            )
+                            .map((x) => (
+                              <option key={x.numero} value={String(x.numero)}>
+                                {x.nome} ({(votos[chave(x)] ?? 0).toLocaleString("pt-BR")})
+                              </option>
+                            ))}
+                        </select>
+                        <button
+                          onClick={() => aplicarCompCand(destinoCand)}
+                          className="rounded-lg bg-orange-800 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-orange-700"
+                        >
+                          Compensar
+                        </button>
+                        <button
+                          onClick={() => aplicarCompCand("nenhum")}
+                          className="rounded-lg border border-orange-800 px-3 py-1.5 text-xs text-orange-300 transition-colors hover:border-orange-600"
+                        >
+                          Sem compensar
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {p.lista.map((c) => {
                     const sit = situacaoDe(c);
                     const pct = pctPesquisaDe(c);
                     return (
                       <div
                         key={c.numero}
-                        className="grid items-center gap-2 border-b border-neutral-800/50 px-3 py-1.5 text-xs last:border-0"
-                        style={{ gridTemplateColumns: "minmax(0,2fr) minmax(0,1.1fr) 7.5rem 5rem" }}
+                        className="border-b border-neutral-800/50 px-3 py-2 text-xs last:border-0"
                       >
-                        <span className="truncate text-neutral-300">
-                          {c.nome}{" "}
-                          <span className="text-[10px] text-neutral-600">{c.numero}</span>
-                          {c.situacao !== "Concorrendo" && (
-                            <span className="ml-1 rounded bg-red-950/60 px-1 py-0.5 text-[9px] text-red-400">
-                              {c.situacao}
-                            </span>
-                          )}
-                          {pct != null && (
-                            <span className="ml-1 rounded bg-emerald-950/60 px-1 py-0.5 text-[9px] text-emerald-400">
-                              pesq. {pct.toLocaleString("pt-BR")}%
-                            </span>
-                          )}
-                        </span>
-                        <span className="truncate text-[10px] text-neutral-600">
+                        <div className="flex items-center gap-2">
+                          <span className="min-w-0 flex-1 text-neutral-300">
+                            <span className="font-medium">{c.nome}</span>{" "}
+                            <span className="text-[10px] text-neutral-600">{c.numero}</span>
+                            {c.situacao !== "Concorrendo" && (
+                              <span className="ml-1 rounded bg-red-950/60 px-1 py-0.5 text-[9px] text-red-400">
+                                {c.situacao}
+                              </span>
+                            )}
+                            {pct != null && (
+                              <span className="ml-1 rounded bg-emerald-950/60 px-1 py-0.5 text-[9px] text-emerald-400">
+                                pesq. {pct.toLocaleString("pt-BR")}%
+                              </span>
+                            )}
+                          </span>
+                          <input
+                            type="number"
+                            min={0}
+                            value={votos[chave(c)] ?? ""}
+                            placeholder="0"
+                            onFocus={() => {
+                              focoAnterior.current[c.numero] = votos[chave(c)] ?? 0;
+                            }}
+                            onBlur={() => registrarEdicaoCandidato(c)}
+                            onChange={(e) =>
+                              setVotos((v) => ({
+                                ...v,
+                                [chave(c)]: Math.max(0, Number(e.target.value)),
+                              }))
+                            }
+                            className="w-24 shrink-0 rounded-lg border border-neutral-800 bg-neutral-950 px-2 py-1.5 text-right text-sm font-medium tabular-nums text-amber-300 sm:w-28"
+                          />
+                          <span className="w-16 shrink-0 text-right">
+                            {sit?.situacao === "eleito" ? (
+                              <span className="rounded bg-emerald-950/60 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400">
+                                Eleito
+                              </span>
+                            ) : sit?.situacao === "suplente" && cadeiras > 0 ? (
+                              <span className="text-[10px] text-neutral-500">
+                                {sit.ordemSuplencia}º supl.
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-neutral-700">—</span>
+                            )}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 truncate text-[10px] text-neutral-600">
                           {c.histResumo ?? "estreante"}
-                        </span>
-                        <input
-                          type="number"
-                          min={0}
-                          value={votos[chave(c)] ?? ""}
-                          placeholder="0"
-                          onChange={(e) =>
-                            setVotos((v) => ({
-                              ...v,
-                              [chave(c)]: Math.max(0, Number(e.target.value)),
-                            }))
-                          }
-                          className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-2 py-1.5 text-right text-sm font-medium tabular-nums text-amber-300"
-                        />
-                        <span className="text-right">
-                          {sit?.situacao === "eleito" ? (
-                            <span className="rounded bg-emerald-950/60 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400">
-                              Eleito
-                            </span>
-                          ) : sit?.situacao === "suplente" && cadeiras > 0 ? (
-                            <span className="text-[10px] text-neutral-500">
-                              {sit.ordemSuplencia}º supl.
-                            </span>
-                          ) : (
-                            <span className="text-[10px] text-neutral-700">—</span>
-                          )}
-                        </span>
+                        </p>
                       </div>
                     );
                   })}
