@@ -34,6 +34,32 @@ export async function GET() {
   } catch (e) {
     out.migError = e instanceof Error ? e.message : String(e);
   }
+  // Sonda de desempenho: mede no próprio servidor a consulta da tela
+  // "Votos por Município" para o maior caso (Belém, Dep. Estadual 2022)
+  // e confere se o índice por município realmente existe no banco.
+  try {
+    const idx = await prisma.$queryRawUnsafe<{ name: string }[]>(
+      "SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='Resultado'"
+    );
+    out.indicesResultado = idx.map((i) => i.name);
+    const belem = await prisma.municipio.findFirst({ where: { nome: "Belém" }, select: { id: true } });
+    const cargo = await prisma.cargo.findFirst({
+      where: { nome: "Deputado Estadual", municipioId: null, eleicao: { ano: 2022 } },
+      select: { id: true },
+    });
+    if (belem && cargo) {
+      const t0 = Date.now();
+      const grupos = await prisma.resultado.groupBy({
+        by: ["candidatoId"],
+        where: { turno: 1, candidato: { cargoId: cargo.id }, municipioId: belem.id },
+        _sum: { votos: true },
+      });
+      out.sondaBelemMs = Date.now() - t0;
+      out.sondaBelemLinhas = grupos.length;
+    }
+  } catch (e) {
+    out.sondaError = e instanceof Error ? e.message : String(e);
+  }
   try {
     if (fs.existsSync("/data/migrate.log")) {
       out.migrateLog = fs.readFileSync("/data/migrate.log", "utf-8").slice(-1500);
