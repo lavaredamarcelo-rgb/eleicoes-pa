@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { distribuirVagas } from "@/lib/simulacaoPartido";
+import { BotaoPdfPost } from "@/components/VisorPdf";
 
 type Candidato = {
   id: string;
@@ -172,9 +173,57 @@ export function SimuladorTransferencia({
         </>
       )}
 
-      <p className="text-xs text-neutral-600">
-        Projeção hipotética — nada é alterado no sistema.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-xs text-neutral-600">
+          Projeção hipotética — nada é alterado no sistema.
+        </p>
+        {resultado && origem && destino && (
+          <BotaoPdfPost
+            url="/api/pdf/simulacao-livre"
+            label="PDF da simulação"
+            titulo="Simulação de transferência de votos"
+            nomeArquivo="simulacao-transferencia.pdf"
+            payload={() => {
+              const fmt = (n: number) => n.toLocaleString("pt-BR");
+              return {
+                titulo: "Simulação de transferência de votos",
+                subtitulo: `${origem.nome} (${origem.partidoSigla}) desiste e apoia ${destino.nome} (${destino.partidoSigla}) — fidelidade de ${pct}%`,
+                stats: [
+                  { rotulo: "Votos transferidos", valor: fmt(resultado.transferidos) },
+                  { rotulo: `${destino.nome} ficaria com`, valor: fmt(resultado.votosDestino) },
+                  {
+                    rotulo: "Situação projetada",
+                    valor: resultado.destinoEleito ? "ELEITO" : "Não eleito",
+                  },
+                  { rotulo: "QE antes → depois", valor: `${fmt(resultado.qeAntes)} → ${fmt(resultado.qeDepois)}` },
+                ],
+                secoes: [
+                  {
+                    titulo: "Cadeiras por partido (antes → depois)",
+                    colunas: ["Partido", "Antes", "Depois", "Diferença"],
+                    linhas: partidos
+                      .filter(
+                        (p) =>
+                          (resultado.antes.get(p.partidoId) ?? 0) !== 0 ||
+                          (resultado.depois.get(p.partidoId) ?? 0) !== 0
+                      )
+                      .map((p) => {
+                        const va = resultado.antes.get(p.partidoId) ?? 0;
+                        const vd = resultado.depois.get(p.partidoId) ?? 0;
+                        const d = vd - va;
+                        return [p.sigla, String(va), String(vd), d === 0 ? "—" : d > 0 ? `+${d}` : String(d)];
+                      }),
+                  },
+                ],
+                observacoes: [
+                  `${destino.nome} ficaria em ${resultado.posicao}º lugar dentro do ${destino.partidoSigla}, que teria ${resultado.vagasDestino} vaga(s).`,
+                  `Fidelidade de ${pct}%: ${fmt(resultado.transferidos)} dos ${fmt(origem.votos)} votos de ${origem.nome} migram; o restante vira abstenção. O quociente eleitoral é recalculado e as cadeiras redistribuídas (quociente partidário + maiores médias).`,
+                ],
+              };
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }

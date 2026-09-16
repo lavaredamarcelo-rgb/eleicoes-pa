@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { BotaoPdfPost } from "@/components/VisorPdf";
 
 // Projeta o quociente eleitoral a partir do comparecimento: quantos votos
 // válidos a eleição teria com X% dos eleitores aptos votando, e quantos
@@ -75,6 +76,43 @@ export function SimuladorComparecimento({
           partido precisa disso para uma vaga direta; candidatos individuais se elegem com menos,
           pela soma da legenda.
         </p>
+      </div>
+
+      <div className="flex justify-end">
+        <BotaoPdfPost
+          url="/api/pdf/simulacao-livre"
+          label="PDF da simulação"
+          titulo="Projeção por comparecimento"
+          nomeArquivo="simulacao-comparecimento.pdf"
+          payload={() => {
+            const fmt = (n: number) => n.toLocaleString("pt-BR");
+            return {
+              titulo: "Projeção do quociente por comparecimento",
+              subtitulo: `Base: ${fmt(eleitores)} eleitores aptos (${anoEleitorado})`,
+              stats: [
+                { rotulo: "QE projetado", valor: fmt(projecao.qe) },
+                { rotulo: "Votos válidos projetados", valor: fmt(projecao.votosValidos) },
+                { rotulo: "Comparecimento válido", valor: `${pct}%` },
+                { rotulo: "Vagas em disputa", valor: fmt(vagasSim) },
+              ],
+              secoes: [
+                {
+                  titulo: "Comparativo com a eleição real",
+                  colunas: ["Indicador", "Real", "Projetado"],
+                  linhas: [
+                    ["Votos válidos", fmt(votosValidosReais), fmt(projecao.votosValidos)],
+                    ["% dos eleitores aptos", `${pctReal}%`, `${pct}%`],
+                    ["Quociente eleitoral", fmt(quocienteReal), fmt(projecao.qe)],
+                    ["Vagas", fmt(vagas), fmt(vagasSim)],
+                  ],
+                },
+              ],
+              observacoes: [
+                "O quociente eleitoral projetado indica quantos votos um partido precisa para uma vaga direta; candidatos individuais podem se eleger com menos, pela soma da legenda.",
+              ],
+            };
+          }}
+        />
       </div>
     </div>
   );

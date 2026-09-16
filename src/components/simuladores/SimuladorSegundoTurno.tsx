@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { BotaoPdfPost } from "@/components/VisorPdf";
 
 type Candidato = { id: string; nome: string; partidoSigla: string; votos: number };
 
@@ -60,12 +61,51 @@ export function SimuladorSegundoTurno({ candidatos }: { candidatos: Candidato[] 
             {resultado?.totalB.toLocaleString("pt-BR")} ({(100 - pctA).toFixed(1)}%)
           </span>
         </div>
-        <p className="mt-2 text-xs text-neutral-500">
-          Vencedor projetado:{" "}
-          <span className="font-medium text-neutral-200">
-            {pctA >= 50 ? a.nome : b.nome}
-          </span>
-        </p>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-neutral-500">
+            Vencedor projetado:{" "}
+            <span className="font-medium text-neutral-200">
+              {pctA >= 50 ? a.nome : b.nome}
+            </span>
+          </p>
+          <BotaoPdfPost
+            url="/api/pdf/simulacao-livre"
+            label="PDF da simulação"
+            titulo="Simulação de 2º turno"
+            nomeArquivo="simulacao-2turno.pdf"
+            payload={() => {
+              const fmt = (n: number) => Math.round(n).toLocaleString("pt-BR");
+              return {
+                titulo: "Simulação de 2º turno",
+                subtitulo: `${a.nome} (${a.partidoSigla}) × ${b.nome} (${b.partidoSigla})`,
+                stats: [
+                  { rotulo: a.nome, valor: `${fmt(resultado?.totalA ?? 0)} (${pctA.toFixed(1)}%)` },
+                  { rotulo: b.nome, valor: `${fmt(resultado?.totalB ?? 0)} (${(100 - pctA).toFixed(1)}%)` },
+                  { rotulo: "Vencedor projetado", valor: pctA >= 50 ? a.nome : b.nome },
+                  { rotulo: "Abstenção aplicada", valor: `${abstencao}%` },
+                ],
+                secoes: [
+                  {
+                    titulo: "Destino dos votos de cada eliminado",
+                    colunas: ["Candidato eliminado", "Votos no 1º turno", `% para ${a.nome.split(" ")[0]}`, `% para ${b.nome.split(" ")[0]}`],
+                    linhas: eliminados.map((e) => {
+                      const pct = destinoA[e.id] ?? 50;
+                      return [
+                        `${e.nome} (${e.partidoSigla})`,
+                        fmt(e.votos),
+                        `${pct}%`,
+                        `${100 - pct}%`,
+                      ];
+                    }),
+                  },
+                ],
+                observacoes: [
+                  `Cenário hipotético: os dois mais votados do 1º turno seguem; os votos de cada eliminado migram conforme os percentuais definidos, com ${abstencao}% de abstenção sobre esses votos.`,
+                ],
+              };
+            }}
+          />
+        </div>
       </div>
 
       <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { BotaoPdfPost } from "@/components/VisorPdf";
 
 export function CalculadoraCenarios({
   vagasIniciais,
@@ -266,11 +267,67 @@ export function CalculadoraCenarios({
         )}
       </section>
 
-      <p className="text-xs text-neutral-600">
-        Calculadora livre, independente dos dados cadastrados no sistema — use para simular
-        qualquer cenário hipotético de eleição (vagas, votação total e crescimento de um
-        candidato ou partido específico).
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="flex-1 text-xs text-neutral-600">
+          Calculadora livre, independente dos dados cadastrados no sistema — use para simular
+          qualquer cenário hipotético de eleição (vagas, votação total e crescimento de um
+          candidato ou partido específico).
+        </p>
+        <BotaoPdfPost
+          url="/api/pdf/simulacao-livre"
+          label="PDF da simulação"
+          titulo="Projeção de cenário"
+          nomeArquivo="projecao-cenario.pdf"
+          payload={() => {
+            const fmt = (n: number) => n.toLocaleString("pt-BR");
+            return {
+              titulo: "Projeção de cenário — Quociente eleitoral",
+              subtitulo: rotuloReferencia
+                ? `Referência: ${rotuloReferencia}`
+                : "Cenário livre (valores informados à mão)",
+              stats: [
+                { rotulo: "Quociente eleitoral", valor: fmt(quocienteEleitoral) },
+                { rotulo: "Vagas em disputa", valor: fmt(vagas) },
+                { rotulo: "Votos válidos", valor: fmt(votosValidos) },
+                {
+                  rotulo: entidade === "candidato" ? "Votos do candidato" : "Votos do partido",
+                  valor: fmt(votosProjetados),
+                },
+              ],
+              secoes: [
+                {
+                  titulo: "Parâmetros do cenário",
+                  colunas: ["Parâmetro", "Valor"],
+                  linhas: [
+                    ["Vagas em disputa", fmt(vagas)],
+                    ["Votos válidos totais", fmt(votosValidos)],
+                    ["QE = votos válidos ÷ vagas", `${fmt(votosValidos)} ÷ ${vagas} = ${fmt(quocienteEleitoral)}`],
+                    [
+                      entidade === "candidato" ? "Votos atuais do candidato" : "Votos totais do partido",
+                      fmt(votosAtuais),
+                    ],
+                    ["Crescimento projetado", `${crescimento > 0 ? "+" : ""}${crescimento}%`],
+                    ["Votos projetados", fmt(votosProjetados)],
+                    ...(entidade === "partido"
+                      ? [["Vagas diretas (quociente partidário)", fmt(vagasPartido)]]
+                      : []),
+                  ],
+                },
+              ],
+              observacoes: [
+                entidade === "candidato"
+                  ? atingeQuociente
+                    ? "Com esses votos, o candidato atingiria o quociente eleitoral sozinho."
+                    : `Faltam ${fmt(faltam)} votos para o candidato atingir o quociente eleitoral direto (ainda pode ser eleito por sobras, dependendo dos demais partidos).`
+                  : vagasPartido > 0
+                    ? `Com ${fmt(votosProjetados)} votos, o partido conquistaria ${vagasPartido} vaga(s) direta(s) pelo quociente partidário — e ainda pode ganhar mais pelas sobras.`
+                    : `Com esses votos, o partido não atinge o quociente eleitoral — faltam ${fmt(faltam)} votos para a primeira vaga direta.`,
+                "Quociente eleitoral (art. 106, Código Eleitoral): votos válidos divididos pelas vagas em disputa. Quociente partidário (art. 107): votos do partido divididos pelo QE, arredondado para baixo.",
+              ],
+            };
+          }}
+        />
+      </div>
     </div>
   );
 }

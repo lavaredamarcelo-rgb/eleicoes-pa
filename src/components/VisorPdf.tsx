@@ -153,6 +153,72 @@ export function VisorPdf({
   );
 }
 
+// Botão + visor para PDFs gerados por POST: monta o payload na hora do
+// clique (função), envia à rota e abre o visor. Usado pelos simuladores,
+// cujo resultado vive só no navegador.
+export function BotaoPdfPost({
+  url,
+  payload,
+  label = "Baixar PDF",
+  titulo,
+  nomeArquivo = "simulacao.pdf",
+}: {
+  url: string;
+  payload: () => unknown;
+  label?: string;
+  titulo?: string;
+  nomeArquivo?: string;
+}) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState(false);
+
+  async function abrir() {
+    if (carregando) return;
+    setCarregando(true);
+    setErro(false);
+    try {
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload()),
+      });
+      if (!resp.ok) throw new Error();
+      setBlobUrl(URL.createObjectURL(await resp.blob()));
+    } catch {
+      setErro(true);
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  function fechar() {
+    if (blobUrl) URL.revokeObjectURL(blobUrl);
+    setBlobUrl(null);
+  }
+
+  return (
+    <>
+      <button
+        onClick={abrir}
+        disabled={carregando}
+        className="inline-flex items-center gap-2 rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-xs font-medium text-neutral-300 transition-colors duration-150 hover:border-neutral-600 hover:bg-neutral-800 disabled:opacity-50"
+      >
+        <FileDown size={14} />
+        {carregando ? "Gerando…" : erro ? "Falhou — tentar de novo" : label}
+      </button>
+      {blobUrl && (
+        <VisorPdf
+          titulo={titulo ?? label}
+          blobUrl={blobUrl}
+          nomeArquivo={nomeArquivo}
+          aoFechar={fechar}
+        />
+      )}
+    </>
+  );
+}
+
 // Botão + visor em um só: busca o PDF de uma URL GET e abre o visor.
 export function BotaoPdf({
   href,
