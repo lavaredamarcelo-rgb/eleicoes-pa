@@ -69,6 +69,139 @@ export function MapaParaense({
   const [tooltipPos, setTooltipPos] = useState<{ left: number; top: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // ---- Zoom e navegação no mapa (viewBox dinâmico) ----
+  const base = useMemo(() => {
+    const [x, y, w, h] = mapaData.viewBox.split(" ").map(Number);
+    return { x, y, w, h };
+  }, []);
+  const [vb, setVb] = useState(base);
+  const vbRef = useRef(vb);
+  const zoomFator = base.w / vb.w;
+
+  const ponteiros = useRef(new Map<number, { x: number; y: number }>());
+  const pinchInicial = useRef<{
+    dist: number;
+    vb: { x: number; y: number; w: number; h: number };
+    mx: number;
+    my: number;
+  } | null>(null);
+  // Distância arrastada desde o toque: acima do limiar, o "clique" que o
+  // navegador dispara ao soltar era um arrasto/pinça, não uma seleção.
+  const arrastou = useRef(0);
+
+  function clampVb(nv: { x: number; y: number; w: number; h: number }) {
+    const w = Math.min(base.w, Math.max(base.w / 8, nv.w));
+    const h = w * (base.h / base.w);
+    const x = Math.min(base.x + base.w - w, Math.max(base.x, nv.x));
+    const y = Math.min(base.y + base.h - h, Math.max(base.y, nv.y));
+    return { x, y, w, h };
+  }
+
+  function aplicarVb(nv: { x: number; y: number; w: number; h: number }) {
+    const c = clampVb(nv);
+    vbRef.current = c;
+    setVb(c);
+  }
+
+  function zoomEm(fator: number, clientX?: number, clientY?: number) {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const v = vbRef.current;
+    const cx = clientX ?? rect.left + rect.width / 2;
+    const cy = clientY ?? rect.top + rect.height / 2;
+    const fx = (cx - rect.left) / rect.width;
+    const fy = (cy - rect.top) / rect.height;
+    const px = v.x + fx * v.w;
+    const py = v.y + fy * v.h;
+    const w = Math.min(base.w, Math.max(base.w / 8, v.w / fator));
+    const h = w * (base.h / base.w);
+    aplicarVb({ x: px - fx * w, y: py - fy * h, w, h });
+  }
+
+  function onPointerDown(e: React.PointerEvent<SVGSVGElement>) {
+    // Com zoom ativo, o arrasto do mouse pana o mapa — bloqueia a seleção de
+    // texto da página durante o gesto (preventDefault aqui suprimiria o click).
+    if (e.pointerType === "mouse" && base.w / vbRef.current.w > 1.01) {
+      document.body.style.userSelect = "none";
+    }
+    ponteiros.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (ponteiros.current.size === 1) arrastou.current = 0;
+    if (ponteiros.current.size === 2) {
+      const [a, b] = [...ponteiros.current.values()];
+      pinchInicial.current = {
+        dist: Math.hypot(a.x - b.x, a.y - b.y),
+        vb: vbRef.current,
+        mx: (a.x + b.x) / 2,
+        my: (a.y + b.y) / 2,
+      };
+    }
+  }
+
+  function onPointerMove(e: React.PointerEvent<SVGSVGElement>) {
+    const ant = ponteiros.current.get(e.pointerId);
+    if (!ant) return;
+    ponteiros.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    if (ponteiros.current.size === 2 && pinchInicial.current) {
+      // Pinça: zoom em torno do ponto médio inicial dos dois dedos.
+      const [a, b] = [...ponteiros.current.values()];
+      const p0 = pinchInicial.current;
+      const fator = Math.hypot(a.x - b.x, a.y - b.y) / p0.dist;
+      const w = Math.min(base.w, Math.max(base.w / 8, p0.vb.w / fator));
+      const h = w * (base.h / base.w);
+      const fx = (p0.mx - rect.left) / rect.width;
+      const fy = (p0.my - rect.top) / rect.height;
+      const px = p0.vb.x + fx * p0.vb.w;
+      const py = p0.vb.y + fy * p0.vb.h;
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2;
+      arrastou.current = 99;
+      aplicarVb({
+        x: px - ((mx - rect.left) / rect.width) * w,
+        y: py - ((my - rect.top) / rect.height) * h,
+        w,
+        h,
+      });
+      return;
+    }
+
+    if (ponteiros.current.size === 1 && base.w / vbRef.current.w > 1.01) {
+      // Um dedo (ou mouse pressionado) com zoom ativo: arrasta o mapa.
+      if (e.pointerType === "mouse" && e.buttons !== 1) return;
+      const v = vbRef.current;
+      arrastou.current += Math.hypot(e.clientX - ant.x, e.clientY - ant.y);
+      aplicarVb({
+        ...v,
+        x: v.x - ((e.clientX - ant.x) / rect.width) * v.w,
+        y: v.y - ((e.clientY - ant.y) / rect.height) * v.h,
+      });
+    }
+  }
+
+  function onPointerFim(e: React.PointerEvent<SVGSVGElement>) {
+    ponteiros.current.delete(e.pointerId);
+    if (ponteiros.current.size < 2) pinchInicial.current = null;
+    if (ponteiros.current.size === 0) document.body.style.userSelect = "";
+  }
+
+  // Zoom com a rolagem do mouse segurando Ctrl/Cmd (e pinça no trackpad,
+  // que os navegadores entregam como wheel+ctrlKey). Listener nativo porque
+  // o React registra wheel como passivo e o preventDefault não funcionaria.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      zoomEm(e.deltaY < 0 ? 1.25 : 0.8, e.clientX, e.clientY);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Telas de toque (sem mouse): o 1º toque mostra as informações e o 2º
   // toque — no mesmo município ou no botão do balão — abre os detalhes,
   // reproduzindo o "passar o mouse" do computador.
@@ -104,6 +237,12 @@ export function MapaParaense({
   }
 
   function handleToque(m: MunicipioMapa, e: React.MouseEvent) {
+    // Soltar o dedo/mouse após arrastar ou pinçar dispara um "click" do
+    // navegador — não é uma seleção de município.
+    if (arrastou.current > 8) {
+      arrastou.current = 0;
+      return;
+    }
     if (temHover) {
       // Com mouse, o clique abre direto (o tooltip já apareceu no hover).
       navegar(m);
@@ -175,9 +314,17 @@ export function MapaParaense({
         className="relative overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-950"
       >
         <svg
-          viewBox={mapaData.viewBox}
-          className="w-full touch-manipulation"
+          viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`}
+          className="w-full select-none"
+          // Sem zoom, o dedo continua rolando a página normalmente (pan-y);
+          // com zoom, o mapa assume todos os gestos (arrastar/pinçar).
+          style={{ touchAction: zoomFator > 1.01 ? "none" : "pan-y" }}
           onMouseMove={handleMouseMove}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerFim}
+          onPointerCancel={onPointerFim}
+          onPointerLeave={onPointerFim}
         >
           {municipios.map((m) => {
             const path = m.codigoIbge ? pathByCodigo.get(m.codigoIbge) : undefined;
@@ -189,7 +336,7 @@ export function MapaParaense({
                 d={path}
                 fill={corDe(m)}
                 stroke={isHover ? "#f8fafc" : "#0a0a0a"}
-                strokeWidth={isHover ? 2 : 0.5}
+                strokeWidth={(isHover ? 2 : 0.5) / zoomFator}
                 className="cursor-pointer transition-[fill,stroke] duration-150"
                 onMouseEnter={temHover ? () => setHover(m) : undefined}
                 onMouseLeave={
@@ -200,6 +347,32 @@ export function MapaParaense({
             );
           })}
         </svg>
+
+        <div className="absolute right-2 top-2 z-10 flex flex-col gap-1.5">
+          <button
+            onClick={() => zoomEm(1.6)}
+            aria-label="Aproximar"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-700 bg-neutral-900/90 text-lg font-bold text-neutral-200 backdrop-blur active:bg-neutral-800"
+          >
+            +
+          </button>
+          <button
+            onClick={() => zoomEm(1 / 1.6)}
+            aria-label="Afastar"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-700 bg-neutral-900/90 text-lg font-bold text-neutral-200 backdrop-blur active:bg-neutral-800"
+          >
+            −
+          </button>
+          {zoomFator > 1.01 && (
+            <button
+              onClick={() => aplicarVb(base)}
+              aria-label="Ver o mapa inteiro"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-700 bg-neutral-900/90 text-[11px] font-semibold text-amber-400 backdrop-blur active:bg-neutral-800"
+            >
+              1×
+            </button>
+          )}
+        </div>
 
         {hover && tooltipPos && (
           <div
@@ -284,6 +457,9 @@ export function MapaParaense({
       </div>
 
       <p className="text-center text-xs text-neutral-600">
+        {temHover
+          ? "Use + e − (ou Ctrl + rolagem) para aproximar municípios pequenos; com zoom, arraste para mover o mapa. "
+          : "Use + e − (ou a pinça com dois dedos) para aproximar municípios pequenos; com zoom, arraste para mover o mapa. "}
         {temHover
           ? comVotos
             ? "Passe o mouse para ver as informações e clique para abrir a disputa no município. Cor mais clara = mais votos."
