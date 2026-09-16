@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 type Opcao = { id: string; nome: string };
 
@@ -20,31 +19,22 @@ export function SeletorVotosMunicipio({
   regiaoSel: string;
   municipioSel: string;
 }) {
-  const router = useRouter();
-  const [pendente, startTransition] = useTransition();
-
-  // Estado local: reflete a escolha do usuário na hora, sem esperar a
-  // navegação do servidor terminar (evita perder o cargo quando o usuário
-  // seleciona município logo em seguida, com o servidor ainda respondendo).
+  // Estado local para os selects responderem na hora; a navegação em si é
+  // uma carga completa de página (window.location) — a navegação client-side
+  // do router ficava pendurada em "Carregando" de forma intermitente no
+  // aparelho, e a carga completa nunca pendura.
   const [cargo, setCargo] = useState(cargoSel);
   const [regiao, setRegiao] = useState(regiaoSel);
   const [municipio, setMunicipio] = useState(municipioSel);
-
-  // Sincroniza quando a URL muda por fora (voltar/avançar do navegador).
-  useEffect(() => {
-    setCargo(cargoSel);
-    setRegiao(regiaoSel);
-    setMunicipio(municipioSel);
-  }, [cargoSel, regiaoSel, municipioSel]);
+  const [pendente, setPendente] = useState(false);
 
   const navegar = (c: string, r: string, m: string) => {
     const p = new URLSearchParams();
     if (c) p.set("cargo", c);
     if (r) p.set("regiao", r);
     if (m) p.set("municipio", m);
-    startTransition(() => {
-      router.push(`/votos-municipio?${p.toString()}`);
-    });
+    setPendente(true);
+    window.location.assign(`/votos-municipio?${p.toString()}`);
   };
 
   const municipiosVisiveis = regiao
@@ -61,6 +51,7 @@ export function SeletorVotosMunicipio({
           <label className="mb-1 block text-xs text-neutral-500">Cargo</label>
           <select
             value={cargo}
+            disabled={pendente}
             onChange={(e) => {
               const v = e.target.value;
               setCargo(v);
@@ -80,6 +71,7 @@ export function SeletorVotosMunicipio({
           <label className="mb-1 block text-xs text-neutral-500">Região</label>
           <select
             value={regiao}
+            disabled={pendente}
             onChange={(e) => {
               const v = e.target.value;
               setRegiao(v);
@@ -100,6 +92,7 @@ export function SeletorVotosMunicipio({
           <label className="mb-1 block text-xs text-neutral-500">Município</label>
           <select
             value={municipio}
+            disabled={pendente}
             onChange={(e) => {
               const v = e.target.value;
               setMunicipio(v);
