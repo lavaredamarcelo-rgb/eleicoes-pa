@@ -46,8 +46,10 @@ export function CriadorEleicaoCompleta({
   curvas,
   curvaGlobal,
   legendaShare,
+  legendaAnterior = {},
   referencia,
   totalProjetado,
+  cenarioInicialId = null,
 }: {
   rotulo: string;
   cargoNome: string;
@@ -60,8 +62,10 @@ export function CriadorEleicaoCompleta({
   curvas: Record<string, number[]>;
   curvaGlobal: number[];
   legendaShare: Record<string, number>;
+  legendaAnterior?: Record<string, number>;
   referencia: { ano: number; validos: number; qe: number } | null;
   totalProjetado: number;
+  cenarioInicialId?: string | null;
 }) {
   const router = useRouter();
 
@@ -95,11 +99,34 @@ export function CriadorEleicaoCompleta({
     for (const p of porPartido) t[p.sigla] = p.sugestao > 0 ? String(p.sugestao) : "";
     return t;
   });
-  const [votos, setVotos] = useState<Record<number, number>>({});
-  const [legendaGerada, setLegendaGerada] = useState<Record<string, number>>({});
+  // Cenário vindo do link "Editar" da aba Cenários: já abre carregado.
+  const cenarioLink = cenarioInicialId
+    ? cenariosSalvos.find((c) => c.id === cenarioInicialId) ?? null
+    : null;
+  const votosIniciais = (() => {
+    const v: Record<number, number> = {};
+    if (cenarioLink) {
+      for (const [k, val] of Object.entries(cenarioLink.votos)) {
+        if (!k.startsWith("legenda:")) v[Number(k)] = val;
+      }
+    }
+    return v;
+  })();
+  const legendaInicial = (() => {
+    const l: Record<string, number> = {};
+    if (cenarioLink) {
+      for (const [k, val] of Object.entries(cenarioLink.votos)) {
+        if (k.startsWith("legenda:")) l[k.slice(8)] = val;
+      }
+    }
+    return l;
+  })();
+
+  const [votos, setVotos] = useState<Record<number, number>>(votosIniciais);
+  const [legendaGerada, setLegendaGerada] = useState<Record<string, number>>(legendaInicial);
   const [abertos, setAbertos] = useState<Record<string, boolean>>({});
-  const [titulo, setTitulo] = useState("");
-  const [cenarioAberto, setCenarioAberto] = useState<string | null>(null);
+  const [titulo, setTitulo] = useState(cenarioLink?.titulo ?? "");
+  const [cenarioAberto, setCenarioAberto] = useState<string | null>(cenarioLink?.id ?? null);
   const [salvando, setSalvando] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [gerandoPdf, setGerandoPdf] = useState(false);
@@ -792,6 +819,42 @@ export function CriadorEleicaoCompleta({
                 </div>
               )}
 
+              {abertos[p.sigla] && (
+                <div className="flex flex-wrap items-center gap-2 border-t border-sky-900/40 bg-sky-950/10 px-3 py-2">
+                  <span className="text-xs text-sky-300">Votos de legenda do {p.sigla}:</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={legendaGerada[p.sigla] ?? ""}
+                    placeholder="0"
+                    onChange={(e) =>
+                      setLegendaGerada((l) => ({
+                        ...l,
+                        [p.sigla]: Math.max(0, Number(e.target.value)),
+                      }))
+                    }
+                    className="w-28 rounded-lg border border-neutral-700 bg-neutral-950 px-2 py-1.5 text-right text-xs font-medium tabular-nums text-sky-300"
+                  />
+                  {(legendaAnterior[p.sigla] ?? 0) > 0 &&
+                    (legendaGerada[p.sigla] ?? 0) !== Math.round(legendaAnterior[p.sigla]) && (
+                      <button
+                        onClick={() =>
+                          setLegendaGerada((l) => ({
+                            ...l,
+                            [p.sigla]: Math.round(legendaAnterior[p.sigla]),
+                          }))
+                        }
+                        className="rounded-lg border border-sky-800 px-2 py-1 text-[11px] text-sky-300 transition-colors hover:border-sky-600"
+                      >
+                        Usar da última eleição (
+                        {Math.round(legendaAnterior[p.sigla]).toLocaleString("pt-BR")})
+                      </button>
+                    )}
+                  <span className="text-[10px] text-neutral-600">
+                    Somam no total do partido e no QE, sem candidato nominal.
+                  </span>
+                </div>
+              )}
               {abertos[p.sigla] && (
                 <div className="max-h-96 overflow-y-auto border-t border-neutral-800">
                   {p.lista.map((c) => {

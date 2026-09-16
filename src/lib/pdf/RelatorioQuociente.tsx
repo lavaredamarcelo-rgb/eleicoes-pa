@@ -16,6 +16,10 @@ export function RelatorioQuociente({ resultado }: { resultado: Proporcional }) {
     >
       <View style={styles.statsRow}>
         <StatBox label="Votos válidos" value={resultado.votosValidos.toLocaleString("pt-BR")} />
+        <StatBox
+          label="De legenda"
+          value={resultado.votosLegendaTotal.toLocaleString("pt-BR")}
+        />
         <StatBox label="Vagas" value={String(resultado.cargo.vagas)} />
         <StatBox
           label="Quociente eleitoral"
@@ -25,19 +29,24 @@ export function RelatorioQuociente({ resultado }: { resultado: Proporcional }) {
 
       <SectionTitle>Quociente partidário</SectionTitle>
       <View style={styles.table}>
-        <TableHeader columns={["Partido", "Votos", "%", "Vagas"]} />
+        <TableHeader columns={["Partido", "Votos", "Legenda", "%", "Vagas"]} />
         {resultado.partidos.map((p) => (
           <TableRow
             key={p.partidoId}
             cells={[
               p.sigla,
               p.votos.toLocaleString("pt-BR"),
+              p.votosLegenda > 0 ? p.votosLegenda.toLocaleString("pt-BR") : "—",
               `${p.percentual.toFixed(1)}%`,
               String(p.quocientePartidario),
             ]}
           />
         ))}
       </View>
+      <Text style={styles.paragraph}>
+        Votos de legenda: dados na sigla do partido, sem candidato nominal — somam nos votos
+        válidos e no quociente partidário (art. 106 e 107 do Código Eleitoral).
+      </Text>
 
       {[...resultado.partidos]
         .sort((a, b) => b.cadeirasOficiais - a.cadeirasOficiais || b.votos - a.votos)

@@ -25,9 +25,10 @@ const MODOS = [
 export default async function CriarCenarioPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cargo?: string; modo?: string }>;
+  searchParams: Promise<{ cargo?: string; modo?: string; cenario?: string }>;
 }) {
-  const { cargo: cargoId, modo: modoParam } = await searchParams;
+  const { cargo: cargoParam, modo: modoParam, cenario: cenarioParam } = await searchParams;
+  let cargoId = cargoParam;
   const modo = modoParam === "meta" ? "meta" : "eleicao";
   const cargosReais = await getCargosParaSimulacao({});
 
@@ -49,6 +50,19 @@ export default async function CriarCenarioPage({
       municipioNome: null,
     }));
   const cargos = [...cargosFuturos, ...cargosReais];
+
+  // Link direto "Editar" vindo da aba Cenários: ?cenario=<id> abre o
+  // cenário salvo já na disputa certa (resolvida pelo cargoNome gravado).
+  if (cenarioParam && !cargoId) {
+    const sessaoLink = await verifySession();
+    const cen = await prisma.cenarioEleicao.findUnique({ where: { id: cenarioParam } });
+    if (cen && cen.userId === String(sessaoLink.userId)) {
+      const alvo =
+        cargosFuturos.find((c) => c.nome.startsWith(cen.cargoNome)) ??
+        cargos.find((c) => c.nome === cen.cargoNome && !c.municipioNome);
+      if (alvo) cargoId = alvo.id;
+    }
+  }
 
   const carga = cargoId ? await getDadosSimulacaoCargoOuProjetado(cargoId) : null;
   const dados = carga?.dados ?? null;
@@ -84,6 +98,7 @@ export default async function CriarCenarioPage({
   let curvasEleicao: Record<string, number[]> = {};
   let curvaGlobalEleicao: number[] = [];
   let legendaShareEleicao: Record<string, number> = {};
+  let legendaAnteriorEleicao: Record<string, number> = {};
   let referenciaEleicao: { ano: number; validos: number; qe: number } | null = null;
   let totalProjetadoEleicao = 0;
   let cenariosEleicaoSalvos: {
@@ -213,6 +228,7 @@ export default async function CriarCenarioPage({
       const sigla = siglaPorId.get(pid);
       if (sigla) legendaPorSigla[sigla] = (legendaPorSigla[sigla] ?? 0) + (v as number);
     }
+    legendaAnteriorEleicao = legendaPorSigla;
     const histPorSigla: Record<string, number> = {};
     for (const c of candidatosEleicao) {
       if (c.situacao === "Concorrendo" && c.histVotos > 0) {
@@ -417,8 +433,10 @@ export default async function CriarCenarioPage({
                 curvas={curvasEleicao}
                 curvaGlobal={curvaGlobalEleicao}
                 legendaShare={legendaShareEleicao}
+                legendaAnterior={legendaAnteriorEleicao}
                 referencia={referenciaEleicao}
                 totalProjetado={totalProjetadoEleicao}
+                cenarioInicialId={cenarioParam ?? null}
               />
             ) : (
               <p className="rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-3 text-xs text-neutral-500">

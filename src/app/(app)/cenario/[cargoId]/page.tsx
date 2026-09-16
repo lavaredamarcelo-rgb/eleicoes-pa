@@ -84,6 +84,35 @@ export default async function CenarioDetailPage({
           />
         </section>
 
+        {resultado.votosLegendaTotal > 0 && (
+          <section className="rounded-xl border border-sky-900/50 bg-sky-950/10 px-4 py-3">
+            <h2 className="text-sm font-medium text-sky-300">
+              Votos de legenda —{" "}
+              {resultado.votosLegendaTotal.toLocaleString("pt-BR")} no total
+            </h2>
+            <p className="mt-0.5 text-[11px] text-neutral-500">
+              Votos dados na sigla, sem candidato nominal — contam nos válidos e no quociente
+              partidário (art. 106 e 107).
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {resultado.partidos
+                .filter((p) => p.votosLegenda > 0)
+                .sort((a, b) => b.votosLegenda - a.votosLegenda)
+                .map((p) => (
+                  <span
+                    key={p.partidoId}
+                    className="rounded-lg border border-sky-900/50 bg-neutral-950 px-2 py-1 text-xs text-neutral-300"
+                  >
+                    {p.sigla}{" "}
+                    <strong className="text-sky-400">
+                      {p.votosLegenda.toLocaleString("pt-BR")}
+                    </strong>
+                  </span>
+                ))}
+            </div>
+          </section>
+        )}
+
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-medium text-neutral-400">Eleitos — por ordem de votação</h2>
           {resultado.candidatosComSituacao

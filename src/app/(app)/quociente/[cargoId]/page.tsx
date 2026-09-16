@@ -113,6 +113,16 @@ export default async function QuocienteDetailPage({
                 <p className="font-medium">{p.sigla}</p>
                 <p className="text-xs text-neutral-500">
                   {p.votos.toLocaleString("pt-BR")} votos · {p.percentual.toFixed(1)}%
+                  {p.votosLegenda > 0 && (
+                    <span className="text-neutral-600">
+                      {" "}
+                      ({(p.votos - p.votosLegenda).toLocaleString("pt-BR")} nominais +{" "}
+                      <span className="text-sky-400">
+                        {p.votosLegenda.toLocaleString("pt-BR")} legenda
+                      </span>
+                      )
+                    </span>
+                  )}
                 </p>
                 <p className="text-xs text-neutral-600">
                   Faltam {p.votosFaltantesProximaVaga.toLocaleString("pt-BR")} votos para a
