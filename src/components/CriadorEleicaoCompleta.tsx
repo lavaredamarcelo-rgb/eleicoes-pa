@@ -147,51 +147,87 @@ export function CriadorEleicaoCompleta({
     const nominalAlvo = alvo - votosLegenda;
     novaLegenda[sigla] = votosLegenda;
 
-    // Pesos → ordem dos candidatos.
-    const historicos = aptos.filter((c) => c.histVotos > 0);
+    // ÂNCORA HISTÓRICA: quem já tem votação real recebe valor PRÓXIMO da
+    // eleição anterior — eleitos com variação pequena (±10%), demais podem
+    // oscilar um pouco mais. Assim o mais votado real do partido (ex.: Dra.
+    // Alessandra no PODE) segue na frente, e a força individual é respeitada.
+    // Novatos dividem apenas uma reserva pequena do bolo, com cauda longa.
+    const veteranos = aptos.filter((c) => c.histVotos > 0);
+    const novatos = aptos.filter((c) => c.histVotos <= 0);
     const mediaHist =
-      historicos.length > 0
-        ? historicos.reduce((s, c) => s + c.histVotos, 0) / historicos.length
+      veteranos.length > 0
+        ? veteranos.reduce((s, c) => s + c.histVotos, 0) / veteranos.length
         : 3000;
-    const baseNovato = Math.max(300, mediaHist * 0.2);
-    const pesos = aptos.map((c) => {
-      let peso: number;
-      if (c.histVotos > 0) {
-        peso = c.histVotos * (c.histEleito ? 1.3 : 1) * (0.75 + Math.random() * 0.5);
-      } else {
-        peso = baseNovato * (0.1 + Math.pow(Math.random(), 1.7) * 1.9);
-      }
-      const pct = pctPesquisaDe(c);
-      if (pct != null && maxPesquisa > 0) {
-        peso = Math.max(peso, mediaHist * 0.5) * (1 + pct / maxPesquisa);
-      }
-      return { numero: c.numero, peso };
-    });
-    pesos.sort((a, b) => b.peso - a.peso);
 
-    // Curva de valores: a votação real de 2022 do partido (escalada) —
-    // ou a curva geral da disputa quando o partido é novo.
-    const curvaBase =
-      (curvas[sigla]?.length ?? 0) >= 5 ? curvas[sigla] : curvaGlobal;
-    const n = pesos.length;
-    const curvaVals: number[] = [];
-    for (let i = 0; i < n; i++) {
-      if (i < curvaBase.length) curvaVals.push(curvaBase[i]);
-      else {
-        const ultimo = curvaVals[curvaVals.length - 1] ?? 1000;
-        curvaVals.push(Math.max(50, ultimo * 0.85));
+    const porNumero: { numero: number; valor: number }[] = [];
+
+    if (veteranos.length > 0) {
+      const desejados = veteranos.map((c) => {
+        const jitter = c.histEleito
+          ? 0.95 + Math.random() * 0.2 // eleito: 95% a 115% da votação anterior
+          : 0.7 + Math.random() * 0.35; // teve votos mas não se elegeu: 70% a 105%
+        let val = c.histVotos * jitter;
+        const pct = pctPesquisaDe(c);
+        if (pct != null && maxPesquisa > 0) {
+          val = Math.max(val, mediaHist * 0.5) * (1 + pct / maxPesquisa);
+        }
+        return { numero: c.numero, val: Math.min(val, tetoRealista) };
+      });
+      const somaDes = desejados.reduce((s, d) => s + d.val, 0);
+      // Reserva dos novatos: ~0,8% do nominal por novato, no máximo 12%.
+      const reserva =
+        novatos.length > 0
+          ? Math.min(0.12, 0.008 * novatos.length) * nominalAlvo
+          : 0;
+      const alvoVeteranos = Math.max(0, nominalAlvo - reserva);
+      // Escala para fechar no total do partido: se o total informado é
+      // parecido com o de 2022, o fator fica ≈ 1 e cada veterano termina
+      // de fato perto da votação anterior.
+      const fator = somaDes > 0 ? alvoVeteranos / somaDes : 0;
+      for (const d of desejados) porNumero.push({ numero: d.numero, valor: d.val * fator });
+
+      if (novatos.length > 0) {
+        const pesosNov = novatos.map((c) => ({
+          numero: c.numero,
+          peso: 0.1 + Math.pow(Math.random(), 1.7) * 1.9,
+        }));
+        const somaPN = pesosNov.reduce((s, p) => s + p.peso, 0);
+        const bolsa = nominalAlvo - alvoVeteranos;
+        for (const pn of pesosNov) {
+          porNumero.push({ numero: pn.numero, valor: somaPN > 0 ? (pn.peso / somaPN) * bolsa : 0 });
+        }
       }
+    } else {
+      // Partido só de estreantes: sem histórico para ancorar, usa a curva
+      // real da disputa como formato + sorteio de posições.
+      const curvaBase = (curvas[sigla]?.length ?? 0) >= 5 ? curvas[sigla] : curvaGlobal;
+      const pesosNov = novatos.map((c) => {
+        let peso = 0.1 + Math.pow(Math.random(), 1.7) * 1.9;
+        const pct = pctPesquisaDe(c);
+        if (pct != null && maxPesquisa > 0) peso *= 1 + pct / maxPesquisa;
+        return { numero: c.numero, peso };
+      });
+      pesosNov.sort((a, b) => b.peso - a.peso);
+      const curvaVals: number[] = [];
+      for (let i = 0; i < pesosNov.length; i++) {
+        if (i < curvaBase.length) curvaVals.push(curvaBase[i]);
+        else {
+          const ultimo = curvaVals[curvaVals.length - 1] ?? 1000;
+          curvaVals.push(Math.max(50, ultimo * 0.85));
+        }
+      }
+      const somaCurva = curvaVals.reduce((s, v) => s + v, 0);
+      pesosNov.forEach((pn, i) => {
+        porNumero.push({
+          numero: pn.numero,
+          valor: somaCurva > 0 ? (curvaVals[i] / somaCurva) * nominalAlvo : 0,
+        });
+      });
     }
-    const somaCurva = curvaVals.reduce((s, v) => s + v, 0);
-    const somaPesos = pesos.reduce((s, p) => s + p.peso, 0);
 
-    // Mistura: 60% formato histórico + 40% peso individual, fechando no
-    // total nominal do partido.
-    let valores = pesos.map((p, i) => {
-      const daCurva = somaCurva > 0 ? (curvaVals[i] / somaCurva) * nominalAlvo : 0;
-      const doPeso = somaPesos > 0 ? (p.peso / somaPesos) * nominalAlvo : 0;
-      return 0.6 * daCurva + 0.4 * doPeso;
-    });
+    // Ordena por valor para aplicar o teto no topo e fechar a conta.
+    porNumero.sort((a, b) => b.valor - a.valor);
+    let valores = porNumero.map((e) => e.valor);
 
     // Teto realista no topo — o excedente desce para os demais.
     if (valores[0] > tetoRealista) {
@@ -208,13 +244,16 @@ export function CriadorEleicaoCompleta({
     let acumulado = 0;
     valores.forEach((v, i) => {
       const arred = Math.max(0, Math.round(v));
-      novoVotos[pesos[i].numero] = arred;
+      novoVotos[porNumero[i].numero] = arred;
       acumulado += arred;
     });
     const dif = nominalAlvo - acumulado;
-    if (dif !== 0 && pesos.length > 1) {
+    if (dif !== 0 && porNumero.length > 1) {
       const idx = valores[0] >= tetoRealista ? 1 : 0;
-      novoVotos[pesos[idx].numero] = Math.max(0, (novoVotos[pesos[idx].numero] ?? 0) + dif);
+      novoVotos[porNumero[idx].numero] = Math.max(
+        0,
+        (novoVotos[porNumero[idx].numero] ?? 0) + dif
+      );
     }
     return { novoVotos, novaLegenda };
   }
@@ -460,11 +499,13 @@ export function CriadorEleicaoCompleta({
         </p>
         <p className="mt-1 text-xs text-neutral-500">
           Todos os candidatos do TSE por partido. A geração separa a fatia de votos de legenda
-          (proporção real de 2022), distribui o nominal seguindo a curva de votação histórica do
-          partido — com teto no campeão da última eleição
-          {tetoRealista !== Infinity ? ` (≈ ${tetoRealista.toLocaleString("pt-BR")})` : ""} — e
-          usa histórico individual{rotuloPesquisa ? " + pesquisa" : ""} para ordenar quem puxa
-          mais. Tudo editável depois.
+          (proporção real de 2022) e ancora cada candidato na própria história: quem já foi
+          eleito recebe votação próxima da eleição anterior (±10%), quem teve votos fica perto
+          do que fez{rotuloPesquisa ? ", pesquisa dá peso extra" : ""}, e os estreantes dividem
+          uma reserva pequena do bolo — tudo com teto no campeão da última eleição
+          {tetoRealista !== Infinity ? ` (≈ ${tetoRealista.toLocaleString("pt-BR")})` : ""}.
+          Tudo editável depois: ao mudar o voto de alguém, o sistema pergunta de quem tirar (ou
+          para quem levar) a diferença.
         </p>
         {rotuloPesquisa && (
           <p className="mt-1.5 text-[11px] text-emerald-400">
@@ -753,48 +794,6 @@ export function CriadorEleicaoCompleta({
 
               {abertos[p.sigla] && (
                 <div className="max-h-96 overflow-y-auto border-t border-neutral-800">
-                  {compCand?.sigla === p.sigla && (
-                    <div className="flex flex-col gap-2 border-b border-orange-900/50 bg-orange-950/20 px-3 py-2.5">
-                      <p className="text-xs text-orange-300">
-                        <strong>{compCand.nome}</strong>{" "}
-                        {compCand.delta > 0 ? "ganhou" : "perdeu"}{" "}
-                        <strong>{Math.abs(compCand.delta).toLocaleString("pt-BR")}</strong>{" "}
-                        votos. {compCand.delta > 0 ? "De quem saem" : "Para quem vão"}, dentro
-                        do {p.sigla}?
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <select
-                          value={destinoCand}
-                          onChange={(e) => setDestinoCand(e.target.value)}
-                          className="max-w-full rounded-lg border border-neutral-700 bg-neutral-950 px-2 py-1.5 text-xs text-neutral-100"
-                        >
-                          <option value="todos">Demais candidatos do partido (proporcional)</option>
-                          {p.lista
-                            .filter(
-                              (x) =>
-                                x.numero !== compCand.numero && (votos[chave(x)] ?? 0) > 0
-                            )
-                            .map((x) => (
-                              <option key={x.numero} value={String(x.numero)}>
-                                {x.nome} ({(votos[chave(x)] ?? 0).toLocaleString("pt-BR")})
-                              </option>
-                            ))}
-                        </select>
-                        <button
-                          onClick={() => aplicarCompCand(destinoCand)}
-                          className="rounded-lg bg-orange-800 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-orange-700"
-                        >
-                          Compensar
-                        </button>
-                        <button
-                          onClick={() => aplicarCompCand("nenhum")}
-                          className="rounded-lg border border-orange-800 px-3 py-1.5 text-xs text-orange-300 transition-colors hover:border-orange-600"
-                        >
-                          Sem compensar
-                        </button>
-                      </div>
-                    </div>
-                  )}
                   {p.lista.map((c) => {
                     const sit = situacaoDe(c);
                     const pct = pctPesquisaDe(c);
@@ -852,6 +851,52 @@ export function CriadorEleicaoCompleta({
                         <p className="mt-0.5 truncate text-[10px] text-neutral-600">
                           {c.histResumo ?? "estreante"}
                         </p>
+                        {compCand?.sigla === p.sigla && compCand.numero === c.numero && (
+                          <div className="mt-2 flex flex-col gap-2 rounded-lg border border-orange-800/60 bg-orange-950/30 px-3 py-2.5">
+                            <p className="text-xs text-orange-300">
+                              <strong>{compCand.nome}</strong>{" "}
+                              {compCand.delta > 0 ? "ganhou" : "perdeu"}{" "}
+                              <strong>{Math.abs(compCand.delta).toLocaleString("pt-BR")}</strong>{" "}
+                              votos. Para manter os votos válidos do cenário,{" "}
+                              {compCand.delta > 0 ? "de quem saem" : "para quem vão"}, dentro do{" "}
+                              {p.sigla}?
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <select
+                                value={destinoCand}
+                                onChange={(e) => setDestinoCand(e.target.value)}
+                                className="max-w-full rounded-lg border border-neutral-700 bg-neutral-950 px-2 py-1.5 text-xs text-neutral-100"
+                              >
+                                <option value="todos">
+                                  Demais candidatos do partido (proporcional)
+                                </option>
+                                {p.lista
+                                  .filter(
+                                    (x) =>
+                                      x.numero !== compCand.numero &&
+                                      (votos[chave(x)] ?? 0) > 0
+                                  )
+                                  .map((x) => (
+                                    <option key={x.numero} value={String(x.numero)}>
+                                      {x.nome} ({(votos[chave(x)] ?? 0).toLocaleString("pt-BR")})
+                                    </option>
+                                  ))}
+                              </select>
+                              <button
+                                onClick={() => aplicarCompCand(destinoCand)}
+                                className="rounded-lg bg-orange-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-orange-600"
+                              >
+                                Compensar
+                              </button>
+                              <button
+                                onClick={() => aplicarCompCand("nenhum")}
+                                className="rounded-lg border border-neutral-700 px-3 py-1.5 text-[11px] text-neutral-500 transition-colors hover:border-neutral-600"
+                              >
+                                Sem compensar (total geral muda)
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}

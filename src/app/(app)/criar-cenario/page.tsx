@@ -122,6 +122,55 @@ export default async function CriarCenarioPage({
         });
       }
     }
+    // 2ª passada: nomes que não casaram EXATAMENTE são procurados com
+    // normalização (sem pontuação, espaços colapsados) — o TSE grafa o
+    // mesmo nome de urna de formas diferentes entre eleições (ex.:
+    // "DRA. ALESSANDRA HABER" em 2026 vs "DRA ALESSANDRA HABER" em 2022),
+    // e o ponto fazia figuras conhecidas aparecerem como "estreantes".
+    const normalizar = (s: string) =>
+      s.toUpperCase().replace(/[.,']/g, " ").replace(/\s+/g, " ").trim();
+    const pendentes = nomes.filter((n) => !melhorPorNome.has(n));
+    if (pendentes.length > 0) {
+      const alvoPorNorm = new Map(pendentes.map((n) => [normalizar(n), n]));
+      const listaIn = [...alvoPorNorm.keys()]
+        .map((k) => `'${k.replace(/'/g, "''")}'`)
+        .join(",");
+      const linhas = await prisma.$queryRawUnsafe<
+        {
+          nome: string;
+          eleito: number | boolean;
+          sigla: string;
+          cargoNome: string;
+          ano: number;
+          votos: number | bigint;
+        }[]
+      >(
+        `SELECT c.nome AS nome, c.eleito AS eleito, p.sigla AS sigla,
+                ca.nome AS cargoNome, e.ano AS ano,
+                COALESCE((SELECT SUM(r.votos) FROM "Resultado" r
+                          WHERE r."candidatoId" = c.id AND r.turno = 1), 0) AS votos
+         FROM "Candidato" c
+         JOIN "Partido" p ON p.id = c."partidoId"
+         JOIN "Cargo" ca ON ca.id = c."cargoId"
+         JOIN "Eleicao" e ON e.id = ca."eleicaoId"
+         WHERE e.ano < 2026
+           AND TRIM(REPLACE(REPLACE(REPLACE(REPLACE(UPPER(c.nome),'.',' '),',',' '),'''',' '),'  ',' ')) IN (${listaIn})`
+      );
+      for (const l of linhas) {
+        const nome2026 = alvoPorNorm.get(normalizar(l.nome));
+        if (!nome2026) continue;
+        const votosH = Number(l.votos);
+        const eleitoH = !!Number(l.eleito);
+        const atual = melhorPorNome.get(nome2026);
+        if (!atual || votosH > atual.votos || (eleitoH && !atual.eleito)) {
+          melhorPorNome.set(nome2026, {
+            votos: Math.max(votosH, atual?.votos ?? 0),
+            eleito: eleitoH || (atual?.eleito ?? false),
+            resumo: `${l.ano} · ${l.cargoNome} · ${l.sigla} · ${votosH.toLocaleString("pt-BR")} votos${eleitoH ? " (eleito)" : ""}`,
+          });
+        }
+      }
+    }
     candidatosEleicao = tse.map((c) => {
       const h = melhorPorNome.get(c.nome);
       return {
@@ -134,31 +183,54 @@ export default async function CriarCenarioPage({
         histResumo: h?.resumo ?? null,
       };
     });
-    // Sugestão por sigla: soma dos votos 2022 escalados (nominais + legenda)
-    // dos partidos de mesma sigla.
-    const siglaPorId = new Map(partidos.map((p: any) => [p.id, p.sigla]));
-    const porSigla: Record<string, number> = {};
-    for (const c of dados.candidatos) {
-      porSigla[c.partidoSigla] = (porSigla[c.partidoSigla] ?? 0) + c.votos;
-    }
-    for (const [pid, v] of Object.entries(votosLegenda)) {
-      const sigla = siglaPorId.get(pid);
-      if (sigla) porSigla[sigla] = (porSigla[sigla] ?? 0) + (v as number);
-    }
-    const siglas2026 = new Set(tse.map((c) => c.partido));
-    for (const sigla of siglas2026) {
-      sugestoesEleicao[sigla] = Math.round(porSigla[sigla] ?? 0);
-    }
-
-    // Normalização: a soma das sugestões deve bater com o TOTAL de votos
-    // válidos projetados (2022 escalado pelo eleitorado de 2026 = mesmo
-    // comparecimento/abstenção do ano anterior). Votos de partidos que
-    // saíram de cena (siglas extintas/renomeadas sem correspondência) são
-    // redistribuídos entre os partidos de 2026 na proporção do tamanho da
-    // chapa de cada um — nenhum partido fica zerado.
+    // Total projetado: 2022 escalado pelo eleitorado de 2026 (mesmo
+    // comparecimento/abstenção do ano anterior).
     const totalProjetado =
       dados.candidatos.reduce((s, c) => s + c.votos, 0) +
       Object.values(votosLegenda).reduce((s, v) => s + (v as number), 0);
+    totalProjetadoEleicao = Math.round(totalProjetado);
+
+    // Última eleição real do cargo (válidos e QE de verdade) — comparativo
+    // e fator de escala dos históricos individuais.
+    const refs = await getReferenciaisViabilidade(carga!.baseCargoId);
+    if (refs && refs.referencias.length > 0) {
+      const ultima = [...refs.referencias].sort((a, b) => b.ano - a.ano)[0];
+      referenciaEleicao = { ano: ultima.ano, validos: ultima.validos, qe: ultima.qe };
+    }
+    const fatorEscala =
+      referenciaEleicao && referenciaEleicao.validos > 0
+        ? totalProjetado / referenciaEleicao.validos
+        : 1;
+
+    // Sugestão por sigla: soma dos HISTÓRICOS dos candidatos de 2026 do
+    // próprio partido (escalados pelo crescimento do eleitorado) + a
+    // legenda 2022 da sigla. Assim quem trocou de partido leva a votação
+    // consigo (ex.: Dra. Alessandra MDB → PODE) e o total de cada partido
+    // reflete a força real da chapa registrada em 2026 — não a sigla de 2022.
+    const siglaPorId = new Map(partidos.map((p: any) => [p.id, p.sigla]));
+    const legendaPorSigla: Record<string, number> = {};
+    for (const [pid, v] of Object.entries(votosLegenda)) {
+      const sigla = siglaPorId.get(pid);
+      if (sigla) legendaPorSigla[sigla] = (legendaPorSigla[sigla] ?? 0) + (v as number);
+    }
+    const histPorSigla: Record<string, number> = {};
+    for (const c of candidatosEleicao) {
+      if (c.situacao === "Concorrendo" && c.histVotos > 0) {
+        histPorSigla[c.partido] = (histPorSigla[c.partido] ?? 0) + c.histVotos;
+      }
+    }
+    const siglas2026 = new Set(tse.map((c) => c.partido));
+    for (const sigla of siglas2026) {
+      sugestoesEleicao[sigla] = Math.round(
+        (histPorSigla[sigla] ?? 0) * fatorEscala + (legendaPorSigla[sigla] ?? 0)
+      );
+    }
+
+    // Normalização: a soma das sugestões deve bater com o total projetado.
+    // Votos "órfãos" (de quem não concorre em 2026) são redistribuídos na
+    // proporção do tamanho da chapa — nenhum partido fica zerado; se os
+    // históricos somarem mais que o bolo (gente vinda de outros cargos),
+    // tudo encolhe proporcionalmente.
     const somaSugestoes = Object.values(sugestoesEleicao).reduce((s, v) => s + v, 0);
     const faltante = Math.round(totalProjetado - somaSugestoes);
     if (faltante > 0) {
@@ -176,8 +248,12 @@ export default async function CriarCenarioPage({
           sugestoesEleicao[sigla] = (sugestoesEleicao[sigla] ?? 0) + extra;
         }
       }
+    } else if (faltante < 0 && somaSugestoes > 0) {
+      const fator2 = totalProjetado / somaSugestoes;
+      for (const sigla of siglas2026) {
+        sugestoesEleicao[sigla] = Math.round((sugestoesEleicao[sigla] ?? 0) * fator2);
+      }
     }
-    totalProjetadoEleicao = Math.round(totalProjetado);
 
     // Curvas históricas (votação de 2022 escalada, ordenada) — a geração
     // segue esse formato real: o topo do cenário não foge do topo real.
@@ -203,13 +279,6 @@ export default async function CriarCenarioPage({
       const nominal = nominalPorSigla[sigla] ?? 0;
       const legenda = v as number;
       if (nominal + legenda > 0) legendaShareEleicao[sigla] = legenda / (nominal + legenda);
-    }
-
-    // Última eleição real do cargo (válidos e QE de verdade) — comparativo.
-    const refs = await getReferenciaisViabilidade(carga!.baseCargoId);
-    if (refs && refs.referencias.length > 0) {
-      const ultima = [...refs.referencias].sort((a, b) => b.ano - a.ano)[0];
-      referenciaEleicao = { ano: ultima.ano, validos: ultima.validos, qe: ultima.qe };
     }
 
     // Pesquisa mais recente da disputa entra como peso extra na geração:
