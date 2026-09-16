@@ -29,7 +29,7 @@ export default async function QuocienteDetailPage({
     const proj = await calcularQuocienteProjetado(cargoId.slice(5));
     if (!proj) notFound();
     const comAprovados = await cenarioComAprovados(cargoId.slice(5), proj);
-    return <QuocientePrevisto proj={proj} comAprovados={comAprovados} />;
+    return <QuocientePrevisto proj={proj} comAprovados={comAprovados} cargoId={cargoId} />;
   }
 
   const cargo = await prisma.cargo.findUnique({ where: { id: cargoId }, include: { eleicao: true } });
@@ -360,9 +360,11 @@ function VotosPorMunicipio({
 function QuocientePrevisto({
   proj,
   comAprovados,
+  cargoId,
 }: {
   proj: NonNullable<Awaited<ReturnType<typeof calcularQuocienteProjetado>>>;
   comAprovados: Awaited<ReturnType<typeof cenarioComAprovados>>;
+  cargoId: string;
 }) {
   const f = (n: number) => n.toLocaleString("pt-BR");
   const pctMedia = (proj.estimativaComparecimento.media * 100).toLocaleString("pt-BR", {
@@ -371,14 +373,20 @@ function QuocientePrevisto({
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
-          Quociente previsto
-        </p>
-        <h1 className="text-lg font-semibold">
-          {proj.cargoNome} <span className="text-neutral-500">· {proj.anoAlvo} (projeção)</span>
-        </h1>
-        <p className="text-sm text-neutral-500">{proj.municipioNome ?? "Pará (estadual)"}</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+            Quociente previsto
+          </p>
+          <h1 className="text-lg font-semibold">
+            {proj.cargoNome} <span className="text-neutral-500">· {proj.anoAlvo} (projeção)</span>
+          </h1>
+          <p className="text-sm text-neutral-500">{proj.municipioNome ?? "Pará (estadual)"}</p>
+        </div>
+        <PdfDownloadLink
+          href={`/api/pdf/quociente/${encodeURIComponent(cargoId)}`}
+          label={`PDF · ${proj.cargoNome} ${proj.anoAlvo}`}
+        />
       </div>
 
       <p className="rounded-lg border border-sky-900/60 bg-sky-950/20 px-3 py-2 text-xs text-sky-300">
