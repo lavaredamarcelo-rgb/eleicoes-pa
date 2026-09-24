@@ -154,6 +154,11 @@ export default async function PesquisasPage({
                         {p.cenario}
                       </span>
                     )}
+                    {/suspensa/i.test(p.observacoes ?? "") && (
+                      <span className="rounded bg-red-950/70 px-2 py-0.5 text-[11px] font-semibold text-red-400">
+                        ⚠️ Suspensa pela Justiça Eleitoral
+                      </span>
+                    )}
                   </div>
                   <p className="mt-1 text-xs text-neutral-500">
                     Divulgada em {fmt(p.dataDivulgacao)}

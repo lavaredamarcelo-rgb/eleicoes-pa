@@ -1,0 +1,53 @@
+-- Seed: presidenciais 23-24/set + marcação de pesquisas SUSPENSAS pela Justiça Eleitoral (TRE-PA)
+INSERT INTO "PesquisaEleitoral" (id, disputa, turno, tipo, cenario, instituto, registroTSE, dataCampoInicio, dataCampoFim, dataDivulgacao, amostra, margemErro, confianca, observacoes, createdAt, updatedAt) VALUES ('pqs5-01', 'Presidente', 1, 'estimulada', NULL, 'PoderData', NULL, '2026-09-20 00:00:00', '2026-09-23 00:00:00', '2026-09-24 00:00:00', 3000, 1.8, 95, 'Data exibida = fim do campo. Carga automática 24/09/2026.', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-01-r0', 'pqs5-01', 'Lula', 'PT', 41, 0);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-01-r1', 'pqs5-01', 'Flávio Bolsonaro', 'PL', 39, 1);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-01-r2', 'pqs5-01', 'Augusto Cury', 'AVANTE', 6, 2);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-01-r3', 'pqs5-01', 'Renan Santos', 'MISSÃO', 3, 3);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-01-r4', 'pqs5-01', 'Ronaldo Caiado', 'PSD', 2, 4);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-01-r5', 'pqs5-01', 'Romeu Zema', 'NOVO', 1, 5);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-01-r6', 'pqs5-01', 'Outros', NULL, 3, 6);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-01-r7', 'pqs5-01', 'Não sabe', NULL, 6, 7);
+INSERT INTO "PesquisaEleitoral" (id, disputa, turno, tipo, cenario, instituto, registroTSE, dataCampoInicio, dataCampoFim, dataDivulgacao, amostra, margemErro, confianca, observacoes, createdAt, updatedAt) VALUES ('pqs5-02', 'Presidente', 2, 'estimulada', 'Lula x Flávio Bolsonaro', 'PoderData', NULL, '2026-09-20 00:00:00', '2026-09-23 00:00:00', '2026-09-24 00:00:00', 3000, 1.8, 95, 'Data exibida = fim do campo. Carga automática 24/09/2026.', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-02-r0', 'pqs5-02', 'Flávio Bolsonaro', 'PL', 46, 0);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-02-r1', 'pqs5-02', 'Lula', 'PT', 45, 1);
+INSERT INTO "PesquisaEleitoral" (id, disputa, turno, tipo, cenario, instituto, registroTSE, dataCampoInicio, dataCampoFim, dataDivulgacao, amostra, margemErro, confianca, observacoes, createdAt, updatedAt) VALUES ('pqs5-03', 'Presidente', 1, 'estimulada', NULL, 'Real Time Big Data', NULL, '2026-09-19 00:00:00', '2026-09-23 00:00:00', '2026-09-24 00:00:00', 2000, 2, 95, 'Renan Santos em alta (6%). Data exibida = fim do campo. Carga automática 24/09/2026.', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-03-r0', 'pqs5-03', 'Lula', 'PT', 41, 0);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-03-r1', 'pqs5-03', 'Flávio Bolsonaro', 'PL', 37, 1);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-03-r2', 'pqs5-03', 'Augusto Cury', 'AVANTE', 6, 2);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-03-r3', 'pqs5-03', 'Renan Santos', 'MISSÃO', 6, 3);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-03-r4', 'pqs5-03', 'Ronaldo Caiado', 'PSD', 2, 4);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-03-r5', 'pqs5-03', 'Romeu Zema', 'NOVO', 1, 5);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-03-r6', 'pqs5-03', 'Não sabe', NULL, 6, 6);
+INSERT INTO "PesquisaEleitoral" (id, disputa, turno, tipo, cenario, instituto, registroTSE, dataCampoInicio, dataCampoFim, dataDivulgacao, amostra, margemErro, confianca, observacoes, createdAt, updatedAt) VALUES ('pqs5-04', 'Presidente', 2, 'estimulada', 'Lula x Flávio Bolsonaro', 'Real Time Big Data', NULL, '2026-09-19 00:00:00', '2026-09-23 00:00:00', '2026-09-24 00:00:00', 2000, 2, 95, 'Data exibida = fim do campo. Carga automática 24/09/2026.', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-04-r0', 'pqs5-04', 'Flávio Bolsonaro', 'PL', 45, 0);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-04-r1', 'pqs5-04', 'Lula', 'PT', 44, 1);
+INSERT INTO "PesquisaEleitoral" (id, disputa, turno, tipo, cenario, instituto, registroTSE, dataCampoInicio, dataCampoFim, dataDivulgacao, amostra, margemErro, confianca, observacoes, createdAt, updatedAt) VALUES ('pqs5-05', 'Presidente', 1, 'estimulada', NULL, 'Alfa Inteligência', NULL, '2026-09-18 00:00:00', '2026-09-23 00:00:00', '2026-09-24 00:00:00', 2700, 1.8, 95, 'Data exibida = fim do campo. Carga automática 24/09/2026.', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-05-r0', 'pqs5-05', 'Lula', 'PT', 40, 0);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-05-r1', 'pqs5-05', 'Flávio Bolsonaro', 'PL', 33, 1);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-05-r2', 'pqs5-05', 'Augusto Cury', 'AVANTE', 6, 2);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-05-r3', 'pqs5-05', 'Ronaldo Caiado', 'PSD', 5, 3);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-05-r4', 'pqs5-05', 'Renan Santos', 'MISSÃO', 3, 4);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-05-r5', 'pqs5-05', 'Romeu Zema', 'NOVO', 1, 5);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-05-r6', 'pqs5-05', 'Não sabe', NULL, 11, 6);
+INSERT INTO "PesquisaEleitoral" (id, disputa, turno, tipo, cenario, instituto, registroTSE, dataCampoInicio, dataCampoFim, dataDivulgacao, amostra, margemErro, confianca, observacoes, createdAt, updatedAt) VALUES ('pqs5-06', 'Presidente', 2, 'estimulada', 'Lula x Flávio Bolsonaro', 'Alfa Inteligência', NULL, '2026-09-18 00:00:00', '2026-09-23 00:00:00', '2026-09-24 00:00:00', 2700, 1.8, 95, 'Empate exato. Data exibida = fim do campo. Carga automática 24/09/2026.', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-06-r0', 'pqs5-06', 'Lula', 'PT', 43, 0);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-06-r1', 'pqs5-06', 'Flávio Bolsonaro', 'PL', 43, 1);
+INSERT INTO "PesquisaEleitoral" (id, disputa, turno, tipo, cenario, instituto, registroTSE, dataCampoInicio, dataCampoFim, dataDivulgacao, amostra, margemErro, confianca, observacoes, createdAt, updatedAt) VALUES ('pqs5-07', 'Presidente', 1, 'estimulada', NULL, 'AtlasIntel', NULL, '2026-09-17 00:00:00', '2026-09-22 00:00:00', '2026-09-23 00:00:00', 5015, 1, 95, 'Data exibida = fim do campo. Carga automática 24/09/2026.', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-07-r0', 'pqs5-07', 'Lula', 'PT', 45.8, 0);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-07-r1', 'pqs5-07', 'Flávio Bolsonaro', 'PL', 43.4, 1);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-07-r2', 'pqs5-07', 'Renan Santos', 'MISSÃO', 4.5, 2);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-07-r3', 'pqs5-07', 'Augusto Cury', 'AVANTE', 2.1, 3);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-07-r4', 'pqs5-07', 'Ronaldo Caiado', 'PSD', 1.3, 4);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-07-r5', 'pqs5-07', 'Romeu Zema', 'NOVO', 0.9, 5);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-07-r6', 'pqs5-07', 'Não sabe', NULL, 1.2, 6);
+INSERT INTO "PesquisaEleitoral" (id, disputa, turno, tipo, cenario, instituto, registroTSE, dataCampoInicio, dataCampoFim, dataDivulgacao, amostra, margemErro, confianca, observacoes, createdAt, updatedAt) VALUES ('pqs5-08', 'Presidente', 2, 'estimulada', 'Lula x Flávio Bolsonaro', 'AtlasIntel', NULL, '2026-09-17 00:00:00', '2026-09-22 00:00:00', '2026-09-23 00:00:00', 5015, 1, 95, 'Data exibida = fim do campo. Carga automática 24/09/2026.', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-08-r0', 'pqs5-08', 'Lula', 'PT', 47.7, 0);
+INSERT INTO "PesquisaResultado" (id, pesquisaId, nome, partido, percentual, ordem) VALUES ('pqs5-08-r1', 'pqs5-08', 'Flávio Bolsonaro', 'PL', 47.4, 1);
+
+-- AtlasIntel de agosto (registro PA-04533/2026): divulgação suspensa liminarmente pelo TRE-PA
+UPDATE "PesquisaEleitoral" SET observacoes = '⚠️ Divulgação SUSPENSA por decisão do TRE-PA (ago/2026, registro PA-04533/2026): questionamentos sobre a correspondência entre o registro e o questionário aplicado. Mantida no sistema como dado histórico. ' || COALESCE(observacoes, ''), updatedAt = CURRENT_TIMESTAMP WHERE id IN ('pq2026-001','pq2026-021','pq2026-032') AND observacoes NOT LIKE '%SUSPENSA%';
+-- Doxa de agosto: divulgação suspensa pelo TRE-PA (denúncias de irregularidades; multa aplicada ao instituto em caso correlato)
+UPDATE "PesquisaEleitoral" SET observacoes = '⚠️ Divulgação SUSPENSA por decisão do TRE-PA (ago/2026): denúncias de irregularidades no registro. Mantida no sistema como dado histórico. ' || COALESCE(observacoes, ''), updatedAt = CURRENT_TIMESTAMP WHERE id IN ('pq2026-002','pq2026-033') AND observacoes NOT LIKE '%SUSPENSA%';
+-- Doxa Dep. Federal: um dos registros citados na divulgação foi suspenso
+UPDATE "PesquisaEleitoral" SET observacoes = COALESCE(observacoes, '') || ' ⚠️ Atenção: um dos registros citados (PA-01857/2026) teve a divulgação suspensa pelo TRE-PA em ago/2026 (plano amostral, coleta e origem de recursos).', updatedAt = CURRENT_TIMESTAMP WHERE id = 'pqs2-05' AND observacoes NOT LIKE '%PA-01857/2026) teve%';
