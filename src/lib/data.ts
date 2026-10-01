@@ -942,12 +942,44 @@ export async function getCandidaturasAnteriores(candidato: {
   cpf: string | null;
   nomeCompleto: string | null;
 }) {
-  const filtros = [];
+  const filtros: object[] = [];
   const cpfValido = candidato.cpf && /^\d{11}$/.test(candidato.cpf);
   // CPF e nome civil juntos: anos em que o TSE mascarou o CPF ("-4")
   // continuam ligados pelo nome completo.
   if (cpfValido) filtros.push({ cpf: candidato.cpf! });
-  if (candidato.nomeCompleto) filtros.push({ nomeCompleto: candidato.nomeCompleto });
+  if (candidato.nomeCompleto) {
+    filtros.push({ nomeCompleto: candidato.nomeCompleto });
+    // O TSE grafa o MESMO nome civil com e sem acento conforme a eleição
+    // ("JOSE PAULO GENUINO" em 2024 × "JOSÉ PAULO GENUINO" em 2000) — o
+    // casamento precisa ignorar acentuação. SQLite não tem unaccent:
+    // normalizamos a coluna com uma cadeia de REPLACE e comparamos com o
+    // alvo normalizado em JS.
+    const alvo = candidato.nomeCompleto
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toUpperCase()
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/'/g, "''");
+    const PARES: [string, string][] = [
+      ["á", "A"], ["à", "A"], ["â", "A"], ["ã", "A"], ["ä", "A"],
+      ["Á", "A"], ["À", "A"], ["Â", "A"], ["Ã", "A"], ["Ä", "A"],
+      ["é", "E"], ["ê", "E"], ["è", "E"], ["É", "E"], ["Ê", "E"], ["È", "E"],
+      ["í", "I"], ["î", "I"], ["Í", "I"], ["Î", "I"],
+      ["ó", "O"], ["ô", "O"], ["õ", "O"], ["ö", "O"],
+      ["Ó", "O"], ["Ô", "O"], ["Õ", "O"], ["Ö", "O"],
+      ["ú", "U"], ["û", "U"], ["ü", "U"], ["Ú", "U"], ["Û", "U"], ["Ü", "U"],
+      ["ç", "C"], ["Ç", "C"],
+    ];
+    let col = `UPPER("nomeCompleto")`;
+    for (const [de, para] of PARES) col = `REPLACE(${col}, '${de}', '${para}')`;
+    const idsNormalizados = await prisma.$queryRawUnsafe<{ id: string }[]>(
+      `SELECT id FROM "Candidato" WHERE "nomeCompleto" IS NOT NULL AND ${col} = '${alvo}'`
+    );
+    if (idsNormalizados.length > 0) {
+      filtros.push({ id: { in: idsNormalizados.map((r) => r.id) } });
+    }
+  }
   if (filtros.length === 0) return [];
 
   const brutos = await prisma.candidato.findMany({
