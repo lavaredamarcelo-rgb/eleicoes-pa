@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { calcularQuocienteEleitoral, calcularMajoritario } from "@/lib/eleitoral";
@@ -122,15 +123,18 @@ export default async function CenarioDetailPage({
                 key={c.id}
                 className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-2"
               >
-                <div className="flex items-center gap-3">
-                  <span className="w-7 text-right text-xs text-neutral-600">{i + 1}º</span>
-                  <div>
-                    <p>{c.nome}</p>
+                <Link
+                  href={`/candidatos/${c.id}`}
+                  className="flex min-w-0 flex-1 items-center gap-3 transition-opacity hover:opacity-75"
+                >
+                  <span className="w-7 shrink-0 text-right text-xs text-neutral-600">{i + 1}º</span>
+                  <div className="min-w-0">
+                    <p className="truncate">{c.nome}</p>
                     <p className="text-xs text-neutral-500">
                       {c.numero} · {c.partido.sigla}
                     </p>
                   </div>
-                </div>
+                </Link>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-semibold text-amber-400">
                     {c.votos.toLocaleString("pt-BR")}
@@ -170,14 +174,17 @@ export default async function CenarioDetailPage({
                   key={c.id}
                   className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-2"
                 >
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <p>{c.nome}</p>
+                  <Link
+                    href={`/candidatos/${c.id}`}
+                    className="flex min-w-0 flex-1 items-center gap-3 transition-opacity hover:opacity-75"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate">{c.nome}</p>
                       <p className="text-xs text-neutral-500">
                         {c.numero} · {c.partido.sigla}
                       </p>
                     </div>
-                  </div>
+                  </Link>
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-semibold text-amber-400">
                       {c.votos.toLocaleString("pt-BR")}

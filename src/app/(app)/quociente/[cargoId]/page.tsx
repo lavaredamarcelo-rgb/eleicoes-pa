@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import {
@@ -152,12 +153,15 @@ export default async function QuocienteDetailPage({
                     key={c.id}
                     className="flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-2"
                   >
-                    <div>
-                      <p>{c.nome}</p>
+                    <Link
+                      href={`/candidatos/${c.id}`}
+                      className="min-w-0 flex-1 transition-opacity hover:opacity-75"
+                    >
+                      <p className="truncate">{c.nome}</p>
                       <p className="text-xs text-neutral-500">
                         {c.numero} · {c.votos.toLocaleString("pt-BR")} votos
                       </p>
-                    </div>
+                    </Link>
                     {c.situacao === "eleito" ? (
                       <span className="rounded-full bg-emerald-950 px-2 py-1 text-xs font-medium text-emerald-300">
                         Eleito

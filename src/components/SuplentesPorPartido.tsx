@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import BotaoFavoritar from "@/components/BotaoFavoritar";
 
@@ -76,15 +77,20 @@ export function SuplentesPorPartido({
               key={c.id}
               className="flex items-center justify-between rounded-xl border border-neutral-800/60 bg-neutral-950 px-4 py-2"
             >
-              <div className="flex items-center gap-3">
-                <span className="w-9 text-right text-xs text-neutral-600">
+              <Link
+                href={`/candidatos/${c.id}`}
+                className="flex min-w-0 flex-1 items-center gap-3 transition-opacity hover:opacity-75"
+              >
+                <span className="w-9 shrink-0 text-right text-xs text-neutral-600">
                   {g.cadeiras > 0 ? `${c.ordemSuplencia}º` : "—"}
                 </span>
-                <div>
-                  <p className="text-sm">{c.nome}</p>
+                <div className="min-w-0">
+                  <p className="truncate text-sm text-amber-300 underline decoration-amber-900 underline-offset-2">
+                    {c.nome}
+                  </p>
                   <p className="text-xs text-neutral-500">{c.numero}</p>
                 </div>
-              </div>
+              </Link>
               <div className="flex items-center gap-3">
                 <span className="text-sm font-semibold text-amber-400">
                   {c.votos.toLocaleString("pt-BR")}
