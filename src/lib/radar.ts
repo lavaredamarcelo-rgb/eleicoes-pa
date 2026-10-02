@@ -48,14 +48,18 @@ const CARGO_2022: Record<string, string> = {
 };
 
 // --- Descoberta dos códigos do pleito de 04/10/2026 -------------------------
-let configCache: { quando: number; cdEleicao: string | null } = {
+// O pleito tem DUAS eleições ordinárias (confirmado em 02/10/2026):
+// Federal (Presidente) cd 6257 e Estadual (Gov/Senado/Deputados) cd 6259.
+// Descobrimos sempre pelo arquivo oficial — se o TSE mudar, acompanhamos.
+type CodigosPleito = { federal: string | null; estadual: string | null };
+let configCache: { quando: number; codigos: CodigosPleito } = {
   quando: 0,
-  cdEleicao: null,
+  codigos: { federal: null, estadual: null },
 };
 
-export async function descobrirEleicao2026(): Promise<string | null> {
+export async function descobrirEleicao2026(): Promise<CodigosPleito> {
   // Cache de 10 minutos — o arquivo muda raramente.
-  if (Date.now() - configCache.quando < 10 * 60 * 1000) return configCache.cdEleicao;
+  if (Date.now() - configCache.quando < 10 * 60 * 1000) return configCache.codigos;
   try {
     const resp = await fetch(
       "https://resultados.tse.jus.br/oficial/comum/config/ele-c.json",
@@ -63,20 +67,22 @@ export async function descobrirEleicao2026(): Promise<string | null> {
     );
     if (!resp.ok) throw new Error(String(resp.status));
     const cfg = (await resp.json()) as {
-      pl?: { dt?: string; e?: { cd: string; nm?: string; tp?: string }[] }[];
+      pl?: { dt?: string; e?: { cd: string; nm?: string }[] }[];
     };
-    let cd: string | null = null;
+    const codigos: CodigosPleito = { federal: null, estadual: null };
     for (const pl of cfg.pl ?? []) {
       if (pl.dt !== "04/10/2026") continue;
-      // Eleição ordinária (federal/estadual) do pleito de outubro.
-      const ord = (pl.e ?? []).find((e) => /ordin/i.test(e.nm ?? "")) ?? (pl.e ?? [])[0];
-      if (ord) cd = ord.cd;
+      for (const e of pl.e ?? []) {
+        const nm = e.nm ?? "";
+        if (/ordin.*federal/i.test(nm)) codigos.federal = e.cd;
+        else if (/ordin.*estadual/i.test(nm)) codigos.estadual = e.cd;
+      }
     }
-    configCache = { quando: Date.now(), cdEleicao: cd };
-    return cd;
+    configCache = { quando: Date.now(), codigos };
+    return codigos;
   } catch {
-    configCache = { quando: Date.now() - 9 * 60 * 1000, cdEleicao: configCache.cdEleicao };
-    return configCache.cdEleicao;
+    configCache = { quando: Date.now() - 9 * 60 * 1000, codigos: configCache.codigos };
+    return configCache.codigos;
   }
 }
 
@@ -86,7 +92,9 @@ const numPt = (s: unknown) =>
 
 export async function lerTSE(cargoChave: string): Promise<SnapshotRadar> {
   const cargoCod = CARGO_TSE[cargoChave];
-  const cd = await descobrirEleicao2026();
+  const codigos = await descobrirEleicao2026();
+  // Presidente vem da eleição FEDERAL; os demais cargos, da ESTADUAL.
+  const cd = cargoChave === "presidente" ? codigos.federal : codigos.estadual;
   if (!cd || !cargoCod) {
     return {
       cargo: cargoChave,
