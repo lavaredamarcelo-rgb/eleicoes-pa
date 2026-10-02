@@ -14,9 +14,11 @@ const f = (n: number) => n.toLocaleString("pt-BR");
 export function BoletimCandidato({
   candidato,
   anteriores = [],
+  locais = [],
 }: {
   candidato: Candidato;
   anteriores?: Anterior[];
+  locais?: { nome: string; municipio: string; votos: number }[];
 }) {
   const totalVotos = candidato.resultados.reduce((sum, r) => sum + r.votos, 0);
 
@@ -214,6 +216,31 @@ export function BoletimCandidato({
           />
         ))}
       </View>
+
+      {locais.length > 0 && (
+        <View break>
+          <SectionTitle>
+            {`Votos por local de votação (${locais.length} locais — retrato por bairro/escola)`}
+          </SectionTitle>
+          <View style={styles.table}>
+            <TableHeader columns={["Local de votação", "Município", "Votos", "%"]} />
+            {(() => {
+              const total = locais.reduce((s, l) => s + l.votos, 0);
+              return locais.slice(0, 250).map((l, i) => (
+                <TableRow
+                  key={i}
+                  cells={[
+                    l.nome.slice(0, 55),
+                    l.municipio.slice(0, 22),
+                    f(l.votos),
+                    total > 0 ? `${((l.votos / total) * 100).toFixed(1)}%` : "—",
+                  ]}
+                />
+              ));
+            })()}
+          </View>
+        </View>
+      )}
     </ReportShell>
   );
 }

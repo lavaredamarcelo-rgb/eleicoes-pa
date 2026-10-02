@@ -3,7 +3,7 @@ import { CardLink } from "@/components/CardLink";
 import { GraficoBarras } from "@/components/GraficoBarras";
 import { TrocaPartidoForm } from "@/components/TrocaPartidoForm";
 import { PdfDownloadLink } from "@/components/PdfDownloadLink";
-import { getCandidato, getCandidaturasAnteriores, getFiliacaoAtual, getPartidos } from "@/lib/data";
+import { getCandidato, getCandidaturasAnteriores, getFiliacaoAtual, getPartidos, getVotosPorLocal } from "@/lib/data";
 import { turnoDecisivo, votosTurno } from "@/lib/turnos";
 import { verifySession } from "@/lib/dal";
 
@@ -17,6 +17,12 @@ export default async function CandidatoDetailPage({
   if (!candidato) notFound();
 
   const candidaturasAnteriores = await getCandidaturasAnteriores(candidato);
+
+  // Votos por LOCAL DE VOTAÇÃO (escolas/colégios) — o retrato mais próximo
+  // de "bairro" que o TSE publica. Disponível para municipais 2024 e
+  // estaduais 2022.
+  const votosLocais = await getVotosPorLocal(candidato.id);
+  const totalLocais = votosLocais.reduce((s, v) => s + v.votos, 0);
   const filiacaoAtual = await getFiliacaoAtual([
     candidato.id,
     ...candidaturasAnteriores.map((c) => c.id),
@@ -178,6 +184,69 @@ export default async function CandidatoDetailPage({
           </details>
         ))}
       </section>
+
+      {votosLocais.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-neutral-400">
+            Votos por local de votação{" "}
+            <span className="text-xs text-neutral-600">
+              ({votosLocais.length} locais · retrato por bairro/escola)
+            </span>
+          </h2>
+          <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900">
+            {votosLocais.slice(0, 12).map((v) => (
+              <div
+                key={v.id}
+                className="border-b border-neutral-800/50 px-4 py-2 text-xs last:border-0"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="min-w-0 flex-1 truncate text-neutral-300">
+                    {v.colegioEleitoral.nome}
+                    <span className="text-neutral-600"> · {v.colegioEleitoral.municipio.nome}</span>
+                  </span>
+                  <span className="shrink-0 font-semibold tabular-nums text-amber-400">
+                    {v.votos.toLocaleString("pt-BR")}
+                  </span>
+                  <span className="w-12 shrink-0 text-right tabular-nums text-neutral-500">
+                    {totalLocais > 0 ? `${((v.votos / totalLocais) * 100).toFixed(1)}%` : "—"}
+                  </span>
+                </div>
+                <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-neutral-800">
+                  <div
+                    className="h-1 bg-amber-400/70"
+                    style={{ width: `${(v.votos / (votosLocais[0]?.votos || 1)) * 100}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+            {votosLocais.length > 12 && (
+              <details>
+                <summary className="cursor-pointer px-4 py-2 text-xs text-amber-400">
+                  Ver todos os {votosLocais.length} locais
+                </summary>
+                {votosLocais.slice(12).map((v) => (
+                  <div
+                    key={v.id}
+                    className="flex items-center justify-between gap-2 border-t border-neutral-800/50 px-4 py-1.5 text-xs"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-neutral-400">
+                      {v.colegioEleitoral.nome}
+                      <span className="text-neutral-600"> · {v.colegioEleitoral.municipio.nome}</span>
+                    </span>
+                    <span className="shrink-0 tabular-nums text-neutral-300">
+                      {v.votos.toLocaleString("pt-BR")}
+                    </span>
+                  </div>
+                ))}
+              </details>
+            )}
+          </div>
+          <p className="text-[11px] text-neutral-600">
+            Local de votação = escola/colégio eleitoral (dados oficiais do TSE). Use para saber
+            em quais bairros/comunidades o candidato é forte ou precisa melhorar.
+          </p>
+        </section>
+      )}
 
       {evolucao.length > 1 && (
         <GraficoBarras

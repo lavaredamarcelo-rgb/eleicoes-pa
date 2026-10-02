@@ -937,6 +937,20 @@ export async function getFiliacaoAtual(candidatoIds: string[]) {
 // repete entre pessoas distintas (ex.: vários "HELDER"), então o vínculo é
 // pelo CPF do TSE — com fallback para o nome civil completo. Sem nenhum dos
 // dois, não arriscamos associação.
+// Votos por local de votação (escolas/colégios eleitorais) de um candidato
+// — granularidade de "bairro". Cobertura: municipais 2024 e estaduais 2022.
+export async function getVotosPorLocal(candidatoId: string) {
+  return prisma.votoLocal.findMany({
+    where: { candidatoId },
+    include: {
+      colegioEleitoral: {
+        select: { nome: true, municipio: { select: { nome: true } } },
+      },
+    },
+    orderBy: { votos: "desc" },
+  });
+}
+
 // Ids de candidatos cujo NOME CIVIL casa com algum dos alvos IGNORANDO
 // acentos — o TSE grafa a mesma pessoa com e sem acento conforme a eleição
 // ("JOSE PAULO GENUINO" 2024 × "JOSÉ PAULO GENUINO" 2000). SQLite não tem
@@ -966,23 +980,84 @@ export async function idsPorNomeCivilNormalizado(nomes: string[]): Promise<strin
   return rows.map((r) => r.id);
 }
 
+// Distância de edição entre dois nomes civis normalizados — tolera os
+// erros de digitação do TSE (ex.: "MACIEL DA SILA ALBUQUERQUE" em 2016 ×
+// "MACIEL DA SILVA ALBUQUERQUE" nos demais anos).
+function distanciaCivil(a: string, b: string): number {
+  const na = a.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+  const nb = b.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+  if (na === nb) return 0;
+  if (Math.abs(na.length - nb.length) > 2) return 99;
+  const m = na.length, n = nb.length;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) {
+      cur[j] = Math.min(
+        prev[j] + 1,
+        cur[j - 1] + 1,
+        prev[j - 1] + (na[i - 1] === nb[j - 1] ? 0 : 1)
+      );
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+
 export async function getCandidaturasAnteriores(candidato: {
   id: string;
   cpf: string | null;
   nomeCompleto: string | null;
+  nome?: string | null;
 }) {
-  const filtros: object[] = [];
   const cpfValido = candidato.cpf && /^\d{11}$/.test(candidato.cpf);
-  // CPF e nome civil juntos: anos em que o TSE mascarou o CPF ("-4")
-  // continuam ligados pelo nome completo.
-  if (cpfValido) filtros.push({ cpf: candidato.cpf! });
-  if (candidato.nomeCompleto) {
-    filtros.push({ nomeCompleto: candidato.nomeCompleto });
-    const idsNormalizados = await idsPorNomeCivilNormalizado([candidato.nomeCompleto]);
-    if (idsNormalizados.length > 0) {
-      filtros.push({ id: { in: idsNormalizados } });
+  const cpfs = new Set<string>();
+  if (cpfValido) cpfs.add(candidato.cpf!);
+  const nomesCivis = new Set<string>();
+  if (candidato.nomeCompleto) nomesCivis.add(candidato.nomeCompleto);
+  const idsExtras = new Set<string>();
+
+  // Via 1 — mesmo NOME DE URNA (sem acento) com nome civil QUASE idêntico:
+  // captura erros de digitação do TSE e descobre o CPF da pessoa em outros
+  // anos (homônimos reais têm nomes civis distantes e ficam de fora).
+  if (candidato.nome && candidato.nomeCompleto) {
+    const alvoUrna = candidato.nome
+      .normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/\s+/g, " ").trim().replace(/'/g, "''");
+    const PARES: [string, string][] = [
+      ["á","A"],["à","A"],["â","A"],["ã","A"],["Á","A"],["À","A"],["Â","A"],["Ã","A"],
+      ["é","E"],["ê","E"],["É","E"],["Ê","E"],["í","I"],["Í","I"],
+      ["ó","O"],["ô","O"],["õ","O"],["Ó","O"],["Ô","O"],["Õ","O"],
+      ["ú","U"],["ü","U"],["Ú","U"],["Ü","U"],["ç","C"],["Ç","C"],
+    ];
+    let col = `UPPER("nome")`;
+    for (const [de, para] of PARES) col = `REPLACE(${col}, '${de}', '${para}')`;
+    const mesmaUrna = await prisma.$queryRawUnsafe<
+      { id: string; nomeCompleto: string | null; cpf: string | null }[]
+    >(`SELECT id, "nomeCompleto", cpf FROM "Candidato" WHERE ${col} = '${alvoUrna}'`);
+    for (const p of mesmaUrna) {
+      if (p.id === candidato.id || !p.nomeCompleto) continue;
+      if (distanciaCivil(candidato.nomeCompleto, p.nomeCompleto) <= 2) {
+        idsExtras.add(p.id);
+        nomesCivis.add(p.nomeCompleto);
+        if (p.cpf && /^\d{11}$/.test(p.cpf)) cpfs.add(p.cpf);
+      }
     }
   }
+
+  // Via 2 — nome civil normalizado (acentos variam entre eleições).
+  if (nomesCivis.size > 0) {
+    for (const id of await idsPorNomeCivilNormalizado([...nomesCivis])) idsExtras.add(id);
+  }
+
+  const filtros: object[] = [];
+  // CPF e nome civil juntos: anos em que o TSE mascarou o CPF ("-4")
+  // continuam ligados pelo nome completo. Os CPFs descobertos na via 1
+  // fazem o SEGUNDO SALTO: um registro de 2024 sem CPF liga ao de 2012
+  // pelo nome, e o CPF de 2012 traz o de 2016 mesmo com nome digitado
+  // errado pelo TSE.
+  if (cpfs.size > 0) filtros.push({ cpf: { in: [...cpfs] } });
+  if (nomesCivis.size > 0) filtros.push({ nomeCompleto: { in: [...nomesCivis] } });
+  if (idsExtras.size > 0) filtros.push({ id: { in: [...idsExtras] } });
   if (filtros.length === 0) return [];
 
   const brutos = await prisma.candidato.findMany({

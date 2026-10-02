@@ -99,10 +99,43 @@ export async function GET(req: NextRequest) {
 
     const normChave = (s: string) =>
       s.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+    // Ponte civil→CPF: um registro SEM CPF (ex.: 2024) herda o CPF de outro
+    // registro da mesma pessoa (mesmo nome civil normalizado, ou quase —
+    // distância ≤ 2 tolera erro de digitação do TSE como "DA SILA").
+    const dist = (a: string, b: string): number => {
+      if (a === b) return 0;
+      if (Math.abs(a.length - b.length) > 2) return 99;
+      let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+      for (let i = 1; i <= a.length; i++) {
+        const cur = [i];
+        for (let j = 1; j <= b.length; j++) {
+          cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+        }
+        prev = cur;
+      }
+      return prev[b.length];
+    };
+    const cpfPorCivil = new Map<string, string>();
     for (const c of todos.values()) {
-      // Chave de pessoa NORMALIZADA: "JOSE PAULO GENUINO" e "JOSÉ PAULO
-      // GENUINO" são a mesma pessoa, não duas.
-      const chave = c.cpf || (c.nomeCompleto ? normChave(c.nomeCompleto) : `urna:${normChave(c.nome)}`);
+      if (c.cpf && /^\d{11}$/.test(c.cpf) && c.nomeCompleto) {
+        cpfPorCivil.set(normChave(c.nomeCompleto), c.cpf);
+      }
+    }
+    const cpfDoCivil = (civil: string): string | null => {
+      const n = normChave(civil);
+      const direto = cpfPorCivil.get(n);
+      if (direto) return direto;
+      for (const [outro, cpf] of cpfPorCivil) {
+        if (dist(n, outro) <= 2) return cpf;
+      }
+      return null;
+    };
+    for (const c of todos.values()) {
+      // Chave de pessoa: CPF (próprio ou herdado pela ponte civil) >
+      // nome civil normalizado > nome de urna.
+      const chave =
+        c.cpf ||
+        (c.nomeCompleto ? cpfDoCivil(c.nomeCompleto) ?? normChave(c.nomeCompleto) : `urna:${normChave(c.nome)}`);
       let p = pessoas.get(chave);
       if (!p) {
         p = {
