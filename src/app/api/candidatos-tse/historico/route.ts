@@ -1,5 +1,6 @@
 import { verifySession } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
+import { idsPorNomeCivilNormalizado } from "@/lib/data";
 import { NextRequest, NextResponse } from "next/server";
 
 // Histórico político de um nome de urna, com duas correções importantes:
@@ -53,8 +54,12 @@ export async function GET(req: NextRequest) {
     const nomesCompletos = [
       ...new Set(iniciais.map((c) => c.nomeCompleto).filter(Boolean)),
     ] as string[];
+    // O nome civil é comparado SEM acento (o TSE varia a grafia entre anos).
+    const idsCivis = nomesCompletos.length
+      ? await idsPorNomeCivilNormalizado(nomesCompletos)
+      : [];
     const expandidos =
-      cpfs.length || nomesCompletos.length
+      cpfs.length || nomesCompletos.length || idsCivis.length
         ? await prisma.candidato.findMany({
             where: {
               OR: [
@@ -62,6 +67,7 @@ export async function GET(req: NextRequest) {
                 ...(nomesCompletos.length
                   ? [{ nomeCompleto: { in: nomesCompletos } }]
                   : []),
+                ...(idsCivis.length ? [{ id: { in: idsCivis } }] : []),
               ],
             },
             include,
@@ -91,8 +97,12 @@ export async function GET(req: NextRequest) {
     };
     const pessoas = new Map<string, Pessoa>();
 
+    const normChave = (s: string) =>
+      s.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
     for (const c of todos.values()) {
-      const chave = c.cpf || c.nomeCompleto || `urna:${c.nome}`;
+      // Chave de pessoa NORMALIZADA: "JOSE PAULO GENUINO" e "JOSÉ PAULO
+      // GENUINO" são a mesma pessoa, não duas.
+      const chave = c.cpf || (c.nomeCompleto ? normChave(c.nomeCompleto) : `urna:${normChave(c.nome)}`);
       let p = pessoas.get(chave);
       if (!p) {
         p = {

@@ -937,6 +937,35 @@ export async function getFiliacaoAtual(candidatoIds: string[]) {
 // repete entre pessoas distintas (ex.: vários "HELDER"), então o vínculo é
 // pelo CPF do TSE — com fallback para o nome civil completo. Sem nenhum dos
 // dois, não arriscamos associação.
+// Ids de candidatos cujo NOME CIVIL casa com algum dos alvos IGNORANDO
+// acentos — o TSE grafa a mesma pessoa com e sem acento conforme a eleição
+// ("JOSE PAULO GENUINO" 2024 × "JOSÉ PAULO GENUINO" 2000). SQLite não tem
+// unaccent: normalizamos a coluna com cadeia de REPLACE (pós-UPPER, que é
+// ASCII-only) e comparamos com os alvos normalizados em JS.
+export async function idsPorNomeCivilNormalizado(nomes: string[]): Promise<string[]> {
+  const normJs = (s: string) =>
+    s.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+  const alvos = [...new Set(nomes.map(normJs).filter(Boolean))];
+  if (alvos.length === 0) return [];
+  const PARES: [string, string][] = [
+    ["á", "A"], ["à", "A"], ["â", "A"], ["ã", "A"], ["ä", "A"],
+    ["Á", "A"], ["À", "A"], ["Â", "A"], ["Ã", "A"], ["Ä", "A"],
+    ["é", "E"], ["ê", "E"], ["è", "E"], ["É", "E"], ["Ê", "E"], ["È", "E"],
+    ["í", "I"], ["î", "I"], ["Í", "I"], ["Î", "I"],
+    ["ó", "O"], ["ô", "O"], ["õ", "O"], ["ö", "O"],
+    ["Ó", "O"], ["Ô", "O"], ["Õ", "O"], ["Ö", "O"],
+    ["ú", "U"], ["û", "U"], ["ü", "U"], ["Ú", "U"], ["Û", "U"], ["Ü", "U"],
+    ["ç", "C"], ["Ç", "C"],
+  ];
+  let col = `UPPER("nomeCompleto")`;
+  for (const [de, para] of PARES) col = `REPLACE(${col}, '${de}', '${para}')`;
+  const lista = alvos.map((a) => `'${a.replace(/'/g, "''")}'`).join(",");
+  const rows = await prisma.$queryRawUnsafe<{ id: string }[]>(
+    `SELECT id FROM "Candidato" WHERE "nomeCompleto" IS NOT NULL AND ${col} IN (${lista})`
+  );
+  return rows.map((r) => r.id);
+}
+
 export async function getCandidaturasAnteriores(candidato: {
   id: string;
   cpf: string | null;
@@ -949,35 +978,9 @@ export async function getCandidaturasAnteriores(candidato: {
   if (cpfValido) filtros.push({ cpf: candidato.cpf! });
   if (candidato.nomeCompleto) {
     filtros.push({ nomeCompleto: candidato.nomeCompleto });
-    // O TSE grafa o MESMO nome civil com e sem acento conforme a eleição
-    // ("JOSE PAULO GENUINO" em 2024 × "JOSÉ PAULO GENUINO" em 2000) — o
-    // casamento precisa ignorar acentuação. SQLite não tem unaccent:
-    // normalizamos a coluna com uma cadeia de REPLACE e comparamos com o
-    // alvo normalizado em JS.
-    const alvo = candidato.nomeCompleto
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .toUpperCase()
-      .replace(/\s+/g, " ")
-      .trim()
-      .replace(/'/g, "''");
-    const PARES: [string, string][] = [
-      ["á", "A"], ["à", "A"], ["â", "A"], ["ã", "A"], ["ä", "A"],
-      ["Á", "A"], ["À", "A"], ["Â", "A"], ["Ã", "A"], ["Ä", "A"],
-      ["é", "E"], ["ê", "E"], ["è", "E"], ["É", "E"], ["Ê", "E"], ["È", "E"],
-      ["í", "I"], ["î", "I"], ["Í", "I"], ["Î", "I"],
-      ["ó", "O"], ["ô", "O"], ["õ", "O"], ["ö", "O"],
-      ["Ó", "O"], ["Ô", "O"], ["Õ", "O"], ["Ö", "O"],
-      ["ú", "U"], ["û", "U"], ["ü", "U"], ["Ú", "U"], ["Û", "U"], ["Ü", "U"],
-      ["ç", "C"], ["Ç", "C"],
-    ];
-    let col = `UPPER("nomeCompleto")`;
-    for (const [de, para] of PARES) col = `REPLACE(${col}, '${de}', '${para}')`;
-    const idsNormalizados = await prisma.$queryRawUnsafe<{ id: string }[]>(
-      `SELECT id FROM "Candidato" WHERE "nomeCompleto" IS NOT NULL AND ${col} = '${alvo}'`
-    );
+    const idsNormalizados = await idsPorNomeCivilNormalizado([candidato.nomeCompleto]);
     if (idsNormalizados.length > 0) {
-      filtros.push({ id: { in: idsNormalizados.map((r) => r.id) } });
+      filtros.push({ id: { in: idsNormalizados } });
     }
   }
   if (filtros.length === 0) return [];
