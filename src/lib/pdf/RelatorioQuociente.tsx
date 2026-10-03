@@ -57,7 +57,7 @@ export function RelatorioQuociente({ resultado }: { resultado: Proporcional }) {
           if (candidatosDoPartido.length === 0) return null;
           const temCadeira = p.cadeirasOficiais > 0;
           return (
-            <View key={p.partidoId} wrap={false}>
+            <View key={p.partidoId}>
               <SectionTitle>
                 {p.sigla} —{" "}
                 {temCadeira

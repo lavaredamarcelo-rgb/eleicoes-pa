@@ -1096,13 +1096,25 @@ export async function getCandidaturasAnteriores(candidato: {
       resultado.push(lista[0]);
       continue;
     }
-    // Duplicata no mesmo ano: se todos são a MESMA pessoa (mesmo CPF, caso
-    // de registro substituído — trocou de cargo/número antes do pleito),
-    // fica a candidatura efetiva (a que recebeu votos); homônimos de nome
-    // sem CPF são ambíguos e ficam de fora.
-    const cpfs = new Set(lista.map((c) => c.cpf).filter(Boolean));
-    const mesmaPessoa = cpfs.size <= 1 && (!cpfValido || cpfs.size === 0 || cpfs.has(candidato.cpf!));
-    if (mesmaPessoa && cpfs.size === 1) {
+    // Duplicata no mesmo ano (homônimo civil real, ex.: dois "José Maria
+    // Rodrigues Junior" em cidades diferentes em 2016): se conhecemos o(s)
+    // CPF(s) DA PESSOA (direto ou descoberto nos outros anos), resolvemos
+    // ficando com o candidato daquele ano cujo CPF pertence à pessoa —
+    // em vez de descartar o ano inteiro.
+    const daPessoa = lista.filter((c) => c.cpf && /^\d{11}$/.test(c.cpf) && cpfs.has(c.cpf));
+    if (daPessoa.length >= 1) {
+      resultado.push(daPessoa.sort((a, b) => b.totalVotos - a.totalVotos)[0]);
+      continue;
+    }
+    // Sem registro com CPF da pessoa neste ano: se conhecemos o CPF da
+    // pessoa e o registro do ano tem OUTRO CPF, é o homônimo — fica fora.
+    const cpfsAno = new Set(lista.map((c) => c.cpf).filter(Boolean)) as Set<string>;
+    if (cpfs.size > 0 && [...cpfsAno].some((x) => /^\d{11}$/.test(x) && !cpfs.has(x))) {
+      continue;
+    }
+    const mesmaPessoa =
+      cpfsAno.size <= 1 && (!cpfValido || cpfsAno.size === 0 || cpfsAno.has(candidato.cpf!));
+    if (mesmaPessoa && cpfsAno.size === 1) {
       resultado.push(lista.sort((a, b) => b.totalVotos - a.totalVotos)[0]);
     }
   }

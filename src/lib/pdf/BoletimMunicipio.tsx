@@ -5,47 +5,103 @@ import type { getMunicipio } from "@/lib/data";
 
 type Municipio = NonNullable<Awaited<ReturnType<typeof getMunicipio>>>;
 
-export function BoletimMunicipio({ municipio }: { municipio: Municipio }) {
-  const totalVotos = municipio.resultados.reduce((sum, r) => sum + r.votos, 0);
+const f = (n: number) => n.toLocaleString("pt-BR");
+const TOP_POR_CARGO = 40;
 
-  const porCargo = new Map<string, { nome: string; resultados: typeof municipio.resultados }>();
+// Boletim do município organizado POR ELEIÇÃO (ano) — antes somava todos
+// os anos num número só (com o histórico 2000-2024 passava de 1 milhão) e
+// misturava cargos de eleições diferentes sem rótulo.
+export function BoletimMunicipio({ municipio }: { municipio: Municipio }) {
+  // ano -> cargoId -> grupo
+  const porAno = new Map<
+    number,
+    Map<string, { nome: string; resultados: Municipio["resultados"] }>
+  >();
   for (const r of municipio.resultados) {
-    const atual = porCargo.get(r.candidato.cargo.id);
+    const ano = r.candidato.cargo.eleicao.ano;
+    let cargos = porAno.get(ano);
+    if (!cargos) {
+      cargos = new Map();
+      porAno.set(ano, cargos);
+    }
+    const atual = cargos.get(r.candidato.cargo.id);
     if (atual) atual.resultados.push(r);
-    else porCargo.set(r.candidato.cargo.id, { nome: r.candidato.cargo.nome, resultados: [r] });
+    else cargos.set(r.candidato.cargo.id, { nome: r.candidato.cargo.nome, resultados: [r] });
   }
+  const anos = [...porAno.keys()].sort((a, b) => b - a);
+  const anoRecente = anos[0];
+  const cargosRecentes = anoRecente ? [...porAno.get(anoRecente)!.values()] : [];
+  const votosRecentes = cargosRecentes.reduce(
+    (s, g) => s + g.resultados.reduce((x, r) => x + r.votos, 0),
+    0
+  );
 
   return (
-    <ReportShell title={`Boletim do município — ${municipio.nome}`} subtitle={municipio.regiao.nome}>
+    <ReportShell
+      title={`Boletim do município — ${municipio.nome}`}
+      subtitle={`${municipio.regiao.nome}${municipio.eleitores ? ` · ${f(municipio.eleitores)} eleitores aptos (${municipio.anoEleitorado})` : ""}`}
+    >
       <View style={styles.statsRow}>
-        <StatBox label="Votos apurados" value={totalVotos.toLocaleString("pt-BR")} />
-        <StatBox label="Disputas" value={String(porCargo.size)} />
-        <StatBox label="Candidatos com votos" value={String(municipio.resultados.length)} />
+        <StatBox label={`Votos em ${anoRecente ?? "—"}`} value={f(votosRecentes)} />
+        <StatBox label={`Disputas em ${anoRecente ?? "—"}`} value={String(cargosRecentes.length)} />
+        <StatBox label="Eleições no histórico" value={String(anos.length)} />
+        {municipio.eleitores ? (
+          <StatBox label={`Eleitores (${municipio.anoEleitorado})`} value={f(municipio.eleitores)} />
+        ) : null}
       </View>
 
-      {Array.from(porCargo.values()).map((grupo) => (
-        <View key={grupo.nome} wrap={false}>
-          <SectionTitle>{grupo.nome}</SectionTitle>
-          <View style={styles.table}>
-            <TableHeader columns={["Candidato", "Número", "Partido", "Votos"]} />
-            {grupo.resultados.map((r) => (
-              <TableRow
-                key={r.id}
-                cells={[
-                  r.candidato.nome,
-                  String(r.candidato.numero),
-                  r.candidato.partido.sigla,
-                  r.votos.toLocaleString("pt-BR"),
-                ]}
-              />
-            ))}
-          </View>
-        </View>
-      ))}
+      <SectionTitle>Resumo por eleição</SectionTitle>
+      <View style={styles.table}>
+        <TableHeader columns={["Eleição", "Disputas", "Candidatos com votos", "Votos computados"]} />
+        {anos.map((ano) => {
+          const grupos = [...porAno.get(ano)!.values()];
+          const cand = grupos.reduce((s, g) => s + g.resultados.length, 0);
+          const votos = grupos.reduce(
+            (s, g) => s + g.resultados.reduce((x, r) => x + r.votos, 0),
+            0
+          );
+          return (
+            <TableRow key={ano} cells={[String(ano), String(grupos.length), f(cand), f(votos)]} />
+          );
+        })}
+      </View>
 
-      <Text style={{ marginTop: 12, fontSize: 8, color: "#9ca3af" }}>
-        Dados de demonstração. Substituir por importação oficial do TSE antes de uso real.
-      </Text>
+      {anos.map((ano) =>
+        [...porAno.get(ano)!.values()]
+          .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
+          .map((grupo) => {
+            const ordenados = [...grupo.resultados].sort((a, b) => b.votos - a.votos);
+            const visiveis = ordenados.slice(0, TOP_POR_CARGO);
+            const restantes = ordenados.length - visiveis.length;
+            const votosRestantes = ordenados
+              .slice(TOP_POR_CARGO)
+              .reduce((s, r) => s + r.votos, 0);
+            return (
+              <View key={`${ano}-${grupo.nome}`}>
+                <SectionTitle>{`${grupo.nome} · ${ano}`}</SectionTitle>
+                <View style={styles.table}>
+                  <TableHeader columns={["Candidato", "Número", "Partido", "Votos"]} />
+                  {visiveis.map((r) => (
+                    <TableRow
+                      key={r.id}
+                      cells={[
+                        r.candidato.nome,
+                        String(r.candidato.numero),
+                        r.candidato.partido.sigla,
+                        f(r.votos),
+                      ]}
+                    />
+                  ))}
+                </View>
+                {restantes > 0 && (
+                  <Text style={styles.tableCellMuted}>
+                    + {restantes} candidatos com menos votos ({f(votosRestantes)} votos somados).
+                  </Text>
+                )}
+              </View>
+            );
+          })
+      )}
     </ReportShell>
   );
 }
