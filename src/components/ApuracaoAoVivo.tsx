@@ -616,7 +616,7 @@ export function ApuracaoAoVivo({
             </div>
           )}
 
-          <div className="flex items-center justify-between text-xs text-neutral-500">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-500">
             <button
               onClick={acompanharComparativo}
               disabled={salvandoFavorito}
@@ -625,7 +625,7 @@ export function ApuracaoAoVivo({
               ⚡ Comparativo: Governador + Senado
             </button>
 
-            <span className="flex items-center gap-2">
+            <span className="flex flex-wrap items-center gap-2">
               {atualizadoEm && `Atualizado ${atualizadoEm.toLocaleTimeString("pt-BR")}`}
               <button
                 onClick={acompanhar}
@@ -669,7 +669,7 @@ export function ApuracaoAoVivo({
                 {quociente.linhas.map((l) => (
                   <div
                     key={l.chave}
-                    className={`flex items-center justify-between gap-2 rounded-lg px-2 py-1 text-xs ${
+                    className={`flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 rounded-lg px-2 py-1 text-xs ${
                       l.total > 0 ? "bg-amber-950/30" : "opacity-60"
                     }`}
                   >
@@ -687,7 +687,7 @@ export function ApuracaoAoVivo({
                         </span>
                       )}
                     </span>
-                    <span className="shrink-0 tabular-nums text-neutral-500">
+                    <span className="ml-auto whitespace-nowrap text-right tabular-nums text-neutral-500">
                       {l.votos.toLocaleString("pt-BR")} votos
                       <span className="ml-2 font-semibold text-neutral-200">
                         {l.total} {l.total === 1 ? "cadeira" : "cadeiras"}
@@ -722,9 +722,9 @@ export function ApuracaoAoVivo({
                         : "border-neutral-800 bg-neutral-900"
                   }`}
                 >
-                  <div className="mb-1.5 flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2">
-                      <span className="w-6 text-right text-xs text-neutral-600">{i + 1}º</span>
+                  <div className="mb-1.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-sm">
+                    <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="w-6 shrink-0 text-right text-xs text-neutral-600">{i + 1}º</span>
                       {ehFavorito(c.nome) && (
                         <Star size={13} className="shrink-0 fill-amber-400 text-amber-400" />
                       )}
@@ -773,7 +773,7 @@ export function ApuracaoAoVivo({
                           </span>
                         )}
                     </span>
-                    <span className="font-semibold text-amber-400">
+                    <span className="ml-auto shrink-0 whitespace-nowrap font-semibold text-amber-400">
                       {c.votos.toLocaleString("pt-BR")}
                       <span className="ml-2 text-xs font-normal text-neutral-500">
                         {total > 0 ? `${((c.votos / total) * 100).toFixed(1)}%` : ""}
