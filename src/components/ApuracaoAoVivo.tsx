@@ -54,10 +54,12 @@ const normNome = (s: string) =>
 // Do índice oficial do TSE, interessam apenas as Eleições Gerais de 2026
 // (1º e 2º turno) — nada de suplementares, consultas ou pleitos antigos.
 function filtrarGerais2026(eleicoes: Eleicao[]) {
+  // A "Eleição Ordinária Municipal" do índice não tem nossos cargos
+  // (Presidente a Dep. Estadual) — fora da lista para não confundir.
   return eleicoes.filter(
     (e) =>
       /2026/.test(e.data) &&
-      !/suplementar|consulta|plebiscito|referendo|nova/i.test(e.nome)
+      !/suplementar|consulta|plebiscito|referendo|nova|municipal/i.test(e.nome)
   );
 }
 
@@ -113,7 +115,9 @@ export function ApuracaoAoVivo({
       .then((d) => {
         const gerais = filtrarGerais2026(d.eleicoes ?? []);
         setEleicoes2026(gerais);
-        if (gerais[0]) setEleicaoCd(gerais[0].cd);
+        // Começa direto na Estadual (cargo inicial é Governador).
+        const inicial = gerais.find((e) => /estadual/i.test(e.nome)) ?? gerais[0];
+        if (inicial) setEleicaoCd(inicial.cd);
       })
       .catch(() => setEleicoes2026([]));
   }, []);
@@ -137,8 +141,14 @@ export function ApuracaoAoVivo({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cargoCd, eleicoes2026]);
 
+  // Sequência das consultas: respostas de uma busca antiga (ex.: da
+  // eleição anterior à troca automática) são descartadas, para não
+  // atropelarem os dados mais novos na tela.
+  const seqBusca = useRef(0);
+
   const buscar = useCallback(async () => {
     if (!eleicaoCd) return;
+    const minhaSeq = ++seqBusca.current;
     setCarregando(true);
     setErro(null);
     try {
@@ -150,6 +160,7 @@ export function ApuracaoAoVivo({
         `/api/apuracao?eleicao=${eleicaoCd}&ano=2026&cargo=${cargoCd}&mun=${mun}`
       );
       const d = await resp.json();
+      if (minhaSeq !== seqBusca.current) return; // já há busca mais nova
       if (!resp.ok) {
         setErro(d.erro ?? "Falha ao consultar o TSE.");
         setDados(null);
@@ -186,9 +197,9 @@ export function ApuracaoAoVivo({
         }
       }
     } catch {
-      setErro("Falha de rede ao consultar o TSE.");
+      if (minhaSeq === seqBusca.current) setErro("Falha de rede ao consultar o TSE.");
     } finally {
-      setCarregando(false);
+      if (minhaSeq === seqBusca.current) setCarregando(false);
     }
   }, [eleicaoCd, cargoCd, abrangencia, municipioSel]);
 

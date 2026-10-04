@@ -51,3 +51,4 @@ next-env.d.ts
 # Backups completos (código+bancos+segredos) — nunca versionar nem publicar
 /backups
 !/backups/RESTAURAR.md
+prod-copy.db
