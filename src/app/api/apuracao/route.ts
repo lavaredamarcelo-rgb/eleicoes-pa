@@ -42,6 +42,9 @@ type CandidatoApuracao = {
   numero: string;
   nome: string | null;
   partido: string | null;
+  // Federação a que o partido pertence (ex.: "PT/PCdoB/PV") — vem do
+  // agrupamento "agr" do arquivo do TSE; null para partido isolado.
+  federacao: string | null;
   votos: number;
   percentual: string;
   eleito: boolean;
@@ -67,15 +70,25 @@ function extrairCandidatos(dados: unknown): { candidatos: CandidatoApuracao[]; m
   }
 
   // Formato municipal (-u.json): carg[].agr[].par[].cand[]
-  const carg = d.carg as { agr?: { par?: { sg?: string; cand?: Record<string, string>[] }[] }[] }[] | undefined;
+  // Cada "agr" é um agrupamento: partido isolado OU federação (vários
+  // partidos juntos, que somam votos para o quociente eleitoral).
+  const carg = d.carg as {
+    agr?: { sg?: string; nm?: string; par?: { sg?: string; cand?: Record<string, string>[] }[] }[];
+  }[] | undefined;
   if (carg?.[0]?.agr) {
     for (const agr of carg[0].agr) {
+      const partidosDoAgr = (agr.par ?? []).map((p) => p.sg).filter(Boolean);
+      const federacao =
+        partidosDoAgr.length > 1
+          ? agr.sg || agr.nm || partidosDoAgr.join("/")
+          : null;
       for (const par of agr.par ?? []) {
         for (const c of par.cand ?? []) {
           candidatos.push({
             numero: c.n,
             nome: c.nmu || c.nm || null,
             partido: par.sg ?? null,
+            federacao,
             votos: Number(c.vap) || 0,
             percentual: c.pvap ?? "",
             eleito: c.e === "s" || c.e === "S",
@@ -97,6 +110,7 @@ function extrairCandidatos(dados: unknown): { candidatos: CandidatoApuracao[]; m
         numero: c.n,
         nome: null,
         partido: null,
+        federacao: null,
         votos: Number(c.vap) || 0,
         percentual: c.pvap ?? "",
         eleito: c.e === "s" || c.e === "S",

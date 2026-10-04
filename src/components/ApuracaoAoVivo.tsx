@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CalendarClock, Star } from "lucide-react";
 import { adicionarFavoritoApuracao } from "@/app/actions/apuracao";
+import { distribuirVagas } from "@/lib/simulacaoPartido";
 import { ApuracaoCardFavorito, type Favorito } from "@/components/ApuracaoCardFavorito";
 
 type Eleicao = { cd: string; nome: string; data: string };
@@ -10,6 +11,7 @@ type Candidato = {
   numero: string;
   nome: string | null;
   partido: string | null;
+  federacao?: string | null;
   votos: number;
   percentual: string;
   eleito: boolean;
@@ -53,10 +55,12 @@ export function ApuracaoAoVivo({
   favoritos,
   regioes = [],
   municipios = [],
+  vagasPorCargo = {},
 }: {
   favoritos: Favorito[];
   regioes?: Regiao[];
   municipios?: MunicipioOpcao[];
+  vagasPorCargo?: Record<string, number>;
 }) {
   const atualizadores = useRef(new Map<string, () => void>());
   const registrarAtualizador = useCallback((id: string, fn: () => void) => {
@@ -248,6 +252,57 @@ export function ApuracaoAoVivo({
 
   const chaveAtual = `${cargoCd}:${municipioSel || (cargoCd === "0001" ? abrangencia : "estado")}`;
   const serieAtual = historico.current[chaveAtual] ?? [];
+
+  // QUOCIENTE ELEITORAL PARCIAL (Deputado Federal/Estadual, estado inteiro):
+  // agrupa os votos por federação/partido, calcula o QE (válidos ÷ vagas) e
+  // distribui as cadeiras — pelo quociente e pelas sobras (maiores médias,
+  // via distribuirVagas). Aproximação com votos nominais (sem legenda), que
+  // se refina a cada atualização; o resultado oficial é o do TSE.
+  const quociente = useMemo(() => {
+    if (!dados || !["0006", "0007"].includes(cargoCd) || municipioSel) return null;
+    const nVagas = vagasPorCargo[cargoCd] ?? 0;
+    const totalV = dados.candidatos.reduce((s, c) => s + c.votos, 0);
+    if (!nVagas || totalV === 0) return null;
+
+    const grupos = new Map<string, { votos: number; candidatos: Candidato[] }>();
+    for (const c of dados.candidatos) {
+      const chave = c.federacao ?? c.partido ?? `Nº ${c.numero.slice(0, 2)}`;
+      const g = grupos.get(chave) ?? { votos: 0, candidatos: [] };
+      g.votos += c.votos;
+      g.candidatos.push(c);
+      grupos.set(chave, g);
+    }
+
+    const qe = Math.floor(totalV / nVagas) || 1;
+    const cadeiras = distribuirVagas(
+      [...grupos.entries()].map(([partidoId, g]) => ({ partidoId, votos: g.votos })),
+      nVagas,
+      qe
+    );
+
+    // Quem está ENTRANDO: os N mais votados de cada grupo, onde N é o
+    // número de cadeiras do grupo agora.
+    const entrando = new Set<string>();
+    const linhas = [...grupos.entries()].map(([chave, g]) => {
+      const total = cadeiras.get(chave) ?? 0;
+      const peloQE = Math.floor(g.votos / qe);
+      g.candidatos
+        .slice()
+        .sort((a, b) => b.votos - a.votos)
+        .slice(0, total)
+        .forEach((c) => entrando.add(c.numero));
+      return {
+        chave,
+        votos: g.votos,
+        atingiuQE: g.votos >= qe,
+        peloQE,
+        sobras: Math.max(0, total - peloQE),
+        total,
+      };
+    });
+    linhas.sort((a, b) => b.total - a.total || b.votos - a.votos);
+    return { qe, nVagas, totalV, linhas, entrando };
+  }, [dados, cargoCd, municipioSel, vagasPorCargo]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -521,10 +576,75 @@ export function ApuracaoAoVivo({
             </p>
           )}
 
+          {quociente && (
+            <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
+              <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+                <p className="text-sm font-semibold text-neutral-200">
+                  Cadeiras por partido/federação — parcial
+                </p>
+                <p className="text-xs text-neutral-500">
+                  QE parcial:{" "}
+                  <span className="font-semibold tabular-nums text-amber-400">
+                    {quociente.qe.toLocaleString("pt-BR")}
+                  </span>{" "}
+                  votos · {quociente.nVagas} vagas
+                </p>
+              </div>
+              <div className="flex flex-col gap-1">
+                {quociente.linhas.map((l) => (
+                  <div
+                    key={l.chave}
+                    className={`flex items-center justify-between gap-2 rounded-lg px-2 py-1 text-xs ${
+                      l.total > 0 ? "bg-amber-950/30" : "opacity-60"
+                    }`}
+                  >
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <span
+                        className={`truncate font-medium ${
+                          l.total > 0 ? "text-amber-300" : "text-neutral-400"
+                        }`}
+                      >
+                        {l.chave}
+                      </span>
+                      {l.atingiuQE && (
+                        <span className="shrink-0 rounded-full bg-emerald-950 px-1.5 py-px text-[9px] text-emerald-300">
+                          bateu o QE
+                        </span>
+                      )}
+                    </span>
+                    <span className="shrink-0 tabular-nums text-neutral-500">
+                      {l.votos.toLocaleString("pt-BR")} votos
+                      <span className="ml-2 font-semibold text-neutral-200">
+                        {l.total} {l.total === 1 ? "cadeira" : "cadeiras"}
+                      </span>
+                      {l.total > 0 && (
+                        <span className="ml-1 text-neutral-500">
+                          ({l.peloQE} QE{l.sobras > 0 ? ` + ${l.sobras} sobras` : ""})
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-[10px] text-neutral-600">
+                Quociente partidário + maiores médias (art. 109), com votos nominais parciais —
+                sem votos de legenda, é aproximação até a totalização avançar. Vale o oficial do
+                TSE.
+              </p>
+            </div>
+          )}
+
           {dados && dados.candidatos.length > 0 && (
             <div className="flex flex-col gap-2">
               {dados.candidatos.map((c, i) => (
-                <div key={c.numero} className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
+                <div
+                  key={c.numero}
+                  className={`rounded-xl border bg-neutral-900 px-4 py-3 ${
+                    quociente?.entrando.has(c.numero)
+                      ? "border-emerald-800"
+                      : "border-neutral-800"
+                  }`}
+                >
                   <div className="mb-1.5 flex items-center justify-between text-sm">
                     <span className="flex items-center gap-2">
                       <span className="w-6 text-right text-xs text-neutral-600">{i + 1}º</span>
@@ -536,6 +656,14 @@ export function ApuracaoAoVivo({
                       {c.eleito && (
                         <span className="rounded-full bg-emerald-950 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
                           {c.situacao || "Eleito"}
+                        </span>
+                      )}
+                      {!c.eleito && quociente?.entrando.has(c.numero) && (
+                        <span
+                          title="Está dentro das cadeiras que o partido/federação faz agora pelo quociente parcial e sobras. Pode mudar a cada atualização."
+                          className="rounded-full bg-emerald-950 px-2 py-0.5 text-[10px] font-medium text-emerald-300"
+                        >
+                          📥 Entrando
                         </span>
                       )}
                       {i === 0 && !c.eleito && definicao && definicao.tipo !== "segundoTurno" && (

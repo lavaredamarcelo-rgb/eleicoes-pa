@@ -3,7 +3,12 @@ import { NextResponse } from "next/server";
 import * as fs from "fs";
 
 export async function GET() {
-  const out: Record<string, unknown> = { version: "v3-fix-migration" };
+  const out: Record<string, unknown> = {
+    version: "v3-fix-migration",
+    // Commit em produção (o Railway injeta a env no build) — permite
+    // confirmar qual versão está no ar sem depender de reinício visível.
+    commit: process.env.RAILWAY_GIT_COMMIT_SHA ?? null,
+  };
   try {
     out.users = await prisma.user.count();
     out.candidatos = await prisma.candidato.count();
