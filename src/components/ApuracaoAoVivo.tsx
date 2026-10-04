@@ -98,7 +98,11 @@ export function ApuracaoAoVivo({
   const [virada, setVirada] = useState<{ texto: string; hora: string } | null>(null);
   // Linha do tempo: evolução % dos dois primeiros a cada atualização.
   const historico = useRef<Record<string, { t: string; a: number; b: number }[]>>({});
-  const [dados, setDados] = useState<{ candidatos: Candidato[]; meta: Record<string, unknown> } | null>(null);
+  const [dados, setDados] = useState<{
+    candidatos: Candidato[];
+    meta: Record<string, unknown>;
+    grupos?: { chave: string; votos: number; legenda: number; vagas: number }[] | null;
+  } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [atualizadoEm, setAtualizadoEm] = useState<Date | null>(null);
@@ -280,48 +284,76 @@ export function ApuracaoAoVivo({
   // se refina a cada atualização; o resultado oficial é o do TSE.
   const quociente = useMemo(() => {
     if (!dados || !["0006", "0007"].includes(cargoCd) || municipioSel) return null;
+
+    // Candidatos de cada agrupamento, para marcar quem está entrando.
+    const candidatosPorChave = new Map<string, Candidato[]>();
+    for (const c of dados.candidatos) {
+      const chave = c.federacao ?? c.partido ?? `Nº ${c.numero.slice(0, 2)}`;
+      const lista = candidatosPorChave.get(chave) ?? [];
+      lista.push(c);
+      candidatosPorChave.set(chave, lista);
+    }
+
+    const entrando = new Set<string>();
+    const marcarEntrando = (chave: string, n: number) => {
+      (candidatosPorChave.get(chave) ?? [])
+        .slice()
+        .sort((a, b) => b.votos - a.votos)
+        .slice(0, n)
+        .forEach((c) => entrando.add(c.numero));
+    };
+
+    // Caminho OFICIAL: o arquivo do TSE já traz QE, vagas e cadeiras por
+    // agrupamento (inclui votos de legenda) — usamos exatamente esses.
+    const qeOficial = Number(dados.meta?.qe) || 0;
+    if (dados.grupos && dados.grupos.length > 0 && qeOficial > 0) {
+      const nVagas = Number(dados.meta?.vagas) || vagasPorCargo[cargoCd] || 0;
+      const linhas = dados.grupos.map((g) => {
+        const peloQE = Math.min(g.vagas, Math.floor(g.votos / qeOficial));
+        marcarEntrando(g.chave, g.vagas);
+        return {
+          chave: g.chave,
+          votos: g.votos,
+          atingiuQE: g.votos >= qeOficial,
+          peloQE,
+          sobras: Math.max(0, g.vagas - peloQE),
+          total: g.vagas,
+        };
+      });
+      linhas.sort((a, b) => b.total - a.total || b.votos - a.votos);
+      return { qe: qeOficial, nVagas, linhas, entrando, oficial: true };
+    }
+
+    // Caminho APROXIMADO (arquivo sem agrupamentos): QE pelos nominais e
+    // cadeiras via quociente partidário + maiores médias.
     const nVagas = vagasPorCargo[cargoCd] ?? 0;
     const totalV = dados.candidatos.reduce((s, c) => s + c.votos, 0);
     if (!nVagas || totalV === 0) return null;
-
-    const grupos = new Map<string, { votos: number; candidatos: Candidato[] }>();
-    for (const c of dados.candidatos) {
-      const chave = c.federacao ?? c.partido ?? `Nº ${c.numero.slice(0, 2)}`;
-      const g = grupos.get(chave) ?? { votos: 0, candidatos: [] };
-      g.votos += c.votos;
-      g.candidatos.push(c);
-      grupos.set(chave, g);
+    const votosPorChave = new Map<string, number>();
+    for (const [chave, lista] of candidatosPorChave) {
+      votosPorChave.set(chave, lista.reduce((s, c) => s + c.votos, 0));
     }
-
     const qe = Math.floor(totalV / nVagas) || 1;
     const cadeiras = distribuirVagas(
-      [...grupos.entries()].map(([partidoId, g]) => ({ partidoId, votos: g.votos })),
+      [...votosPorChave.entries()].map(([partidoId, votos]) => ({ partidoId, votos })),
       nVagas,
       qe
     );
-
-    // Quem está ENTRANDO: os N mais votados de cada grupo, onde N é o
-    // número de cadeiras do grupo agora.
-    const entrando = new Set<string>();
-    const linhas = [...grupos.entries()].map(([chave, g]) => {
+    const linhas = [...votosPorChave.entries()].map(([chave, votos]) => {
       const total = cadeiras.get(chave) ?? 0;
-      const peloQE = Math.floor(g.votos / qe);
-      g.candidatos
-        .slice()
-        .sort((a, b) => b.votos - a.votos)
-        .slice(0, total)
-        .forEach((c) => entrando.add(c.numero));
+      const peloQE = Math.floor(votos / qe);
+      marcarEntrando(chave, total);
       return {
         chave,
-        votos: g.votos,
-        atingiuQE: g.votos >= qe,
+        votos,
+        atingiuQE: votos >= qe,
         peloQE,
         sobras: Math.max(0, total - peloQE),
         total,
       };
     });
     linhas.sort((a, b) => b.total - a.total || b.votos - a.votos);
-    return { qe, nVagas, totalV, linhas, entrando };
+    return { qe, nVagas, linhas, entrando, oficial: false };
   }, [dados, cargoCd, municipioSel, vagasPorCargo]);
 
   // "Entrando" vale para TODOS os cargos: nos proporcionais vem do
@@ -615,7 +647,7 @@ export function ApuracaoAoVivo({
                   Cadeiras por partido/federação — parcial
                 </p>
                 <p className="text-xs text-neutral-500">
-                  QE parcial:{" "}
+                  QE {quociente.oficial ? "oficial" : "parcial"}:{" "}
                   <span className="font-semibold tabular-nums text-amber-400">
                     {quociente.qe.toLocaleString("pt-BR")}
                   </span>{" "}
@@ -659,9 +691,9 @@ export function ApuracaoAoVivo({
                 ))}
               </div>
               <p className="mt-2 text-[10px] text-neutral-600">
-                Quociente partidário + maiores médias (art. 109), com votos nominais parciais —
-                sem votos de legenda, é aproximação até a totalização avançar. Vale o oficial do
-                TSE.
+                {quociente.oficial
+                  ? "QE, votos (nominais + legenda) e cadeiras OFICIAIS, direto do arquivo de totalização do TSE — parciais até 100% das seções."
+                  : "Quociente partidário + maiores médias (art. 109), com votos nominais parciais — sem votos de legenda, é aproximação até a totalização avançar. Vale o oficial do TSE."}
               </p>
             </div>
           )}

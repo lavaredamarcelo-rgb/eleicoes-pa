@@ -51,9 +51,16 @@ type CandidatoApuracao = {
   situacao: string;
 };
 
-function extrairCandidatos(dados: unknown): { candidatos: CandidatoApuracao[]; meta: Record<string, unknown> } {
+type GrupoApuracao = { chave: string; votos: number; legenda: number; vagas: number };
+
+function extrairCandidatos(dados: unknown): {
+  candidatos: CandidatoApuracao[];
+  meta: Record<string, unknown>;
+  grupos: GrupoApuracao[] | null;
+} {
   const d = dados as Record<string, unknown>;
   const candidatos: CandidatoApuracao[] = [];
+  const grupos: GrupoApuracao[] = [];
   const meta: Record<string, unknown> = { dg: d.dg, hg: d.hg, turno: d.t };
   // Progresso da totalização — o TSE varia os nomes entre formatos, então
   // capturamos defensivamente: pst (% seções totalizadas), s/st/ts
@@ -71,18 +78,37 @@ function extrairCandidatos(dados: unknown): { candidatos: CandidatoApuracao[]; m
 
   // Formato municipal (-u.json): carg[].agr[].par[].cand[]
   // Cada "agr" é um agrupamento: partido isolado OU federação (vários
-  // partidos juntos, que somam votos para o quociente eleitoral).
+  // partidos juntos, que somam votos para o quociente eleitoral). O TSE
+  // já manda o cálculo OFICIAL: carg[0].qe (quociente eleitoral),
+  // carg[0].nv (vagas do cargo) e agr.vag (cadeiras do agrupamento no
+  // momento); par.tvan = votos nominais, par.tval = votos de legenda.
   const carg = d.carg as {
-    agr?: { sg?: string; nm?: string; par?: { sg?: string; cand?: Record<string, string>[] }[] }[];
+    qe?: string;
+    nv?: string;
+    agr?: {
+      sg?: string;
+      nm?: string;
+      com?: string;
+      vag?: string;
+      par?: { sg?: string; tvan?: string; tval?: string; cand?: Record<string, string>[] }[];
+    }[];
   }[] | undefined;
   if (carg?.[0]?.agr) {
-    for (const agr of carg[0].agr) {
+    const c0 = carg[0];
+    if (c0.qe != null) meta.qe = Number(String(c0.qe).replace(/\./g, "")) || null;
+    if (c0.nv != null) meta.vagas = Number(c0.nv) || null;
+    for (const agr of c0.agr ?? []) {
       const partidosDoAgr = (agr.par ?? []).map((p) => p.sg).filter(Boolean);
       const federacao =
         partidosDoAgr.length > 1
-          ? agr.sg || agr.nm || partidosDoAgr.join("/")
+          ? agr.com || agr.sg || partidosDoAgr.join("/")
           : null;
+      const chave = federacao ?? agr.com ?? partidosDoAgr[0] ?? agr.nm ?? "?";
+      let votosGrupo = 0;
+      let legendaGrupo = 0;
       for (const par of agr.par ?? []) {
+        votosGrupo += (Number(par.tvan) || 0) + (Number(par.tval) || 0);
+        legendaGrupo += Number(par.tval) || 0;
         for (const c of par.cand ?? []) {
           candidatos.push({
             numero: c.n,
@@ -96,6 +122,7 @@ function extrairCandidatos(dados: unknown): { candidatos: CandidatoApuracao[]; m
           });
         }
       }
+      grupos.push({ chave, votos: votosGrupo, legenda: legendaGrupo, vagas: Number(agr.vag) || 0 });
     }
   }
 
@@ -120,7 +147,7 @@ function extrairCandidatos(dados: unknown): { candidatos: CandidatoApuracao[]; m
   }
 
   candidatos.sort((a, b) => b.votos - a.votos);
-  return { candidatos, meta };
+  return { candidatos, meta, grupos: grupos.length > 0 ? grupos : null };
 }
 
 export async function GET(req: NextRequest) {
@@ -167,7 +194,7 @@ export async function GET(req: NextRequest) {
   for (const url of urls) {
     const dados = await buscarJson(url);
     if (!dados) continue;
-    const { candidatos, meta } = extrairCandidatos(dados);
+    const { candidatos, meta, grupos } = extrairCandidatos(dados);
 
     // Presidente: nomes fixos dos presidenciáveis 2026 (número do partido).
     if (cargo === "0001") {
@@ -200,7 +227,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ candidatos, meta, fonte: url });
+    return NextResponse.json({ candidatos, meta, grupos, fonte: url });
   }
 
   return NextResponse.json(
