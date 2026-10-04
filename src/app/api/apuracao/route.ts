@@ -52,6 +52,19 @@ function extrairCandidatos(dados: unknown): { candidatos: CandidatoApuracao[]; m
   const d = dados as Record<string, unknown>;
   const candidatos: CandidatoApuracao[] = [];
   const meta: Record<string, unknown> = { dg: d.dg, hg: d.hg, turno: d.t };
+  // Progresso da totalização — o TSE varia os nomes entre formatos, então
+  // capturamos defensivamente: pst (% seções totalizadas), s/st/ts
+  // (seções totalizadas / total de seções) no topo ou dentro de "s"/abr.
+  const s = d.s as Record<string, unknown> | undefined;
+  for (const [de, para] of [
+    ["pst", "secoesTotalizadas"],
+    ["st", "secoesApuradas"],
+    ["ts", "secoesTotais"],
+    ["tst", "secoesTotais"],
+  ] as const) {
+    const v = d[de] ?? s?.[de];
+    if (v != null && meta[para] == null) meta[para] = v;
+  }
 
   // Formato municipal (-u.json): carg[].agr[].par[].cand[]
   const carg = d.carg as { agr?: { par?: { sg?: string; cand?: Record<string, string>[] }[] }[] }[] | undefined;
@@ -76,7 +89,9 @@ function extrairCandidatos(dados: unknown): { candidatos: CandidatoApuracao[]; m
   // Formato estadual (-v.json): abr[].cand[] (sem nomes)
   const abr = d.abr as ({ cand?: Record<string, string>[] } & Record<string, unknown>)[] | undefined;
   if (candidatos.length === 0 && abr?.[0]?.cand) {
-    meta.secoesTotalizadas = abr[0].pst;
+    meta.secoesTotalizadas = abr[0].pst ?? meta.secoesTotalizadas;
+    meta.secoesApuradas = abr[0].st ?? meta.secoesApuradas;
+    meta.secoesTotais = abr[0].ts ?? abr[0].tst ?? meta.secoesTotais;
     for (const c of abr[0].cand) {
       candidatos.push({
         numero: c.n,

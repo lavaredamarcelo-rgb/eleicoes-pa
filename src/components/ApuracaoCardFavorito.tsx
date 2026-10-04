@@ -101,8 +101,13 @@ export function ApuracaoCardFavorito({
               {c.partido ? <span className="text-neutral-500"> · {c.partido}</span> : null}
               {c.eleito && <span className="ml-1 text-emerald-400">✓</span>}
             </span>
-            <span className="ml-2 shrink-0 font-semibold text-amber-400">
-              {total > 0 ? `${((c.votos / total) * 100).toFixed(1)}%` : "—"}
+            <span className="ml-2 shrink-0 text-right">
+              <span className="font-semibold tabular-nums text-amber-400">
+                {c.votos.toLocaleString("pt-BR")}
+              </span>
+              <span className="ml-1.5 tabular-nums text-neutral-500">
+                {total > 0 ? `${((c.votos / total) * 100).toFixed(1)}%` : "—"}
+              </span>
             </span>
           </div>
           <div className="h-1 w-full overflow-hidden rounded-full bg-neutral-800">
@@ -126,6 +131,9 @@ export function ApuracaoCardFavorito({
 
       {dados && (
         <p className="text-[10px] text-neutral-600">
+          {dados.meta?.secoesTotalizadas
+            ? `${String(dados.meta.secoesTotalizadas).replace(".", ",")}% das seções · `
+            : ""}
           TSE {String(dados.meta?.dg ?? "")} {String(dados.meta?.hg ?? "")}
           {hora ? ` · card ${hora.toLocaleTimeString("pt-BR")}` : ""}
         </p>

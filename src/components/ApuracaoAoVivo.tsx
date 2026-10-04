@@ -243,12 +243,52 @@ export function ApuracaoAoVivo({ favoritos }: { favoritos: Favorito[] }) {
             </div>
           )}
 
+          {/* Placar da totalização — no padrão do painel oficial do TSE */}
+          <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-neutral-500">
+                  Seções totalizadas
+                </p>
+                <p className="text-2xl font-bold text-amber-400">
+                  {dados?.meta?.secoesTotalizadas
+                    ? `${String(dados.meta.secoesTotalizadas).replace(".", ",")}%`
+                    : "—"}
+                </p>
+                {dados?.meta?.secoesApuradas != null && dados?.meta?.secoesTotais != null ? (
+                  <p className="text-xs text-neutral-500">
+                    {Number(dados.meta.secoesApuradas).toLocaleString("pt-BR")} de{" "}
+                    {Number(dados.meta.secoesTotais).toLocaleString("pt-BR")} urnas/seções
+                  </p>
+                ) : null}
+              </div>
+              <div className="text-right text-xs text-neutral-500">
+                <p>
+                  {dados?.meta?.dg
+                    ? `Última atualização do TSE: ${dados.meta.dg} às ${dados.meta.hg ?? ""}`
+                    : "Aguardando a totalização começar…"}
+                </p>
+                <p className="mt-0.5 text-neutral-600">
+                  Total de votos nesta disputa:{" "}
+                  <span className="font-semibold text-neutral-300">
+                    {total.toLocaleString("pt-BR")}
+                  </span>
+                </p>
+              </div>
+            </div>
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-neutral-800">
+              <div
+                className="h-2 bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-700"
+                style={{
+                  width: `${Math.min(100, Number(String(dados?.meta?.secoesTotalizadas ?? "0").replace(",", ".")) || 0)}%`,
+                }}
+              />
+            </div>
+          </div>
+
           <div className="flex items-center justify-between text-xs text-neutral-500">
-            <span>
-              {dados?.meta?.dg
-                ? `Totalização do TSE: ${dados.meta.dg} ${dados.meta.hg ?? ""}${dados.meta.secoesTotalizadas ? ` · ${dados.meta.secoesTotalizadas}% das seções` : ""}`
-                : "Aguardando dados…"}
-            </span>
+            <span />
+
             <span className="flex items-center gap-2">
               {atualizadoEm && `Atualizado ${atualizadoEm.toLocaleTimeString("pt-BR")}`}
               <button
