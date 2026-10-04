@@ -38,6 +38,19 @@ const ABRANGENCIAS_PRESIDENTE = [
 
 const INTERVALO_MS = 60_000;
 
+// Cadeiras dos majoritários em 2026: Presidente e Governador 1; Senado
+// renova 2/3, então cada estado elege 2 senadores neste pleito.
+const VAGAS_MAJORITARIAS: Record<string, number> = { "0001": 1, "0003": 1, "0005": 2 };
+
+// Nome normalizado para casar favoritos com os nomes vindos do TSE
+// (maiúsculas, sem acento).
+const normNome = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toUpperCase()
+    .trim();
+
 // Do índice oficial do TSE, interessam apenas as Eleições Gerais de 2026
 // (1º e 2º turno) — nada de suplementares, consultas ou pleitos antigos.
 function filtrarGerais2026(eleicoes: Eleicao[]) {
@@ -53,15 +66,22 @@ type MunicipioOpcao = { nome: string; codigoTse: string; regiaoId: string };
 
 export function ApuracaoAoVivo({
   favoritos,
+  nomesFavoritos = [],
   regioes = [],
   municipios = [],
   vagasPorCargo = {},
 }: {
   favoritos: Favorito[];
+  nomesFavoritos?: string[];
   regioes?: Regiao[];
   municipios?: MunicipioOpcao[];
   vagasPorCargo?: Record<string, number>;
 }) {
+  const favoritosSet = useMemo(() => new Set(nomesFavoritos.map(normNome)), [nomesFavoritos]);
+  const ehFavorito = useCallback(
+    (nome: string | null) => (nome ? favoritosSet.has(normNome(nome)) : false),
+    [favoritosSet]
+  );
   const atualizadores = useRef(new Map<string, () => void>());
   const registrarAtualizador = useCallback((id: string, fn: () => void) => {
     atualizadores.current.set(id, fn);
@@ -304,6 +324,17 @@ export function ApuracaoAoVivo({
     return { qe, nVagas, totalV, linhas, entrando };
   }, [dados, cargoCd, municipioSel, vagasPorCargo]);
 
+  // "Entrando" vale para TODOS os cargos: nos proporcionais vem do
+  // quociente; nos majoritários são os N primeiros (N = cadeiras em jogo:
+  // 2 senadores em 2026, 1 para Presidente/Governador) — a foto de quem
+  // estaria eleito se a apuração terminasse agora.
+  const entrandoGeral = useMemo(() => {
+    if (quociente) return quociente.entrando;
+    const n = VAGAS_MAJORITARIAS[cargoCd] ?? 0;
+    if (!dados || n === 0 || municipioSel) return new Set<string>();
+    return new Set(dados.candidatos.slice(0, n).map((c) => c.numero));
+  }, [quociente, dados, cargoCd, municipioSel]);
+
   return (
     <div className="flex flex-col gap-4">
       {favoritos.length > 0 && (
@@ -326,6 +357,7 @@ export function ApuracaoAoVivo({
                 favorito={f}
                 indice={i}
                 registrarAtualizador={registrarAtualizador}
+                nomesFavoritos={nomesFavoritos}
               />
             ))}
           </div>
@@ -639,16 +671,23 @@ export function ApuracaoAoVivo({
               {dados.candidatos.map((c, i) => (
                 <div
                   key={c.numero}
-                  className={`rounded-xl border bg-neutral-900 px-4 py-3 ${
-                    quociente?.entrando.has(c.numero)
-                      ? "border-emerald-800"
-                      : "border-neutral-800"
+                  className={`rounded-xl border px-4 py-3 ${
+                    ehFavorito(c.nome)
+                      ? "border-amber-500 bg-amber-950/25"
+                      : entrandoGeral.has(c.numero)
+                        ? "border-emerald-800 bg-neutral-900"
+                        : "border-neutral-800 bg-neutral-900"
                   }`}
                 >
                   <div className="mb-1.5 flex items-center justify-between text-sm">
                     <span className="flex items-center gap-2">
                       <span className="w-6 text-right text-xs text-neutral-600">{i + 1}º</span>
-                      <span className="font-medium">{c.nome ?? `Candidato ${c.numero}`}</span>
+                      {ehFavorito(c.nome) && (
+                        <Star size={13} className="shrink-0 fill-amber-400 text-amber-400" />
+                      )}
+                      <span className={`font-medium ${ehFavorito(c.nome) ? "text-amber-300" : ""}`}>
+                        {c.nome ?? `Candidato ${c.numero}`}
+                      </span>
                       <span className="text-xs text-neutral-500">
                         {c.numero}
                         {c.partido ? ` · ${c.partido}` : ""}
@@ -658,9 +697,9 @@ export function ApuracaoAoVivo({
                           {c.situacao || "Eleito"}
                         </span>
                       )}
-                      {!c.eleito && quociente?.entrando.has(c.numero) && (
+                      {!c.eleito && entrandoGeral.has(c.numero) && (
                         <span
-                          title="Está dentro das cadeiras que o partido/federação faz agora pelo quociente parcial e sobras. Pode mudar a cada atualização."
+                          title="Estaria eleito se a apuração terminasse agora — nos proporcionais, dentro das cadeiras do partido/federação (quociente + sobras); nos majoritários, entre os primeiros (2 vagas de Senador em 2026). Pode mudar a cada atualização."
                           className="rounded-full bg-emerald-950 px-2 py-0.5 text-[10px] font-medium text-emerald-300"
                         >
                           📥 Entrando

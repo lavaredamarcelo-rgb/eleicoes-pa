@@ -6,7 +6,7 @@ import { verifySession } from "@/lib/dal";
 
 export default async function ApuracaoPage() {
   const session = await verifySession();
-  const [favoritos, regioes, municipios, cargosVagas] = await Promise.all([
+  const [favoritos, regioes, municipios, cargosVagas, politicosFav] = await Promise.all([
     prisma.apuracaoFavorito.findMany({
       where: { userId: session.userId },
       orderBy: { ordem: "asc" },
@@ -22,7 +22,14 @@ export default async function ApuracaoPage() {
       orderBy: { eleicao: { ano: "desc" } },
       select: { nome: true, vagas: true },
     }),
+    prisma.politicoFavorito.findMany({
+      where: { userId: String(session.userId) },
+      include: { candidato: { select: { nome: true } } },
+    }),
   ]);
+
+  // Políticos favoritados — casados por nome com os nomes do TSE.
+  const nomesFavoritos = [...new Set(politicosFav.map((f) => f.candidato.nome.toUpperCase().trim()))];
 
   // Cadeiras em disputa nos proporcionais (PA: 17 federais, 41 estaduais).
   const vagasPorCargo: Record<string, number> = {
@@ -61,6 +68,7 @@ export default async function ApuracaoPage() {
 
       <ApuracaoAoVivo
         favoritos={favoritos}
+        nomesFavoritos={nomesFavoritos}
         vagasPorCargo={vagasPorCargo}
         regioes={regioes}
         municipios={municipios.map((m) => ({

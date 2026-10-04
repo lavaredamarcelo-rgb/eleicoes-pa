@@ -31,11 +31,25 @@ export function ApuracaoCardFavorito({
   favorito,
   indice,
   registrarAtualizador,
+  nomesFavoritos = [],
 }: {
   favorito: Favorito;
   indice: number;
   registrarAtualizador?: (id: string, fn: () => void) => void;
+  nomesFavoritos?: string[];
 }) {
+  // Políticos favoritados ganham destaque âmbar também dentro do card.
+  const favoritosSet = new Set(
+    nomesFavoritos.map((n) =>
+      n.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().trim()
+    )
+  );
+  const ehFavorito = (nome: string | null) =>
+    nome
+      ? favoritosSet.has(
+          nome.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().trim()
+        )
+      : false;
   const [dados, setDados] = useState<{ candidatos: Candidato[]; meta: Record<string, unknown> } | null>(null);
   const [erro, setErro] = useState(false);
   const [hora, setHora] = useState<Date | null>(null);
@@ -96,9 +110,10 @@ export function ApuracaoCardFavorito({
       {top.map((c) => (
         <div key={c.numero}>
           <div className="mb-0.5 flex items-center justify-between text-xs">
-            <span className="truncate text-neutral-200">
+            <span className={`truncate ${ehFavorito(c.nome) ? "font-semibold text-amber-300" : "text-neutral-200"}`}>
+              {ehFavorito(c.nome) && "⭐ "}
               {c.nome ?? `Nº ${c.numero}`}
-              {c.partido ? <span className="text-neutral-500"> · {c.partido}</span> : null}
+              {c.partido ? <span className="font-normal text-neutral-500"> · {c.partido}</span> : null}
               {c.eleito && <span className="ml-1 text-emerald-400">✓</span>}
             </span>
             <span className="ml-2 shrink-0 text-right">
