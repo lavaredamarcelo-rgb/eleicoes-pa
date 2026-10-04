@@ -225,15 +225,25 @@ export function ApuracaoAoVivo({
   const total = dados?.candidatos.reduce((s, c) => s + c.votos, 0) ?? 0;
   const maior = dados?.candidatos[0]?.votos ?? 0;
 
-  // MATEMATICAMENTE DEFINIDO (majoritários de vaga única): estimamos os
-  // votos que ainda faltam pelo % de seções e comparamos com a vantagem.
+  // DEFINIÇÕES MATEMÁTICAS (Presidente/Governador): estimamos os votos que
+  // ainda faltam pelo % de seções totalizadas e checamos o que já está
+  // decidido — eleito no 1º turno (líder já passa da metade do total final
+  // estimado), 2º turno garantido (nem levando todos os votos restantes o
+  // líder chega à metade) ou só a liderança assegurada. Sempre estimativa:
+  // a palavra final é do TSE.
   const pstNum = Number(String(dados?.meta?.secoesTotalizadas ?? "0").replace(",", ".")) || 0;
-  const definido = (() => {
-    if (!dados || !["0001", "0003"].includes(cargoCd) || pstNum < 50 || total === 0) return false;
+  const definicao = (() => {
+    if (!dados || !["0001", "0003"].includes(cargoCd) || pstNum < 50 || total === 0) return null;
     const lider = dados.candidatos[0]?.votos ?? 0;
     const vice = dados.candidatos[1]?.votos ?? 0;
-    const restanteEstimado = total * ((100 - pstNum) / pstNum);
-    return lider - vice > restanteEstimado;
+    const terceiro = dados.candidatos[2]?.votos ?? 0;
+    const restante = total * ((100 - pstNum) / pstNum);
+    const metadeFinal = (total + restante) / 2;
+    if (lider > metadeFinal) return { tipo: "eleito1t" as const, finalistasGarantidos: false };
+    if (lider + restante < metadeFinal)
+      return { tipo: "segundoTurno" as const, finalistasGarantidos: vice - terceiro > restante };
+    if (lider - vice > restante) return { tipo: "lider" as const, finalistasGarantidos: false };
+    return null;
   })();
 
   const chaveAtual = `${cargoCd}:${municipioSel || (cargoCd === "0001" ? abrangencia : "estado")}`;
@@ -458,6 +468,24 @@ export function ApuracaoAoVivo({
             )}
           </div>
 
+          {definicao?.tipo === "segundoTurno" && dados && (
+            <div className="rounded-xl border border-sky-800 bg-sky-950/40 px-4 py-3">
+              <p className="text-sm font-bold text-sky-200">
+                🔁 2º turno matematicamente definido*
+              </p>
+              <p className="mt-0.5 text-xs text-sky-300/80">
+                Mesmo levando todos os votos que ainda faltam, ninguém alcança a metade dos
+                válidos.{" "}
+                {definicao.finalistasGarantidos
+                  ? `Disputa em 25/10 entre ${
+                      dados.candidatos[0]?.nome ?? `Nº ${dados.candidatos[0]?.numero}`
+                    } e ${dados.candidatos[1]?.nome ?? `Nº ${dados.candidatos[1]?.numero}`}.`
+                  : "Os dois finalistas ainda não estão matematicamente garantidos."}{" "}
+                *Estimativa pelo % de seções totalizadas — vale a confirmação oficial do TSE.
+              </p>
+            </div>
+          )}
+
           <div className="flex items-center justify-between text-xs text-neutral-500">
             <button
               onClick={acompanharComparativo}
@@ -510,14 +538,30 @@ export function ApuracaoAoVivo({
                           {c.situacao || "Eleito"}
                         </span>
                       )}
-                      {i === 0 && definido && !c.eleito && (
+                      {i === 0 && !c.eleito && definicao && definicao.tipo !== "segundoTurno" && (
                         <span
-                          title="A vantagem sobre o 2º colocado já supera a estimativa de votos que faltam (pelo % de seções totalizadas). Estimativa nossa — vale a confirmação oficial do TSE."
+                          title={
+                            definicao.tipo === "eleito1t"
+                              ? "Os votos do líder já superam a metade do total final estimado — eleito sem 2º turno. Estimativa pelo % de seções; vale a confirmação oficial do TSE."
+                              : "A vantagem sobre o 2º colocado já supera a estimativa de votos que faltam (pelo % de seções totalizadas). Estimativa nossa — vale a confirmação oficial do TSE."
+                          }
                           className="rounded-full bg-emerald-950 px-2 py-0.5 text-[10px] font-medium text-emerald-300"
                         >
-                          ✓ Matematicamente definido*
+                          {definicao.tipo === "eleito1t"
+                            ? "✓ Eleito no 1º turno — matematicamente definido*"
+                            : "✓ Liderança matematicamente definida*"}
                         </span>
                       )}
+                      {i <= 1 &&
+                        definicao?.tipo === "segundoTurno" &&
+                        definicao.finalistasGarantidos && (
+                          <span
+                            title="Vai ao 2º turno: a distância para o 3º colocado já supera a estimativa de votos que faltam. Estimativa pelo % de seções; vale a confirmação oficial do TSE."
+                            className="rounded-full bg-sky-950 px-2 py-0.5 text-[10px] font-medium text-sky-300"
+                          >
+                            🔁 No 2º turno*
+                          </span>
+                        )}
                     </span>
                     <span className="font-semibold text-amber-400">
                       {c.votos.toLocaleString("pt-BR")}
