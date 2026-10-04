@@ -69,9 +69,12 @@ export function ApuracaoCardFavorito({
     };
   }, [buscar, indice, favorito.id, registrarAtualizador]);
 
-  const top = dados?.candidatos.slice(0, 3) ?? [];
+  const [expandido, setExpandido] = useState(false);
+  // Fechado mostra os 6 primeiros; expandido mostra todos (com rolagem).
+  const top = dados?.candidatos.slice(0, expandido ? undefined : 6) ?? [];
   const total = dados?.candidatos.reduce((s, c) => s + c.votos, 0) ?? 0;
   const maior = top[0]?.votos ?? 0;
+  const ocultos = (dados?.candidatos.length ?? 0) - top.length;
 
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-neutral-800 bg-neutral-900 p-3">
@@ -89,6 +92,7 @@ export function ApuracaoCardFavorito({
       {erro && <p className="text-xs text-neutral-500">Sem dados do TSE para esta disputa.</p>}
       {!erro && !dados && <p className="text-xs text-neutral-600">Carregando…</p>}
 
+      <div className={expandido ? "flex max-h-72 flex-col gap-2 overflow-y-auto pr-1" : "flex flex-col gap-2"}>
       {top.map((c) => (
         <div key={c.numero}>
           <div className="mb-0.5 flex items-center justify-between text-xs">
@@ -109,6 +113,16 @@ export function ApuracaoCardFavorito({
           </div>
         </div>
       ))}
+      </div>
+
+      {dados && dados.candidatos.length > 6 && (
+        <button
+          onClick={() => setExpandido((e) => !e)}
+          className="self-start rounded-full border border-neutral-700 px-2.5 py-0.5 text-[11px] text-amber-400 transition-colors hover:border-amber-700"
+        >
+          {expandido ? "Mostrar menos" : `Ver todos os ${dados.candidatos.length} candidatos${ocultos > 0 ? ` (+${ocultos})` : ""}`}
+        </button>
+      )}
 
       {dados && (
         <p className="text-[10px] text-neutral-600">

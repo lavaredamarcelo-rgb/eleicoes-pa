@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { QuocienteHierarquia } from "@/components/QuocienteHierarquia";
+import { ExcluirCenarioSalvo } from "@/components/ExcluirCenarioSalvo";
 import { getHierarquiaCargos } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
 import { verifySession } from "@/lib/dal";
@@ -54,13 +55,16 @@ export default async function CenarioPage() {
                       {c.updatedAt.toLocaleDateString("pt-BR")}
                     </p>
                   </div>
-                  <Link
-                    href={`/criar-cenario?modo=eleicao&cenario=${c.id}`}
-                    className="flex shrink-0 items-center gap-1.5 rounded-lg bg-amber-400 px-3 py-1.5 text-xs font-semibold text-neutral-950 transition-opacity hover:opacity-90"
-                  >
-                    <Pencil size={12} />
-                    Editar
-                  </Link>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <Link
+                      href={`/criar-cenario?modo=eleicao&cenario=${c.id}`}
+                      className="flex items-center gap-1.5 rounded-lg bg-amber-400 px-3 py-1.5 text-xs font-semibold text-neutral-950 transition-opacity hover:opacity-90"
+                    >
+                      <Pencil size={12} />
+                      Editar
+                    </Link>
+                    <ExcluirCenarioSalvo id={c.id} titulo={c.titulo} />
+                  </div>
                 </div>
               );
             })}
