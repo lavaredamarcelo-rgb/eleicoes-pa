@@ -10,10 +10,26 @@ const BASE = "https://resultados.tse.jus.br/oficial";
 export const CODIGO_CARGO: Record<string, string> = {
   Prefeito: "0011",
   Vereador: "0013",
+  Presidente: "0001",
   Governador: "0003",
   Senador: "0005",
   "Deputado Federal": "0006",
   "Deputado Estadual": "0007",
+};
+
+// Presidenciáveis 2026 (número = número do partido) — o arquivo estadual
+// do TSE não traz nomes e eles não estão no banco local.
+const PRESIDENCIAIS_2026: Record<string, { nome: string; partido: string }> = {
+  "13": { nome: "Lula", partido: "PT" },
+  "22": { nome: "Flávio Bolsonaro", partido: "PL" },
+  "55": { nome: "Ronaldo Caiado", partido: "PSD" },
+  "70": { nome: "Augusto Cury", partido: "AVANTE" },
+  "30": { nome: "Romeu Zema", partido: "NOVO" },
+  "80": { nome: "Samara Martins", partido: "UP" },
+  "16": { nome: "Hertz Dias", partido: "PSTU" },
+  "21": { nome: "Edmilson Costa", partido: "PCB" },
+  "29": { nome: "Rui Costa Pimenta", partido: "PCO" },
+  "27": { nome: "Clariana Barão", partido: "DC" },
 };
 
 async function buscarJson(url: string) {
@@ -101,16 +117,39 @@ export async function GET(req: NextRequest) {
   }
 
   const cod = eleicao.padStart(6, "0");
-  const abrangencia = mun && mun !== "estado" ? `pa${mun.padStart(5, "0")}` : "pa";
+  // Abrangência: município do PA, o estado, o BRASIL inteiro ("uf-br") ou
+  // o EXTERIOR ("uf-zz" — a "UF ZZ" do TSE, votos de Presidente fora do país).
+  let uf = "pa";
+  let abrangencia = "pa";
+  if (mun === "uf-br") {
+    uf = "br";
+    abrangencia = "br";
+  } else if (mun === "uf-zz") {
+    uf = "zz";
+    abrangencia = "zz";
+  } else if (mun && mun !== "estado") {
+    abrangencia = `pa${mun.padStart(5, "0")}`;
+  }
   const urls = [
-    `${BASE}/ele${anoDoCodigo(eleicao, ano)}/${eleicao}/dados/pa/${abrangencia}-c${cargo}-e${cod}-u.json`,
-    `${BASE}/ele${anoDoCodigo(eleicao, ano)}/${eleicao}/dados/pa/${abrangencia}-c${cargo}-e${cod}-v.json`,
+    `${BASE}/ele${anoDoCodigo(eleicao, ano)}/${eleicao}/dados/${uf}/${abrangencia}-c${cargo}-e${cod}-u.json`,
+    `${BASE}/ele${anoDoCodigo(eleicao, ano)}/${eleicao}/dados/${uf}/${abrangencia}-c${cargo}-e${cod}-v.json`,
   ];
 
   for (const url of urls) {
     const dados = await buscarJson(url);
     if (!dados) continue;
     const { candidatos, meta } = extrairCandidatos(dados);
+
+    // Presidente: nomes fixos dos presidenciáveis 2026 (número do partido).
+    if (cargo === "0001") {
+      for (const c of candidatos) {
+        const p = PRESIDENCIAIS_2026[c.numero];
+        if (p) {
+          c.nome = c.nome ?? p.nome;
+          c.partido = c.partido ?? p.partido;
+        }
+      }
+    }
 
     // Enriquecimento: a API estadual não traz nomes; cruzamos com os
     // candidatos já importados (cargo + número) quando o ano existir aqui.

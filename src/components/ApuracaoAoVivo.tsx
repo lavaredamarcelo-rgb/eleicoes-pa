@@ -16,13 +16,23 @@ type Candidato = {
   situacao: string;
 };
 
-// 2026 é eleição geral: só os cargos estaduais/federais estão em disputa.
+// 2026 é eleição geral. Presidente vem da eleição FEDERAL; os demais, da
+// ESTADUAL — a troca de eleição é automática ao escolher o cargo.
 const CARGOS = [
+  { cd: "0001", nome: "Presidente" },
   { cd: "0003", nome: "Governador" },
   { cd: "0005", nome: "Senador" },
   { cd: "0006", nome: "Deputado Federal" },
   { cd: "0007", nome: "Deputado Estadual" },
 ];
+
+// Abrangências do Presidente: votos no Pará, no Brasil todo ou no EXTERIOR
+// (a "UF ZZ" do TSE).
+const ABRANGENCIAS_PRESIDENTE = [
+  { valor: "estado", rotulo: "Pará" },
+  { valor: "uf-br", rotulo: "Brasil" },
+  { valor: "uf-zz", rotulo: "Exterior" },
+] as const;
 
 const INTERVALO_MS = 60_000;
 
@@ -45,6 +55,7 @@ export function ApuracaoAoVivo({ favoritos }: { favoritos: Favorito[] }) {
   const [eleicoes2026, setEleicoes2026] = useState<Eleicao[] | null>(null);
   const [eleicaoCd, setEleicaoCd] = useState("");
   const [cargoCd, setCargoCd] = useState("0003");
+  const [abrangencia, setAbrangencia] = useState<string>("estado");
   const [dados, setDados] = useState<{ candidatos: Candidato[]; meta: Record<string, unknown> } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
@@ -67,12 +78,27 @@ export function ApuracaoAoVivo({ favoritos }: { favoritos: Favorito[] }) {
   );
   const cargoSel = CARGOS.find((c) => c.cd === cargoCd)!;
 
+  // Presidente pertence à eleição FEDERAL; Gov/Senado/Deputados à ESTADUAL.
+  // Ao trocar o cargo, escolhe sozinho a eleição certa.
+  useEffect(() => {
+    if (!eleicoes2026 || eleicoes2026.length < 2) return;
+    const alvo =
+      cargoCd === "0001"
+        ? eleicoes2026.find((e) => /federal/i.test(e.nome))
+        : eleicoes2026.find((e) => /estadual/i.test(e.nome));
+    if (alvo && alvo.cd !== eleicaoCd) setEleicaoCd(alvo.cd);
+    if (cargoCd !== "0001" && abrangencia.startsWith("uf-")) setAbrangencia("estado");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cargoCd, eleicoes2026]);
+
   const buscar = useCallback(async () => {
     if (!eleicaoCd) return;
     setCarregando(true);
     setErro(null);
     try {
-      const resp = await fetch(`/api/apuracao?eleicao=${eleicaoCd}&ano=2026&cargo=${cargoCd}&mun=estado`);
+      const resp = await fetch(
+        `/api/apuracao?eleicao=${eleicaoCd}&ano=2026&cargo=${cargoCd}&mun=${cargoCd === "0001" ? abrangencia : "estado"}`
+      );
       const d = await resp.json();
       if (!resp.ok) {
         setErro(d.erro ?? "Falha ao consultar o TSE.");
@@ -86,7 +112,7 @@ export function ApuracaoAoVivo({ favoritos }: { favoritos: Favorito[] }) {
     } finally {
       setCarregando(false);
     }
-  }, [eleicaoCd, cargoCd]);
+  }, [eleicaoCd, cargoCd, abrangencia]);
 
   useEffect(() => {
     if (!eleicaoCd) return;
@@ -98,12 +124,16 @@ export function ApuracaoAoVivo({ favoritos }: { favoritos: Favorito[] }) {
   async function acompanhar() {
     if (!eleicaoCd) return;
     setSalvandoFavorito(true);
+    const local =
+      cargoCd === "0001"
+        ? ABRANGENCIAS_PRESIDENTE.find((a) => a.valor === abrangencia)?.rotulo ?? "Pará"
+        : "PA";
     await adicionarFavoritoApuracao({
-      rotulo: `${cargoSel.nome} · PA · 2026`,
+      rotulo: `${cargoSel.nome} · ${local} · 2026`,
       ano: "2026",
       eleicaoCd,
       cargoCd,
-      municipioTse: null,
+      municipioTse: cargoCd === "0001" && abrangencia !== "estado" ? abrangencia : null,
     });
     setSalvandoFavorito(false);
   }
@@ -193,6 +223,25 @@ export function ApuracaoAoVivo({ favoritos }: { favoritos: Favorito[] }) {
               </button>
             ))}
           </div>
+
+          {cargoCd === "0001" && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-neutral-500">Votos de Presidente em:</span>
+              {ABRANGENCIAS_PRESIDENTE.map((a) => (
+                <button
+                  key={a.valor}
+                  onClick={() => setAbrangencia(a.valor)}
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                    abrangencia === a.valor
+                      ? "bg-sky-700 text-white"
+                      : "border border-neutral-800 bg-neutral-900 text-neutral-400 hover:border-neutral-700"
+                  }`}
+                >
+                  {a.rotulo}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="flex items-center justify-between text-xs text-neutral-500">
             <span>
