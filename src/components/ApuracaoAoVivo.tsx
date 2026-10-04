@@ -46,7 +46,18 @@ function filtrarGerais2026(eleicoes: Eleicao[]) {
   );
 }
 
-export function ApuracaoAoVivo({ favoritos }: { favoritos: Favorito[] }) {
+type Regiao = { id: string; nome: string };
+type MunicipioOpcao = { nome: string; codigoTse: string; regiaoId: string };
+
+export function ApuracaoAoVivo({
+  favoritos,
+  regioes = [],
+  municipios = [],
+}: {
+  favoritos: Favorito[];
+  regioes?: Regiao[];
+  municipios?: MunicipioOpcao[];
+}) {
   const atualizadores = useRef(new Map<string, () => void>());
   const registrarAtualizador = useCallback((id: string, fn: () => void) => {
     atualizadores.current.set(id, fn);
@@ -56,6 +67,13 @@ export function ApuracaoAoVivo({ favoritos }: { favoritos: Favorito[] }) {
   const [eleicaoCd, setEleicaoCd] = useState("");
   const [cargoCd, setCargoCd] = useState("0003");
   const [abrangencia, setAbrangencia] = useState<string>("estado");
+  const [regiaoSel, setRegiaoSel] = useState("");
+  const [municipioSel, setMunicipioSel] = useState(""); // codigoTse
+  // Virada: líder anterior por recorte (cargo+local) e aviso em destaque.
+  const liderAnterior = useRef<Record<string, { numero: string; nome: string }>>({});
+  const [virada, setVirada] = useState<{ texto: string; hora: string } | null>(null);
+  // Linha do tempo: evolução % dos dois primeiros a cada atualização.
+  const historico = useRef<Record<string, { t: string; a: number; b: number }[]>>({});
   const [dados, setDados] = useState<{ candidatos: Candidato[]; meta: Record<string, unknown> } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
@@ -96,8 +114,12 @@ export function ApuracaoAoVivo({ favoritos }: { favoritos: Favorito[] }) {
     setCarregando(true);
     setErro(null);
     try {
+      // Município escolhido vale para qualquer cargo (o TSE publica cada
+      // disputa recortada por cidade); sem município, Presidente usa a
+      // abrangência (Pará/Brasil/Exterior) e os demais usam o estado.
+      const mun = municipioSel || (cargoCd === "0001" ? abrangencia : "estado");
       const resp = await fetch(
-        `/api/apuracao?eleicao=${eleicaoCd}&ano=2026&cargo=${cargoCd}&mun=${cargoCd === "0001" ? abrangencia : "estado"}`
+        `/api/apuracao?eleicao=${eleicaoCd}&ano=2026&cargo=${cargoCd}&mun=${mun}`
       );
       const d = await resp.json();
       if (!resp.ok) {
@@ -106,13 +128,41 @@ export function ApuracaoAoVivo({ favoritos }: { favoritos: Favorito[] }) {
       } else {
         setDados(d);
         setAtualizadoEm(new Date());
+        // Virada + linha do tempo (por recorte cargo+local).
+        const chave = `${cargoCd}:${mun}`;
+        const lider = d.candidatos?.[0];
+        const vice = d.candidatos?.[1];
+        if (lider?.numero) {
+          const anterior = liderAnterior.current[chave];
+          if (anterior && anterior.numero !== lider.numero) {
+            setVirada({
+              texto: `VIRADA! ${lider.nome ?? `Nº ${lider.numero}`} assumiu a liderança (antes: ${anterior.nome})`,
+              hora: new Date().toLocaleTimeString("pt-BR"),
+            });
+          }
+          liderAnterior.current[chave] = {
+            numero: lider.numero,
+            nome: lider.nome ?? `Nº ${lider.numero}`,
+          };
+          const totalAgora = (d.candidatos as Candidato[]).reduce(
+            (s: number, c: Candidato) => s + c.votos,
+            0
+          );
+          const serie = (historico.current[chave] ??= []);
+          serie.push({
+            t: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+            a: totalAgora > 0 ? (lider.votos / totalAgora) * 100 : 0,
+            b: totalAgora > 0 && vice ? (vice.votos / totalAgora) * 100 : 0,
+          });
+          if (serie.length > 240) serie.shift();
+        }
       }
     } catch {
       setErro("Falha de rede ao consultar o TSE.");
     } finally {
       setCarregando(false);
     }
-  }, [eleicaoCd, cargoCd, abrangencia]);
+  }, [eleicaoCd, cargoCd, abrangencia, municipioSel]);
 
   useEffect(() => {
     if (!eleicaoCd) return;
@@ -121,11 +171,14 @@ export function ApuracaoAoVivo({ favoritos }: { favoritos: Favorito[] }) {
     return () => clearInterval(id);
   }, [buscar, eleicaoCd]);
 
+  const municipioNomeSel = municipios.find((m) => m.codigoTse === municipioSel)?.nome;
+
   async function acompanhar() {
     if (!eleicaoCd) return;
     setSalvandoFavorito(true);
-    const local =
-      cargoCd === "0001"
+    const local = municipioNomeSel
+      ? municipioNomeSel
+      : cargoCd === "0001"
         ? ABRANGENCIAS_PRESIDENTE.find((a) => a.valor === abrangencia)?.rotulo ?? "Pará"
         : "PA";
     await adicionarFavoritoApuracao({
@@ -133,13 +186,58 @@ export function ApuracaoAoVivo({ favoritos }: { favoritos: Favorito[] }) {
       ano: "2026",
       eleicaoCd,
       cargoCd,
-      municipioTse: cargoCd === "0001" && abrangencia !== "estado" ? abrangencia : null,
+      municipioTse:
+        municipioSel ||
+        (cargoCd === "0001" && abrangencia !== "estado" ? abrangencia : null),
     });
     setSalvandoFavorito(false);
   }
 
+  // Comparativo lado a lado: cria de uma vez os cards de Governador e
+  // Senador (estado inteiro), para acompanhar as duas disputas juntas.
+  async function acompanharComparativo() {
+    const estadual =
+      eleicoes2026?.find((e) => /estadual/i.test(e.nome)) ?? eleicaoSel;
+    if (!estadual) return;
+    setSalvandoFavorito(true);
+    await adicionarFavoritoApuracao({
+      rotulo: "Governador · PA · 2026",
+      ano: "2026",
+      eleicaoCd: estadual.cd,
+      cargoCd: "0003",
+      municipioTse: null,
+    });
+    await adicionarFavoritoApuracao({
+      rotulo: "Senador · PA · 2026",
+      ano: "2026",
+      eleicaoCd: estadual.cd,
+      cargoCd: "0005",
+      municipioTse: null,
+    });
+    setSalvandoFavorito(false);
+  }
+
+  // Troca de recorte limpa o aviso de virada (vale para o novo recorte).
+  useEffect(() => {
+    setVirada(null);
+  }, [cargoCd, municipioSel, abrangencia]);
+
   const total = dados?.candidatos.reduce((s, c) => s + c.votos, 0) ?? 0;
   const maior = dados?.candidatos[0]?.votos ?? 0;
+
+  // MATEMATICAMENTE DEFINIDO (majoritários de vaga única): estimamos os
+  // votos que ainda faltam pelo % de seções e comparamos com a vantagem.
+  const pstNum = Number(String(dados?.meta?.secoesTotalizadas ?? "0").replace(",", ".")) || 0;
+  const definido = (() => {
+    if (!dados || !["0001", "0003"].includes(cargoCd) || pstNum < 50 || total === 0) return false;
+    const lider = dados.candidatos[0]?.votos ?? 0;
+    const vice = dados.candidatos[1]?.votos ?? 0;
+    const restanteEstimado = total * ((100 - pstNum) / pstNum);
+    return lider - vice > restanteEstimado;
+  })();
+
+  const chaveAtual = `${cargoCd}:${municipioSel || (cargoCd === "0001" ? abrangencia : "estado")}`;
+  const serieAtual = historico.current[chaveAtual] ?? [];
 
   return (
     <div className="flex flex-col gap-4">
@@ -224,7 +322,47 @@ export function ApuracaoAoVivo({ favoritos }: { favoritos: Favorito[] }) {
             ))}
           </div>
 
-          {cargoCd === "0001" && (
+          {/* Recorte por região/município — urnas de qualquer cidade do PA */}
+          {municipios.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={regiaoSel}
+                onChange={(e) => {
+                  setRegiaoSel(e.target.value);
+                  setMunicipioSel("");
+                }}
+                className="rounded-lg border border-neutral-700 bg-neutral-950 px-2 py-1.5 text-xs text-neutral-100"
+              >
+                <option value="">Todas as regiões</option>
+                {regioes.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.nome}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={municipioSel}
+                onChange={(e) => setMunicipioSel(e.target.value)}
+                className="rounded-lg border border-neutral-700 bg-neutral-950 px-2 py-1.5 text-xs text-neutral-100"
+              >
+                <option value="">Pará inteiro (estado)</option>
+                {(regiaoSel ? municipios.filter((m) => m.regiaoId === regiaoSel) : municipios).map(
+                  (m) => (
+                    <option key={m.codigoTse} value={m.codigoTse}>
+                      {m.nome}
+                    </option>
+                  )
+                )}
+              </select>
+              {municipioNomeSel && (
+                <span className="rounded-full bg-sky-950/60 px-2.5 py-1 text-[11px] text-sky-300">
+                  Urnas de {municipioNomeSel}
+                </span>
+              )}
+            </div>
+          )}
+
+          {cargoCd === "0001" && !municipioSel && (
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs text-neutral-500">Votos de Presidente em:</span>
               {ABRANGENCIAS_PRESIDENTE.map((a) => (
@@ -240,6 +378,13 @@ export function ApuracaoAoVivo({ favoritos }: { favoritos: Favorito[] }) {
                   {a.rotulo}
                 </button>
               ))}
+            </div>
+          )}
+
+          {virada && (
+            <div className="animate-pulse rounded-xl border border-red-700 bg-red-950/50 px-4 py-3">
+              <p className="text-sm font-bold text-red-200">🔄 {virada.texto}</p>
+              <p className="text-[11px] text-red-400">às {virada.hora}</p>
             </div>
           )}
 
@@ -279,15 +424,48 @@ export function ApuracaoAoVivo({ favoritos }: { favoritos: Favorito[] }) {
             <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-neutral-800">
               <div
                 className="h-2 bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-700"
-                style={{
-                  width: `${Math.min(100, Number(String(dados?.meta?.secoesTotalizadas ?? "0").replace(",", ".")) || 0)}%`,
-                }}
+                style={{ width: `${Math.min(100, pstNum)}%` }}
               />
             </div>
+
+            {/* Linha do tempo da disputa: evolução % do 1º (âmbar) e 2º (cinza) */}
+            {serieAtual.length >= 3 && (
+              <div className="mt-3">
+                <p className="mb-1 text-[10px] uppercase tracking-wide text-neutral-600">
+                  Evolução da noite ({serieAtual[0].t} → {serieAtual[serieAtual.length - 1].t})
+                </p>
+                <svg viewBox="0 0 300 48" className="h-12 w-full" preserveAspectRatio="none">
+                  {(["b", "a"] as const).map((k) => {
+                    const pts = serieAtual
+                      .map((p, i) => {
+                        const x = (i / (serieAtual.length - 1)) * 300;
+                        const y = 46 - (Math.min(100, p[k]) / 100) * 44;
+                        return `${x.toFixed(1)},${y.toFixed(1)}`;
+                      })
+                      .join(" ");
+                    return (
+                      <polyline
+                        key={k}
+                        points={pts}
+                        fill="none"
+                        stroke={k === "a" ? "#f59e0b" : "#737373"}
+                        strokeWidth={k === "a" ? 2 : 1.5}
+                      />
+                    );
+                  })}
+                </svg>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between text-xs text-neutral-500">
-            <span />
+            <button
+              onClick={acompanharComparativo}
+              disabled={salvandoFavorito}
+              className="rounded-full border border-sky-800 px-3 py-1 text-sky-300 transition-colors hover:border-sky-600 disabled:opacity-50"
+            >
+              ⚡ Comparativo: Governador + Senado
+            </button>
 
             <span className="flex items-center gap-2">
               {atualizadoEm && `Atualizado ${atualizadoEm.toLocaleTimeString("pt-BR")}`}
@@ -330,6 +508,14 @@ export function ApuracaoAoVivo({ favoritos }: { favoritos: Favorito[] }) {
                       {c.eleito && (
                         <span className="rounded-full bg-emerald-950 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
                           {c.situacao || "Eleito"}
+                        </span>
+                      )}
+                      {i === 0 && definido && !c.eleito && (
+                        <span
+                          title="A vantagem sobre o 2º colocado já supera a estimativa de votos que faltam (pelo % de seções totalizadas). Estimativa nossa — vale a confirmação oficial do TSE."
+                          className="rounded-full bg-emerald-950 px-2 py-0.5 text-[10px] font-medium text-emerald-300"
+                        >
+                          ✓ Matematicamente definido*
                         </span>
                       )}
                     </span>

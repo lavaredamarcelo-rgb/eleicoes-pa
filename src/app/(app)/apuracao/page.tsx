@@ -6,10 +6,18 @@ import { verifySession } from "@/lib/dal";
 
 export default async function ApuracaoPage() {
   const session = await verifySession();
-  const favoritos = await prisma.apuracaoFavorito.findMany({
-    where: { userId: session.userId },
-    orderBy: { ordem: "asc" },
-  });
+  const [favoritos, regioes, municipios] = await Promise.all([
+    prisma.apuracaoFavorito.findMany({
+      where: { userId: session.userId },
+      orderBy: { ordem: "asc" },
+    }),
+    prisma.regiao.findMany({ orderBy: { nome: "asc" }, select: { id: true, nome: true } }),
+    prisma.municipio.findMany({
+      where: { codigoTse: { not: null } },
+      orderBy: { nome: "asc" },
+      select: { nome: true, codigoTse: true, regiaoId: true },
+    }),
+  ]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -40,7 +48,15 @@ export default async function ApuracaoPage() {
         </span>
       </Link>
 
-      <ApuracaoAoVivo favoritos={favoritos} />
+      <ApuracaoAoVivo
+        favoritos={favoritos}
+        regioes={regioes}
+        municipios={municipios.map((m) => ({
+          nome: m.nome,
+          codigoTse: m.codigoTse!,
+          regiaoId: m.regiaoId,
+        }))}
+      />
     </div>
   );
 }
