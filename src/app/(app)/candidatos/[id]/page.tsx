@@ -186,6 +186,16 @@ export default async function CandidatoDetailPage({
       </section>
 
       {votosLocais.length > 0 && (
+        <VotosPorBairro
+          votosLocais={votosLocais.map((v) => ({
+            municipio: v.colegioEleitoral.municipio.nome,
+            bairro: v.colegioEleitoral.bairro,
+            votos: v.votos,
+          }))}
+        />
+      )}
+
+      {votosLocais.length > 0 && (
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-medium text-neutral-400">
             Votos por local de votação{" "}
@@ -371,5 +381,74 @@ async function TrocaPartidoFormSection({
       partidoAtualId={partidoAtualId}
       partidos={partidos}
     />
+  );
+}
+
+// Votos por BAIRRO: soma dos locais de votação agrupada por município e
+// bairro — responde "quantos votos em Icoaraci/Outeiro dentro de Belém".
+function VotosPorBairro({
+  votosLocais,
+}: {
+  votosLocais: { municipio: string; bairro: string | null; votos: number }[];
+}) {
+  const porMunicipio = new Map<string, Map<string, number>>();
+  for (const v of votosLocais) {
+    const bairros = porMunicipio.get(v.municipio) ?? new Map<string, number>();
+    const bairro = v.bairro?.trim() || "(bairro não informado pelo TSE)";
+    bairros.set(bairro, (bairros.get(bairro) ?? 0) + v.votos);
+    porMunicipio.set(v.municipio, bairros);
+  }
+  const municipios = [...porMunicipio.entries()]
+    .map(([nome, bairros]) => ({
+      nome,
+      total: [...bairros.values()].reduce((s, v) => s + v, 0),
+      bairros: [...bairros.entries()]
+        .map(([bairro, votos]) => ({ bairro, votos }))
+        .sort((a, b) => b.votos - a.votos),
+    }))
+    .sort((a, b) => b.total - a.total);
+
+  return (
+    <section className="flex flex-col gap-2">
+      <h2 className="text-sm font-medium text-neutral-400">
+        Votos por bairro{" "}
+        <span className="text-xs text-neutral-600">
+          (clique no município para abrir os bairros)
+        </span>
+      </h2>
+      <div className="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900">
+        {municipios.map((m) => (
+          <details key={m.nome} className="border-b border-neutral-800/50 last:border-0">
+            <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2 px-4 py-2 text-sm hover:bg-neutral-800/50">
+              <span className="font-medium text-neutral-200">
+                {m.nome}
+                <span className="ml-2 text-xs text-neutral-600">
+                  {m.bairros.length} bairro{m.bairros.length === 1 ? "" : "s"}
+                </span>
+              </span>
+              <span className="tabular-nums font-semibold text-amber-400">
+                {m.total.toLocaleString("pt-BR")}
+              </span>
+            </summary>
+            <div className="flex flex-col gap-0.5 px-4 pb-2">
+              {m.bairros.map((b) => (
+                <div
+                  key={b.bairro}
+                  className="flex flex-wrap items-center justify-between gap-x-3 rounded px-2 py-1 text-xs odd:bg-neutral-950/50"
+                >
+                  <span className="text-neutral-300">{b.bairro}</span>
+                  <span className="tabular-nums text-neutral-400">
+                    {b.votos.toLocaleString("pt-BR")}
+                    <span className="ml-2 text-neutral-600">
+                      {m.total > 0 ? `${((b.votos / m.total) * 100).toFixed(1)}%` : ""}
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </details>
+        ))}
+      </div>
+    </section>
   );
 }

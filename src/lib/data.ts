@@ -944,7 +944,7 @@ export async function getVotosPorLocal(candidatoId: string) {
     where: { candidatoId },
     include: {
       colegioEleitoral: {
-        select: { nome: true, municipio: { select: { nome: true } } },
+        select: { nome: true, bairro: true, municipio: { select: { nome: true } } },
       },
     },
     orderBy: { votos: "desc" },

@@ -239,6 +239,7 @@ model ColegioEleitoral {
   id          String      @id @default(cuid())
   nome        String
   codigoTse   String?     @unique
+  bairro      String?
   municipioId String
   municipio   Municipio   @relation(fields: [municipioId], references: [id])
   resultados  Resultado[]
