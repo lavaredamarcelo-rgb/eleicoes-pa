@@ -7,10 +7,25 @@ import {
 } from "@/lib/comparativos";
 import { prisma } from "@/lib/prisma";
 
+const normalizar = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toUpperCase()
+    .replace(/\s+/g, " ")
+    .trim();
+
 export default async function ComparativosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cargo?: string; a?: string; b?: string; q?: string }>;
+  searchParams: Promise<{
+    cargo?: string;
+    a?: string;
+    b?: string;
+    pcargo?: string;
+    pano?: string;
+    q?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const cargo = CARGOS_COMPARAVEIS.includes(sp.cargo as (typeof CARGOS_COMPARAVEIS)[number])
@@ -26,8 +41,15 @@ export default async function ComparativosPage({
   const comparativo =
     anoA != null && anoB != null ? await compararEleicoes(cargo, anoA, anoB) : null;
 
+  // Seção do candidato: cargo + ano escolhidos listam as pessoas (eleitos
+  // primeiro); o filtro de nome ignora acentos e maiúsculas.
+  const pcargo = CARGOS_COMPARAVEIS.includes(sp.pcargo as (typeof CARGOS_COMPARAVEIS)[number])
+    ? (sp.pcargo as string)
+    : "Deputado Estadual";
+  const panos = pcargo === cargo ? anos : await anosDoCargo(pcargo);
+  const pano = sp.pano && panos.includes(Number(sp.pano)) ? Number(sp.pano) : panos[0];
   const q = (sp.q ?? "").trim();
-  const encontrados = q.length >= 3 ? await buscarCandidatos(q) : [];
+  const pessoas = pano != null ? await listarPessoas(pcargo, pano, q) : [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -45,43 +67,93 @@ export default async function ComparativosPage({
           Candidato: onde cresceu e onde caiu
         </h2>
         <p className="mb-3 text-xs text-neutral-500">
-          Busque o candidato; na página dele você escolhe as duas eleições a comparar.
+          Escolha o cargo e o ano para listar as pessoas (eleitos primeiro); clique em alguém
+          para comparar as eleições dele. O filtro de nome ignora acentos.
         </p>
-        <form className="flex flex-wrap gap-2">
-          <input
-            type="text"
-            name="q"
-            defaultValue={q}
-            placeholder="Nome do candidato (mín. 3 letras)…"
-            className="w-72 max-w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600"
-          />
+        <form className="flex flex-wrap items-end gap-2">
+          <label className="flex flex-col gap-1 text-xs text-neutral-500">
+            Cargo
+            <select
+              name="pcargo"
+              defaultValue={pcargo}
+              className="rounded-lg border border-neutral-700 bg-neutral-950 px-2 py-2 text-sm text-neutral-100"
+            >
+              {CARGOS_COMPARAVEIS.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-neutral-500">
+            Ano
+            <select
+              name="pano"
+              defaultValue={pano ?? ""}
+              className="rounded-lg border border-neutral-700 bg-neutral-950 px-2 py-2 text-sm text-neutral-100"
+            >
+              {panos.map((x) => (
+                <option key={x}>{x}</option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-neutral-500">
+            Filtrar por nome (opcional)
+            <input
+              type="text"
+              name="q"
+              defaultValue={q}
+              placeholder="ex.: carlos vinicius"
+              className="w-56 max-w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600"
+            />
+          </label>
           <input type="hidden" name="cargo" value={cargo} />
           {anoA != null && <input type="hidden" name="a" value={anoA} />}
           {anoB != null && <input type="hidden" name="b" value={anoB} />}
           <button className="flex items-center gap-1.5 rounded-lg bg-amber-400 px-4 py-2 text-sm font-semibold text-neutral-950">
-            <Search size={14} /> Buscar
+            <Search size={14} /> Listar
           </button>
         </form>
-        {q.length >= 3 && (
-          <div className="mt-3 flex flex-col gap-1">
-            {encontrados.length === 0 && (
-              <p className="text-xs text-neutral-500">Nenhum candidato encontrado para “{q}”.</p>
+
+        {pano != null && (
+          <div className="mt-3">
+            {pessoas.length === 0 && (
+              <p className="text-xs text-neutral-500">
+                Nenhum candidato de {pcargo} em {pano}
+                {q ? ` com “${q}” no nome` : ""}.
+              </p>
             )}
-            {encontrados.map((c) => (
-              <Link
-                key={c.id}
-                href={`/comparativos/candidato/${c.id}`}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-neutral-800 px-3 py-2 text-sm transition-colors hover:border-amber-700"
-              >
-                <span>
-                  <span className="font-medium text-neutral-100">{c.nome}</span>
-                  <span className="ml-2 text-xs text-neutral-500">
-                    {c.cargo} · {c.ano} · {c.partido}
+            <div className="flex max-h-96 flex-col gap-1 overflow-y-auto pr-1">
+              {pessoas.map((c) => (
+                <Link
+                  key={c.id}
+                  href={`/comparativos/candidato/${c.id}`}
+                  className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm transition-colors hover:border-amber-600 ${
+                    c.eleito ? "border-emerald-900 bg-emerald-950/20" : "border-neutral-800"
+                  }`}
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span className="truncate font-medium text-neutral-100">{c.nome}</span>
+                    <span className="shrink-0 text-xs text-neutral-500">
+                      {c.numero} · {c.partido}
+                    </span>
+                    {c.eleito && (
+                      <span className="shrink-0 rounded-full bg-emerald-950 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
+                        Eleito
+                      </span>
+                    )}
                   </span>
-                </span>
-                <span className="text-xs text-amber-400">comparar →</span>
-              </Link>
-            ))}
+                  <span className="shrink-0 text-xs tabular-nums text-neutral-400">
+                    {c.votos.toLocaleString("pt-BR")} votos
+                    <span className="ml-2 text-amber-400">comparar →</span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+            {pessoas.length > 0 && (
+              <p className="mt-1.5 text-[11px] text-neutral-600">
+                {pessoas.length} candidato{pessoas.length === 1 ? "" : "s"} · eleitos primeiro,
+                depois por votação.
+              </p>
+            )}
           </div>
         )}
       </section>
@@ -126,6 +198,9 @@ export default async function ComparativosPage({
               ))}
             </select>
           </label>
+          <input type="hidden" name="pcargo" value={pcargo} />
+          {pano != null && <input type="hidden" name="pano" value={pano} />}
+          {q && <input type="hidden" name="q" value={q} />}
           <button className="rounded-lg bg-amber-400 px-4 py-2 text-sm font-semibold text-neutral-950">
             Comparar
           </button>
@@ -253,31 +328,48 @@ function ListaPessoas({
   );
 }
 
-// Busca simples por nome de urna ou nome civil, mostrando a candidatura
-// mais recente de cada pessoa (o refinamento acontece na página dela).
-async function buscarCandidatos(q: string) {
+// Pessoas de um cargo/ano: eleitos primeiro, depois por votação. O filtro
+// de nome é aplicado DEPOIS de normalizar (sem acento, sem caixa), por
+// isso "carlos vinicius" encontra "CARLOS VINÍCIUS".
+async function listarPessoas(cargoNome: string, ano: number, q: string) {
   const candidatos = await prisma.candidato.findMany({
-    where: {
-      OR: [{ nome: { contains: q } }, { nomeCompleto: { contains: q } }],
-    },
-    include: { partido: true, cargo: { include: { eleicao: true } } },
-    take: 120,
+    where: { cargo: { nome: cargoNome, eleicao: { ano } } },
+    include: { partido: true },
   });
-  candidatos.sort((a, b) => b.cargo.eleicao.ano - a.cargo.eleicao.ano);
+  const votosPorCandidato = await prisma.resultado.groupBy({
+    by: ["candidatoId"],
+    where: { turno: 1, candidato: { cargo: { nome: cargoNome, eleicao: { ano } } } },
+    _sum: { votos: true },
+  });
+  const votos = new Map(votosPorCandidato.map((v) => [v.candidatoId, v._sum.votos ?? 0]));
+
+  const alvo = q ? normalizar(q) : "";
   const vistos = new Set<string>();
-  const unicos: { id: string; nome: string; cargo: string; ano: number; partido: string }[] = [];
-  for (const c of candidatos) {
-    const chave = (c.nomeCompleto || c.nome).toUpperCase();
+  const lista: {
+    id: string;
+    nome: string;
+    numero: number;
+    partido: string;
+    eleito: boolean;
+    votos: number;
+  }[] = [];
+  const ordenados = candidatos
+    .map((c) => ({ c, v: votos.get(c.id) ?? 0 }))
+    .sort((x, y) => Number(y.c.eleito) - Number(x.c.eleito) || y.v - x.v);
+  for (const { c, v } of ordenados) {
+    if (alvo && !normalizar(`${c.nome} ${c.nomeCompleto ?? ""}`).includes(alvo)) continue;
+    // Duplicatas herdadas de seeds antigos: fica a cópia mais votada.
+    const chave = `${c.numero}:${normalizar(c.nome)}`;
     if (vistos.has(chave)) continue;
     vistos.add(chave);
-    unicos.push({
+    lista.push({
       id: c.id,
       nome: c.nome,
-      cargo: c.cargo.nome,
-      ano: c.cargo.eleicao.ano,
+      numero: c.numero,
       partido: c.partido.sigla,
+      eleito: c.eleito,
+      votos: v,
     });
-    if (unicos.length >= 15) break;
   }
-  return unicos;
+  return lista;
 }

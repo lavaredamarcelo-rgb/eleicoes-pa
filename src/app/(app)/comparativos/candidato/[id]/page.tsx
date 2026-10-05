@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { PdfDownloadLink } from "@/components/PdfDownloadLink";
 import { getCandidaturasAnteriores } from "@/lib/data";
 import { compararPorMunicipio } from "@/lib/comparativos";
 import { prisma } from "@/lib/prisma";
@@ -135,6 +136,15 @@ export default async function ComparativoCandidatoPage({
               Comparar
             </button>
           </form>
+
+          {idA && idB && (
+            <div>
+              <PdfDownloadLink
+                href={`/api/pdf/comparativo-candidato?a=${idA}&b=${idB}`}
+                label="PDF do comparativo"
+              />
+            </div>
+          )}
 
           {comp && (
             <>
