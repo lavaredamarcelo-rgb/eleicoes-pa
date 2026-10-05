@@ -24,6 +24,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/pdf/candidato/[
       locais={votosLocais.map((v) => ({
         nome: v.colegioEleitoral.nome,
         municipio: v.colegioEleitoral.municipio.nome,
+        bairro: v.colegioEleitoral.bairro,
         votos: v.votos,
       }))}
     />,

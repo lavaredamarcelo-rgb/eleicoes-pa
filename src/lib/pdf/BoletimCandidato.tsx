@@ -2,6 +2,7 @@ import { Text, View, Svg, Rect, Text as SvgText } from "@react-pdf/renderer";
 import { ReportShell, StatBox, SectionTitle, TableHeader, TableRow } from "./ReportShell";
 import { styles } from "./styles";
 import type { getCandidato, getCandidaturasAnteriores } from "@/lib/data";
+import { CabecalhoBairro, ListaLocaisDuasColunas } from "./LocaisCompactos";
 
 type Candidato = NonNullable<Awaited<ReturnType<typeof getCandidato>>>;
 type Anterior = Awaited<ReturnType<typeof getCandidaturasAnteriores>>[number];
@@ -18,7 +19,7 @@ export function BoletimCandidato({
 }: {
   candidato: Candidato;
   anteriores?: Anterior[];
-  locais?: { nome: string; municipio: string; votos: number }[];
+  locais?: { nome: string; municipio: string; bairro?: string | null; votos: number }[];
 }) {
   const totalVotos = candidato.resultados.reduce((sum, r) => sum + r.votos, 0);
 
@@ -217,30 +218,79 @@ export function BoletimCandidato({
         ))}
       </View>
 
-      {locais.length > 0 && (
-        <View break>
-          <SectionTitle>
-            {`Votos por local de votação (${locais.length} locais — retrato por bairro/escola)`}
-          </SectionTitle>
-          <View style={styles.table}>
-            <TableHeader columns={["Local de votação", "Município", "Votos", "%"]} />
-            {(() => {
-              const total = locais.reduce((s, l) => s + l.votos, 0);
-              return locais.slice(0, 250).map((l, i) => (
-                <TableRow
-                  key={i}
-                  cells={[
-                    l.nome.slice(0, 55),
-                    l.municipio.slice(0, 22),
-                    f(l.votos),
-                    total > 0 ? `${((l.votos / total) * 100).toFixed(1)}%` : "—",
-                  ]}
-                />
-              ));
-            })()}
-          </View>
-        </View>
-      )}
+      {locais.length > 0 &&
+        (() => {
+          // COMPLETO (sem corte) e separado por localidade: município →
+          // bairro (linha de subtotal) → escolas/colégios do bairro.
+          const total = locais.reduce((s, l) => s + l.votos, 0);
+          const porMun = new Map<string, typeof locais>();
+          for (const l of locais) {
+            const lista = porMun.get(l.municipio) ?? [];
+            lista.push(l);
+            porMun.set(l.municipio, lista);
+          }
+          const municipios = [...porMun.entries()]
+            .map(([nome, lista]) => ({
+              nome,
+              totalMun: lista.reduce((s, l) => s + l.votos, 0),
+              lista,
+            }))
+            .sort((a, b) => b.totalMun - a.totalMun);
+
+          return (
+            <View break>
+              <SectionTitle>
+                {`Votos por local de votação — por município e bairro (${locais.length} locais)`}
+              </SectionTitle>
+              {municipios.map((m) => {
+                const porBairro = new Map<string, typeof m.lista>();
+                for (const l of m.lista) {
+                  const b = l.bairro?.trim() || "(bairro não informado)";
+                  const lista = porBairro.get(b) ?? [];
+                  lista.push(l);
+                  porBairro.set(b, lista);
+                }
+                const bairros = [...porBairro.entries()]
+                  .map(([bairro, lista]) => ({
+                    bairro,
+                    sub: lista.reduce((s, l) => s + l.votos, 0),
+                    lista: lista.sort((a, b) => b.votos - a.votos),
+                  }))
+                  .sort((a, b) => b.sub - a.sub);
+                return (
+                  <View key={m.nome} style={{ marginBottom: 6 }}>
+                    <Text
+                      style={{
+                        fontSize: 9,
+                        fontFamily: "Helvetica-Bold",
+                        marginTop: 6,
+                        marginBottom: 1,
+                      }}
+                    >
+                      {`${m.nome} — ${f(m.totalMun)} votos (${
+                        total > 0 ? ((m.totalMun / total) * 100).toFixed(1) : "0"
+                      }% do total)`}
+                    </Text>
+                    {bairros.map((b) => (
+                      <View key={b.bairro}>
+                        <CabecalhoBairro
+                          bairro={b.bairro}
+                          votos={b.sub}
+                          pct={
+                            m.totalMun > 0
+                              ? `${((b.sub / m.totalMun) * 100).toFixed(1)}%`
+                              : undefined
+                          }
+                        />
+                        <ListaLocaisDuasColunas itens={b.lista} />
+                      </View>
+                    ))}
+                  </View>
+                );
+              })}
+            </View>
+          );
+        })()}
     </ReportShell>
   );
 }

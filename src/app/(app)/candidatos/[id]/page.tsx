@@ -187,6 +187,7 @@ export default async function CandidatoDetailPage({
 
       {votosLocais.length > 0 && (
         <VotosPorBairro
+          candidatoId={candidato.id}
           votosLocais={votosLocais.map((v) => ({
             municipio: v.colegioEleitoral.municipio.nome,
             bairro: v.colegioEleitoral.bairro,
@@ -387,8 +388,10 @@ async function TrocaPartidoFormSection({
 // Votos por BAIRRO: soma dos locais de votação agrupada por município e
 // bairro — responde "quantos votos em Icoaraci/Outeiro dentro de Belém".
 function VotosPorBairro({
+  candidatoId,
   votosLocais,
 }: {
+  candidatoId: string;
   votosLocais: { municipio: string; bairro: string | null; votos: number }[];
 }) {
   const porMunicipio = new Map<string, Map<string, number>>();
@@ -431,6 +434,12 @@ function VotosPorBairro({
               </span>
             </summary>
             <div className="flex flex-col gap-0.5 px-4 pb-2">
+              <div className="py-1">
+                <PdfDownloadLink
+                  href={`/api/pdf/candidato-municipio?id=${candidatoId}&mun=${encodeURIComponent(m.nome)}`}
+                  label={`PDF de ${m.nome} (bairros + locais)`}
+                />
+              </div>
               {m.bairros.map((b) => (
                 <div
                   key={b.bairro}
