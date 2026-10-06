@@ -10,6 +10,45 @@ import { votosTurno } from "@/lib/turnos";
 // quociente eleitoral. Os votos válidos somam NOMINAIS + LEGENDA do 1º turno
 // (proporcionais só têm um turno), como no cálculo oficial.
 
+// Federações por ELEIÇÃO (partidos federados somam votos juntos no
+// quociente, art. 6º-A da Lei 9.096). A composição muda a cada pleito,
+// por isso o mapa é por ano — e os anos sem federação ficam intactos.
+const FEDERACOES: Record<number, Record<string, string>> = {
+  2022: {
+    PT: "PT/PCdoB/PV",
+    PCDOB: "PT/PCdoB/PV",
+    PV: "PT/PCdoB/PV",
+    PSDB: "PSDB/CIDADANIA",
+    CIDADANIA: "PSDB/CIDADANIA",
+    PSOL: "PSOL/REDE",
+    REDE: "PSOL/REDE",
+  },
+  2026: {
+    PT: "PT/PCdoB/PV",
+    PCDOB: "PT/PCdoB/PV",
+    PV: "PT/PCdoB/PV",
+    PSDB: "PSDB/CIDADANIA",
+    CIDADANIA: "PSDB/CIDADANIA",
+    PSOL: "PSOL/REDE",
+    REDE: "PSOL/REDE",
+    UNIAO: "UNIÃO/PP",
+    PP: "UNIÃO/PP",
+    PRD: "PRD/SOLIDARIEDADE",
+    SOLIDARIEDADE: "PRD/SOLIDARIEDADE",
+  },
+};
+
+const normSigla = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toUpperCase()
+    .replace(/[\s.]/g, "");
+
+function federacaoDe(ano: number, sigla: string) {
+  return FEDERACOES[ano]?.[normSigla(sigla)] ?? null;
+}
+
 export async function calcularQuocienteEleitoral(cargoId: string) {
   const cargo = await prisma.cargo.findUnique({
     where: { id: cargoId },
@@ -54,46 +93,72 @@ export async function calcularQuocienteEleitoral(cargoId: string) {
   const votosValidos = votosNominais + votosLegendaTotal;
   const quocienteEleitoral = cargo.vagas > 0 ? Math.floor(votosValidos / cargo.vagas) : 0;
 
+  // Agrupamento do quociente: FEDERAÇÃO quando o partido pertence a uma
+  // neste pleito (somam votos juntos), senão o próprio partido.
+  const ano = cargo.eleicao.ano;
+  const grupoDe = (p: { id: string; sigla: string; nome: string }) => {
+    const fed = federacaoDe(ano, p.sigla);
+    return fed
+      ? { chave: `fed:${fed}`, sigla: fed, nome: `Federação ${fed}` }
+      : { chave: p.id, sigla: p.sigla, nome: p.nome };
+  };
+
   const votosPorPartido = new Map<
     string,
     { partidoId: string; sigla: string; nome: string; votos: number; votosLegenda: number }
   >();
   for (const c of candidatosComVotos) {
-    const atual = votosPorPartido.get(c.partido.id);
+    const g = grupoDe(c.partido);
+    const atual = votosPorPartido.get(g.chave);
     if (atual) {
       atual.votos += c.votos;
     } else {
-      votosPorPartido.set(c.partido.id, {
-        partidoId: c.partido.id,
-        sigla: c.partido.sigla,
-        nome: c.partido.nome,
+      votosPorPartido.set(g.chave, {
+        partidoId: g.chave,
+        sigla: g.sigla,
+        nome: g.nome,
         votos: c.votos,
         votosLegenda: 0,
       });
     }
   }
   for (const [partidoId, votos] of legendaPorPartido) {
-    const atual = votosPorPartido.get(partidoId);
+    const vl = cargo.votosLegenda.find((v) => v.partidoId === partidoId)!;
+    const g = grupoDe(vl.partido);
+    const atual = votosPorPartido.get(g.chave);
     if (atual) {
       atual.votos += votos;
-      atual.votosLegenda = votos;
+      atual.votosLegenda += votos;
     } else {
-      const vl = cargo.votosLegenda.find((v) => v.partidoId === partidoId)!;
-      votosPorPartido.set(partidoId, {
-        partidoId,
-        sigla: vl.partido.sigla,
-        nome: vl.partido.nome,
+      votosPorPartido.set(g.chave, {
+        partidoId: g.chave,
+        sigla: g.sigla,
+        nome: g.nome,
         votos,
         votosLegenda: votos,
       });
     }
   }
 
-  const vagasFinais = distribuirVagas(
+  // Quando o TSE já marcou os eleitos, a composição por grupo segue a
+  // CONTAGEM OFICIAL (as sobras reais têm as travas dos arts. 108/109 —
+  // 80% do QE e votação individual mínima — que a matemática simples não
+  // cobre). A distribuição calculada fica para disputas sem flag.
+  const temFlagOficial = candidatosComVotos.some((c) => c.eleito);
+  let vagasFinais = distribuirVagas(
     Array.from(votosPorPartido.values()).map((p) => ({ partidoId: p.partidoId, votos: p.votos })),
     cargo.vagas,
     quocienteEleitoral
   );
+  if (temFlagOficial) {
+    const oficiais = new Map<string, number>();
+    for (const c of candidatosComVotos) {
+      if (!c.eleito) continue;
+      const g = grupoDe(c.partido);
+      oficiais.set(g.chave, (oficiais.get(g.chave) ?? 0) + 1);
+    }
+    vagasFinais = oficiais;
+  }
 
   const partidos = Array.from(votosPorPartido.values())
     .map((p) => ({
@@ -109,16 +174,16 @@ export async function calcularQuocienteEleitoral(cargoId: string) {
 
   const candidatosPorPartido = new Map<string, typeof candidatosComVotos>();
   for (const c of candidatosComVotos) {
-    const lista = candidatosPorPartido.get(c.partido.id);
+    const g = grupoDe(c.partido);
+    const lista = candidatosPorPartido.get(g.chave);
     if (lista) lista.push(c);
-    else candidatosPorPartido.set(c.partido.id, [c]);
+    else candidatosPorPartido.set(g.chave, [c]);
   }
 
   // A situação eleito/suplente segue a FLAG OFICIAL do TSE quando ela
   // existe (cassações e decisões judiciais fazem a distribuição real
   // divergir da matemática pura — ex.: candidato inapto não assume mesmo
   // com votos). O cálculo pelo quociente fica para os simuladores.
-  const temFlagOficial = candidatosComVotos.some((c) => c.eleito);
   const candidatosComSituacao = Array.from(candidatosPorPartido.entries()).flatMap(
     ([partidoId, lista]) => {
       const vagas = vagasPorPartido.get(partidoId) ?? 0;

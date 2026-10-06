@@ -25,6 +25,7 @@ export default async function ComparativosPage({
     pcargo?: string;
     pano?: string;
     q?: string;
+    da?: string;
   }>;
 }) {
   const sp = await searchParams;
@@ -50,6 +51,22 @@ export default async function ComparativosPage({
   const pano = sp.pano && panos.includes(Number(sp.pano)) ? Number(sp.pano) : panos[0];
   const q = (sp.q ?? "").trim();
   const pessoas = pano != null ? await listarPessoas(pcargo, pano, q) : [];
+
+  // Duelo em duas etapas: ?da=<id> guarda o primeiro escolhido; o próximo
+  // clique abre o confronto.
+  const desafiante = sp.da
+    ? await prisma.candidato.findUnique({
+        where: { id: sp.da },
+        select: { id: true, nome: true },
+      })
+    : null;
+  const paramsBase = new URLSearchParams();
+  paramsBase.set("cargo", cargo);
+  if (anoA != null) paramsBase.set("a", String(anoA));
+  if (anoB != null) paramsBase.set("b", String(anoB));
+  paramsBase.set("pcargo", pcargo);
+  if (pano != null) paramsBase.set("pano", String(pano));
+  if (q) paramsBase.set("q", q);
 
   return (
     <div className="flex flex-col gap-6">
@@ -108,10 +125,26 @@ export default async function ComparativosPage({
           <input type="hidden" name="cargo" value={cargo} />
           {anoA != null && <input type="hidden" name="a" value={anoA} />}
           {anoB != null && <input type="hidden" name="b" value={anoB} />}
+          {desafiante && <input type="hidden" name="da" value={desafiante.id} />}
           <button className="flex items-center gap-1.5 rounded-lg bg-amber-400 px-4 py-2 text-sm font-semibold text-neutral-950">
             <Search size={14} /> Listar
           </button>
         </form>
+
+        {desafiante && (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-sky-800 bg-sky-950/40 px-3 py-2 text-sm">
+            <span className="text-sky-200">
+              ⚔ Duelo: <span className="font-semibold">{desafiante.nome}</span> ×{" "}
+              <span className="text-sky-400">escolha o adversário na lista</span>
+            </span>
+            <Link
+              href={`/comparativos?${paramsBase.toString()}`}
+              className="rounded-full border border-neutral-700 px-2.5 py-0.5 text-xs text-neutral-300 hover:border-neutral-500"
+            >
+              cancelar
+            </Link>
+          </div>
+        )}
 
         {pano != null && (
           <div className="mt-3">
@@ -123,10 +156,9 @@ export default async function ComparativosPage({
             )}
             <div className="flex max-h-96 flex-col gap-1 overflow-y-auto pr-1">
               {pessoas.map((c) => (
-                <Link
+                <div
                   key={c.id}
-                  href={`/comparativos/candidato/${c.id}`}
-                  className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm transition-colors hover:border-amber-600 ${
+                  className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
                     c.eleito ? "border-emerald-900 bg-emerald-950/20" : "border-neutral-800"
                   }`}
                 >
@@ -141,11 +173,35 @@ export default async function ComparativosPage({
                       </span>
                     )}
                   </span>
-                  <span className="shrink-0 text-xs tabular-nums text-neutral-400">
+                  <span className="flex shrink-0 items-center gap-2 text-xs tabular-nums text-neutral-400">
                     {c.votos.toLocaleString("pt-BR")} votos
-                    <span className="ml-2 text-amber-400">comparar →</span>
+                    {desafiante ? (
+                      desafiante.id !== c.id && (
+                        <Link
+                          href={`/comparativos/duelo?a=${desafiante.id}&b=${c.id}`}
+                          className="rounded-full border border-sky-700 px-2.5 py-0.5 text-sky-300 hover:border-sky-500"
+                        >
+                          ⚔ desafiar
+                        </Link>
+                      )
+                    ) : (
+                      <>
+                        <Link
+                          href={`/comparativos/candidato/${c.id}`}
+                          className="text-amber-400 hover:underline"
+                        >
+                          evolução →
+                        </Link>
+                        <Link
+                          href={`/comparativos?${paramsBase.toString()}&da=${c.id}`}
+                          className="rounded-full border border-sky-800 px-2.5 py-0.5 text-sky-300 hover:border-sky-600"
+                        >
+                          ⚔ duelo
+                        </Link>
+                      </>
+                    )}
                   </span>
-                </Link>
+                </div>
               ))}
             </div>
             {pessoas.length > 0 && (
