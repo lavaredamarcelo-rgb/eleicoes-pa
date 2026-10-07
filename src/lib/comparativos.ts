@@ -110,6 +110,43 @@ export async function compararEleicoes(cargoNome: string, anoA: number, anoB: nu
   return { cargoNome, anoA, anoB, cadeiras, reeleitos, entraram, sairam, totalA: eleitosA.length, totalB: eleitosB.length };
 }
 
+// Duelo DENTRO de um município: votos dos dois candidatos somados por
+// BAIRRO (via locais de votação). Também lista os municípios onde pelo
+// menos um dos dois tem votos por local, para o seletor.
+export async function dueloPorBairro(idA: string, idB: string, municipio: string) {
+  const carregar = (id: string) =>
+    prisma.votoLocal.findMany({
+      where: { candidatoId: id, turno: 1, colegioEleitoral: { municipio: { nome: municipio } } },
+      include: { colegioEleitoral: { select: { bairro: true } } },
+    });
+  const [la, lb] = await Promise.all([carregar(idA), carregar(idB)]);
+  const mapa = new Map<string, { bairro: string; a: number; b: number }>();
+  const somar = (lado: "a" | "b", lista: typeof la) => {
+    for (const v of lista) {
+      const bairro = v.colegioEleitoral.bairro?.trim() || "(bairro não informado)";
+      const atual = mapa.get(bairro) ?? { bairro, a: 0, b: 0 };
+      atual[lado] += v.votos;
+      mapa.set(bairro, atual);
+    }
+  };
+  somar("a", la);
+  somar("b", lb);
+  return [...mapa.values()]
+    .map((l) => ({ ...l, delta: l.a - l.b }))
+    .sort((x, y) => y.a + y.b - (x.a + x.b));
+}
+
+export async function municipiosComLocais(idA: string, idB: string) {
+  const rows = await prisma.votoLocal.findMany({
+    where: { candidatoId: { in: [idA, idB] }, turno: 1 },
+    select: { colegioEleitoral: { select: { municipio: { select: { nome: true } } } } },
+    distinct: ["colegioEleitoralId"],
+  });
+  return [...new Set(rows.map((r) => r.colegioEleitoral.municipio.nome))].sort((a, b) =>
+    a.localeCompare(b, "pt-BR")
+  );
+}
+
 // Votação de duas candidaturas (da mesma pessoa) município a município.
 export async function compararPorMunicipio(idA: string, idB: string) {
   const carregar = (id: string) =>

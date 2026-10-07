@@ -76,6 +76,8 @@ export default async function PesquisasPage({
         </div>
       </div>
 
+      <Agregador2T />
+
       <div className="flex flex-wrap gap-2">
         <Link
           href="/pesquisas"
@@ -203,5 +205,83 @@ export default async function PesquisasPage({
         </div>
       )}
     </div>
+  );
+}
+
+// AGREGADOR DO 2º TURNO (Presidente, 25/10): média móvel das 3 pesquisas
+// mais recentes de Lula × Flávio e a linha do tempo de todas.
+async function Agregador2T() {
+  const pesquisas = await prisma.pesquisaEleitoral.findMany({
+    where: { turno: 2, disputa: "Presidente", tipo: { not: "rejeicao" } },
+    include: { resultados: true },
+    orderBy: [{ dataDivulgacao: "desc" }, { createdAt: "desc" }],
+  });
+  if (pesquisas.length === 0) return null;
+
+  const extrai = (p: (typeof pesquisas)[number]) => {
+    const acha = (alvo: RegExp) =>
+      p.resultados.find((r) => alvo.test(r.nome.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase()))
+        ?.percentual ?? null;
+    return { lula: acha(/LULA/), flavio: acha(/FLAVIO/) };
+  };
+
+  const pontos = pesquisas
+    .map((p) => ({ data: p.dataDivulgacao, instituto: p.instituto, ...extrai(p) }))
+    .filter((p): p is typeof p & { lula: number; flavio: number } => p.lula != null && p.flavio != null);
+  if (pontos.length === 0) return null;
+
+  const janela = pontos.slice(0, 3);
+  const mLula = janela.reduce((s, p) => s + p.lula, 0) / janela.length;
+  const mFlavio = janela.reduce((s, p) => s + p.flavio, 0) / janela.length;
+  const lider = mLula >= mFlavio ? "Lula" : "Flávio Bolsonaro";
+  const vant = Math.abs(mLula - mFlavio);
+
+  // Linha do tempo (da mais antiga para a mais nova) para o gráfico.
+  const serie = [...pontos].reverse();
+  const W = 300;
+  const H = 46;
+  const min = Math.min(...serie.flatMap((p) => [p.lula, p.flavio])) - 2;
+  const max = Math.max(...serie.flatMap((p) => [p.lula, p.flavio])) + 2;
+  const x = (i: number) => (serie.length > 1 ? (i / (serie.length - 1)) * W : W / 2);
+  const y = (v: number) => H - 3 - ((v - min) / Math.max(max - min, 1)) * (H - 6);
+  const linha = (sel: (p: (typeof serie)[number]) => number) =>
+    serie.map((p, i) => `${x(i).toFixed(1)},${y(sel(p)).toFixed(1)}`).join(" ");
+
+  return (
+    <section className="rounded-2xl border border-sky-900/60 bg-gradient-to-r from-sky-950/40 to-neutral-900 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-sky-200">
+            2º turno · Presidente — média das {janela.length} últimas pesquisas
+          </h2>
+          <p className="mt-1 text-2xl font-bold">
+            <span className="text-red-400">Lula {mLula.toFixed(1)}%</span>
+            <span className="mx-2 text-neutral-500">×</span>
+            <span className="text-sky-400">{mFlavio.toFixed(1)}% Flávio</span>
+          </p>
+          <p className="text-xs text-neutral-400">
+            {vant < 2
+              ? `Empate técnico na média (${vant.toFixed(1)} pp para ${lider})`
+              : `${lider} à frente por ${vant.toFixed(1)} pp na média`}{" "}
+            · {pontos.length} pesquisas 2T no total · decisão em 25/10
+          </p>
+        </div>
+        <div className="w-full max-w-xs">
+          <svg viewBox={`0 0 ${W} ${H}`} className="h-12 w-full" preserveAspectRatio="none">
+            <polyline points={linha((p) => p.flavio)} fill="none" stroke="#38bdf8" strokeWidth={1.5} />
+            <polyline points={linha((p) => p.lula)} fill="none" stroke="#f87171" strokeWidth={1.5} />
+          </svg>
+          <p className="text-right text-[10px] text-neutral-600">
+            {serie[0]?.data.toLocaleDateString("pt-BR", { timeZone: "UTC" })} →{" "}
+            {serie[serie.length - 1]?.data.toLocaleDateString("pt-BR", { timeZone: "UTC" })}
+          </p>
+        </div>
+      </div>
+      <p className="mt-2 text-[11px] text-neutral-600">
+        Média simples das mais recentes (
+        {janela.map((p) => p.instituto).join(", ")}). Novas pesquisas entram sozinhas no
+        agregado quando forem carregadas.
+      </p>
+    </section>
   );
 }

@@ -1,19 +1,29 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { compararPorMunicipio } from "@/lib/comparativos";
+import { PdfDownloadLink } from "@/components/PdfDownloadLink";
+import {
+  compararPorMunicipio,
+  dueloPorBairro,
+  municipiosComLocais,
+} from "@/lib/comparativos";
 
 // DUELO: dois candidatos lado a lado, município a município e por
-// região — quem lidera onde, e por quanto.
+// região — quem lidera onde, e por quanto. Com recorte por BAIRRO
+// dentro de um município (?mun=) quando há votos por local.
 export default async function DueloPage({
   searchParams,
 }: {
-  searchParams: Promise<{ a?: string; b?: string }>;
+  searchParams: Promise<{ a?: string; b?: string; mun?: string }>;
 }) {
   const sp = await searchParams;
   if (!sp.a || !sp.b || sp.a === sp.b) notFound();
 
   const comp = await compararPorMunicipio(sp.a, sp.b);
   if (!comp) notFound();
+
+  const munsComLocais = await municipiosComLocais(sp.a, sp.b);
+  const munSel = sp.mun && munsComLocais.includes(sp.mun) ? sp.mun : null;
+  const bairros = munSel ? await dueloPorBairro(sp.a, sp.b, munSel) : [];
 
   const regioes = new Map<string, { a: number; b: number }>();
   for (const l of comp.linhas) {
@@ -50,6 +60,10 @@ export default async function DueloPage({
         <p className="text-sm text-neutral-500">
           {rot(comp.a)} <span className="text-neutral-700">contra</span> {rot(comp.b)}
         </p>
+      </div>
+
+      <div>
+        <PdfDownloadLink href={`/api/pdf/duelo?a=${sp.a}&b=${sp.b}`} label="PDF do duelo" />
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -98,6 +112,68 @@ export default async function DueloPage({
         <ListaDominio titulo={`Onde ${comp.a.nome} lidera (${dominaA.length})`} cor="text-amber-400" linhas={dominaA.slice(0, 12)} ladoA />
         <ListaDominio titulo={`Onde ${comp.b.nome} lidera (${dominaB.length})`} cor="text-sky-400" linhas={dominaB.slice(0, 12)} ladoA={false} />
       </div>
+
+      {munsComLocais.length > 0 && (
+        <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+            Duelo por bairro dentro de um município
+          </h2>
+          <form className="flex flex-wrap items-end gap-2">
+            <input type="hidden" name="a" value={sp.a} />
+            <input type="hidden" name="b" value={sp.b} />
+            <select
+              name="mun"
+              defaultValue={munSel ?? ""}
+              className="max-w-full rounded-lg border border-neutral-700 bg-neutral-950 px-2 py-2 text-sm text-neutral-100"
+            >
+              <option value="">Escolha o município…</option>
+              {munsComLocais.map((m) => (
+                <option key={m}>{m}</option>
+              ))}
+            </select>
+            <button className="rounded-lg bg-amber-400 px-4 py-2 text-sm font-semibold text-neutral-950">
+              Ver bairros
+            </button>
+          </form>
+
+          {munSel && (
+            <div className="mt-3 flex flex-col gap-1">
+              {bairros.length === 0 && (
+                <p className="text-xs text-neutral-500">
+                  Sem votos por local registrados em {munSel} para os dois.
+                </p>
+              )}
+              {bairros.map((l) => {
+                const total = l.a + l.b;
+                return (
+                  <div key={l.bairro} className="rounded-lg bg-neutral-950/60 px-3 py-1.5 text-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-x-3">
+                      <span className="text-neutral-200">{l.bairro}</span>
+                      <span className="tabular-nums text-xs">
+                        <span className="font-semibold text-amber-400">{l.a.toLocaleString("pt-BR")}</span>
+                        <span className="mx-1.5 text-neutral-600">×</span>
+                        <span className="font-semibold text-sky-400">{l.b.toLocaleString("pt-BR")}</span>
+                        <span className={`ml-2 ${l.delta >= 0 ? "text-amber-400" : "text-sky-400"}`}>
+                          ({l.delta >= 0 ? "+" : ""}
+                          {l.delta.toLocaleString("pt-BR")})
+                        </span>
+                      </span>
+                    </div>
+                    <div className="mt-1 flex h-1 w-full overflow-hidden rounded-full bg-neutral-800">
+                      <div className="h-1 bg-amber-400" style={{ width: `${total > 0 ? (l.a / total) * 100 : 0}%` }} />
+                      <div className="h-1 bg-sky-500" style={{ width: `${total > 0 ? (l.b / total) * 100 : 0}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <p className="mt-2 text-[11px] text-neutral-600">
+            Base: votos por local de votação (disponível para as eleições estaduais de 2022 e
+            2026 e municipais de 2024).
+          </p>
+        </section>
+      )}
 
       <details className="rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3">
         <summary className="cursor-pointer text-sm font-medium text-neutral-300">

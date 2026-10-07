@@ -45,7 +45,7 @@ const normSigla = (s: string) =>
     .toUpperCase()
     .replace(/[\s.]/g, "");
 
-function federacaoDe(ano: number, sigla: string) {
+export function federacaoDe(ano: number, sigla: string) {
   return FEDERACOES[ano]?.[normSigla(sigla)] ?? null;
 }
 

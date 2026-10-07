@@ -57,6 +57,12 @@ export default async function CenarioPage() {
                   </div>
                   <div className="flex shrink-0 items-center gap-1.5">
                     <Link
+                      href={`/cenario-real/${c.id}`}
+                      className="flex items-center gap-1 rounded-lg border border-emerald-800 px-2.5 py-1.5 text-xs font-medium text-emerald-300 transition-colors hover:border-emerald-600"
+                    >
+                      × Real
+                    </Link>
+                    <Link
                       href={`/criar-cenario?modo=eleicao&cenario=${c.id}`}
                       className="flex items-center gap-1.5 rounded-lg bg-amber-400 px-3 py-1.5 text-xs font-semibold text-neutral-950 transition-opacity hover:opacity-90"
                     >
