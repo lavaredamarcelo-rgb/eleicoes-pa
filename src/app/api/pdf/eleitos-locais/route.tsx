@@ -9,7 +9,14 @@ import { pdfResponse, nomeArquivo } from "@/lib/pdf/respond";
 // PDF: todos os eleitos de um ano com os votos deles em UM município,
 // detalhados por bairro (e escola a escola quando o volume permite).
 // ?ano=2026&municipio=<id>
-const ORDEM_CARGOS = ["Governador", "Senador", "Deputado Federal", "Deputado Estadual"];
+const ORDEM_CARGOS = [
+  "Governador",
+  "Senador",
+  "Deputado Federal",
+  "Deputado Estadual",
+  "Prefeito",
+  "Vereador",
+];
 const LIMITE_ESCOLAS = 6000;
 
 export async function GET(req: NextRequest) {
@@ -24,8 +31,17 @@ export async function GET(req: NextRequest) {
   });
   if (!municipio) notFound();
 
+  // Cargos ESTADUAIS (municipioId null: Gov/Sen/Deputados) e os
+  // MUNICIPAIS do próprio município (Prefeito/Vereador) — assim o mesmo
+  // relatório serve para 2026 e para os anos municipais (2024, 2020…).
   const eleitos = await prisma.candidato.findMany({
-    where: { eleito: true, cargo: { eleicao: { ano }, municipioId: null } },
+    where: {
+      eleito: true,
+      cargo: {
+        eleicao: { ano },
+        OR: [{ municipioId: null }, { municipioId }],
+      },
+    },
     include: {
       partido: true,
       cargo: true,
