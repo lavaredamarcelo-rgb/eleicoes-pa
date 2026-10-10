@@ -30,10 +30,16 @@ export function PdfEleitosMunicipio({
         ))}
       </select>
       {municipioId && (
-        <PdfDownloadLink
-          href={`/api/pdf/eleitos/${ano}?municipio=${municipioId}`}
-          label={`PDF · ${nome}`}
-        />
+        <>
+          <PdfDownloadLink
+            href={`/api/pdf/eleitos-locais?ano=${ano}&municipio=${municipioId}`}
+            label={`Votos de todos os eleitos em ${nome}`}
+          />
+          <PdfDownloadLink
+            href={`/api/pdf/eleitos/${ano}?municipio=${municipioId}`}
+            label="Só os redutos"
+          />
+        </>
       )}
     </div>
   );
