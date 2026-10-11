@@ -110,6 +110,64 @@ export async function compararEleicoes(cargoNome: string, anoA: number, anoB: nu
   return { cargoNome, anoA, anoB, cadeiras, reeleitos, entraram, sairam, totalA: eleitosA.length, totalB: eleitosB.length };
 }
 
+// VENCEDOR por município: quem foi o mais votado de um cargo em cada
+// cidade — alimenta o mapa de vencedores e o ranking "ganhou em N
+// municípios".
+export async function vencedoresPorMunicipio(cargoNome: string, ano: number) {
+  const resultados = await prisma.resultado.findMany({
+    where: { turno: 1, candidato: { cargo: { nome: cargoNome, eleicao: { ano } } } },
+    include: {
+      candidato: { include: { partido: true } },
+      municipio: { select: { nome: true, codigoIbge: true } },
+    },
+  });
+
+  const porMunicipio = new Map<
+    string,
+    {
+      municipio: string;
+      codigoIbge: string | null;
+      melhor: { nome: string; partido: string; votos: number };
+      segundo: { nome: string; votos: number } | null;
+    }
+  >();
+  for (const r of resultados) {
+    const atual = porMunicipio.get(r.municipio.nome);
+    const linha = { nome: r.candidato.nome, partido: r.candidato.partido.sigla, votos: r.votos };
+    if (!atual) {
+      porMunicipio.set(r.municipio.nome, {
+        municipio: r.municipio.nome,
+        codigoIbge: r.municipio.codigoIbge,
+        melhor: linha,
+        segundo: null,
+      });
+    } else if (r.votos > atual.melhor.votos) {
+      atual.segundo = { nome: atual.melhor.nome, votos: atual.melhor.votos };
+      atual.melhor = linha;
+    } else if (!atual.segundo || r.votos > atual.segundo.votos) {
+      atual.segundo = { nome: r.candidato.nome, votos: r.votos };
+    }
+  }
+
+  const ranking = new Map<string, { nome: string; partido: string; municipios: number; votosNosVencidos: number }>();
+  for (const m of porMunicipio.values()) {
+    const r = ranking.get(m.melhor.nome) ?? {
+      nome: m.melhor.nome,
+      partido: m.melhor.partido,
+      municipios: 0,
+      votosNosVencidos: 0,
+    };
+    r.municipios += 1;
+    r.votosNosVencidos += m.melhor.votos;
+    ranking.set(m.melhor.nome, r);
+  }
+
+  return {
+    porMunicipio: [...porMunicipio.values()],
+    ranking: [...ranking.values()].sort((x, y) => y.municipios - x.municipios || y.votosNosVencidos - x.votosNosVencidos),
+  };
+}
+
 // Duelo DENTRO de um município: votos dos dois candidatos somados por
 // BAIRRO (via locais de votação). Também lista os municípios onde pelo
 // menos um dos dois tem votos por local, para o seletor.
@@ -163,7 +221,7 @@ export async function compararPorMunicipio(idA: string, idB: string) {
 
   const mapa = new Map<
     string,
-    { municipio: string; regiao: string; a: number; b: number }
+    { municipio: string; regiao: string; codigoIbge: string | null; a: number; b: number }
   >();
   const somar = (lado: "a" | "b", resultados: NonNullable<typeof a>["resultados"]) => {
     for (const r of resultados) {
@@ -171,6 +229,7 @@ export async function compararPorMunicipio(idA: string, idB: string) {
       const atual = mapa.get(r.municipio.nome) ?? {
         municipio: r.municipio.nome,
         regiao: r.municipio.regiao.nome,
+        codigoIbge: r.municipio.codigoIbge,
         a: 0,
         b: 0,
       };

@@ -6,6 +6,7 @@ import {
   dueloPorBairro,
   municipiosComLocais,
 } from "@/lib/comparativos";
+import { MapaVotos } from "@/components/MapaVotos";
 
 // DUELO: dois candidatos lado a lado, município a município e por
 // região — quem lidera onde, e por quanto. Com recorte por BAIRRO
@@ -76,6 +77,48 @@ export default async function DueloPage({
           detalhe={`vantagem de ${difTotal >= 0 ? comp.a.nome : comp.b.nome}`}
         />
       </div>
+
+      <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
+        <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+          Mapa: quem venceu em cada município
+        </h2>
+        <p className="mb-2 text-xs text-neutral-500">
+          <span className="font-semibold text-amber-400">{comp.a.nome}</span> venceu em{" "}
+          {dominaA.length} municípios ·{" "}
+          <span className="font-semibold text-sky-400">{comp.b.nome}</span> em {dominaB.length}
+          {comp.linhas.length - dominaA.length - dominaB.length > 0 &&
+            ` · empate/sem votos em ${comp.linhas.length - dominaA.length - dominaB.length}`}
+        </p>
+        <MapaVotos
+          cores={Object.fromEntries(
+            comp.linhas
+              .filter((l) => l.codigoIbge)
+              .map((l) => {
+                const total = l.a + l.b;
+                const margem = total > 0 ? Math.abs(l.a - l.b) / total : 0;
+                const op = 0.45 + Math.min(margem * 2.5, 0.55);
+                const cor =
+                  l.a > l.b
+                    ? `rgba(245, 158, 11, ${op.toFixed(2)})`
+                    : l.b > l.a
+                      ? `rgba(56, 189, 248, ${op.toFixed(2)})`
+                      : "#404040";
+                return [l.codigoIbge!, cor];
+              })
+          )}
+          titulos={Object.fromEntries(
+            comp.linhas
+              .filter((l) => l.codigoIbge)
+              .map((l) => [
+                l.codigoIbge!,
+                `${l.municipio}: ${comp.a.nome} ${l.a.toLocaleString("pt-BR")} × ${l.b.toLocaleString("pt-BR")} ${comp.b.nome}`,
+              ])
+          )}
+        />
+        <p className="mt-1 text-[11px] text-neutral-600">
+          Cor mais forte = vitória mais folgada no município. Passe o mouse para ver os números.
+        </p>
+      </section>
 
       <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
         <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">

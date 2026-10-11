@@ -70,12 +70,28 @@ export default async function ComparativosPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-lg font-semibold">Comparativos entre eleições</h1>
-        <p className="text-sm text-neutral-500">
-          Saldo de cadeiras por partido, quem entrou e quem saiu — e a evolução de um candidato
-          município a município entre duas eleições.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-semibold">Comparativos entre eleições</h1>
+          <p className="text-sm text-neutral-500">
+            Saldo de cadeiras por partido, quem entrou e quem saiu — e a evolução de um
+            candidato município a município entre duas eleições.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/comparativos/mapa"
+            className="rounded-lg border border-neutral-800 px-3 py-2 text-sm text-neutral-200 transition hover:bg-neutral-900"
+          >
+            🗺 Mapa de vencedores
+          </Link>
+          <Link
+            href="/comparativos/brasil"
+            className="rounded-lg border border-neutral-800 px-3 py-2 text-sm text-neutral-200 transition hover:bg-neutral-900"
+          >
+            🇧🇷 Mapa do Brasil · Presidente
+          </Link>
+        </div>
       </div>
 
       {/* ===== Candidato × ele mesmo ===== */}
