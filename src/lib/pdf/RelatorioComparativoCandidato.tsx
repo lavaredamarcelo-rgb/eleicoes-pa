@@ -1,6 +1,7 @@
 import { Text, View } from "@react-pdf/renderer";
 import { ReportShell, SectionTitle } from "./ReportShell";
 import { styles, CORES } from "./styles";
+import { MapaParaPdf, tonalidade } from "./MapaParaPdf";
 
 type Lado = {
   nome: string;
@@ -10,7 +11,14 @@ type Lado = {
   eleito: boolean;
   total: number;
 };
-type Linha = { municipio: string; regiao: string; a: number; b: number; delta: number };
+type Linha = {
+  municipio: string;
+  regiao: string;
+  codigoIbge?: string | null;
+  a: number;
+  b: number;
+  delta: number;
+};
 
 const VERDE = CORES.verde ?? "#047857";
 const VERMELHO = "#b91c1c";
@@ -69,6 +77,30 @@ export function RelatorioComparativoCandidato({
           </Text>
         </View>
       </View>
+
+      <MapaParaPdf
+        altura={290}
+        cores={Object.fromEntries(
+          linhas
+            .filter((l) => l.codigoIbge)
+            .map((l) => {
+              const base = Math.max(l.a, l.b);
+              const forca = base > 0 ? 0.35 + Math.min(Math.abs(l.delta) / base, 1) * 0.65 : 0;
+              return [
+                l.codigoIbge!,
+                l.delta > 0
+                  ? tonalidade("#059669", forca)
+                  : l.delta < 0
+                    ? tonalidade("#dc2626", forca)
+                    : "#e5e7eb",
+              ];
+            })
+        )}
+        legenda={[
+          { cor: "#059669", rotulo: `cresceu (${cresceu.length} municípios)` },
+          { cor: "#dc2626", rotulo: `caiu (${caiu.length})` },
+        ]}
+      />
 
       <SectionTitle>Onde mais cresceu</SectionTitle>
       <Cabecalho a={a.ano} b={b.ano} />

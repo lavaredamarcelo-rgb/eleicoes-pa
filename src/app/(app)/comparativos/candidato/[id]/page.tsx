@@ -4,6 +4,7 @@ import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { PdfDownloadLink } from "@/components/PdfDownloadLink";
 import { getCandidaturasAnteriores } from "@/lib/data";
 import { compararPorMunicipio } from "@/lib/comparativos";
+import { MapaVotos } from "@/components/MapaVotos";
 import { prisma } from "@/lib/prisma";
 import { votosDecisivos } from "@/lib/turnos";
 
@@ -172,6 +173,51 @@ export default async function ComparativoCandidatoPage({
                   destaque={comp.b.total - comp.a.total >= 0 ? "alta" : "queda"}
                 />
               </div>
+
+              <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
+                <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  Mapa da evolução — {comp.a.ano} → {comp.b.ano}
+                </h2>
+                <p className="mb-2 text-xs text-neutral-500">
+                  <span className="font-semibold text-emerald-400">
+                    cresceu em {comp.linhas.filter((l) => l.delta > 0).length}
+                  </span>{" "}
+                  municípios ·{" "}
+                  <span className="font-semibold text-red-400">
+                    caiu em {comp.linhas.filter((l) => l.delta < 0).length}
+                  </span>
+                </p>
+                <MapaVotos
+                  cores={Object.fromEntries(
+                    comp.linhas
+                      .filter((l) => l.codigoIbge)
+                      .map((l) => {
+                        const base = Math.max(l.a, l.b);
+                        const forca = base > 0 ? Math.min(Math.abs(l.delta) / base, 1) : 0;
+                        const op = 0.35 + forca * 0.65;
+                        const cor =
+                          l.delta > 0
+                            ? `rgba(16, 185, 129, ${op.toFixed(2)})`
+                            : l.delta < 0
+                              ? `rgba(239, 68, 68, ${op.toFixed(2)})`
+                              : "#404040";
+                        return [l.codigoIbge!, cor];
+                      })
+                  )}
+                  titulos={Object.fromEntries(
+                    comp.linhas
+                      .filter((l) => l.codigoIbge)
+                      .map((l) => [
+                        l.codigoIbge!,
+                        `${l.municipio}: ${l.a.toLocaleString("pt-BR")} → ${l.b.toLocaleString("pt-BR")} (${l.delta >= 0 ? "+" : ""}${l.delta.toLocaleString("pt-BR")})`,
+                      ])
+                  )}
+                />
+                <p className="mt-1 text-[11px] text-neutral-600">
+                  Verde = cresceu, vermelho = caiu; cor mais forte = variação maior. Passe o
+                  mouse para ver os números.
+                </p>
+              </section>
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <ListaVariacao

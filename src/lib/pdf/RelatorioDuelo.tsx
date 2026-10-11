@@ -1,6 +1,7 @@
 import { Text, View } from "@react-pdf/renderer";
 import { ReportShell, SectionTitle } from "./ReportShell";
 import { styles } from "./styles";
+import { MapaParaPdf, tonalidade } from "./MapaParaPdf";
 
 // DUELO em PDF: dois candidatos lado a lado — âmbar (A) × azul (B),
 // placar, disputa por região com barra proporcional e todos os
@@ -16,7 +17,14 @@ type Lado = {
   eleito: boolean;
   total: number;
 };
-type Linha = { municipio: string; regiao: string; a: number; b: number; delta: number };
+type Linha = {
+  municipio: string;
+  regiao: string;
+  codigoIbge?: string | null;
+  a: number;
+  b: number;
+  delta: number;
+};
 
 const fmt = (n: number) => n.toLocaleString("pt-BR");
 
@@ -60,6 +68,30 @@ export function RelatorioDuelo({ a, b, linhas }: { a: Lado; b: Lado; linhas: Lin
           </Text>
         </View>
       </View>
+
+      <MapaParaPdf
+        altura={290}
+        cores={Object.fromEntries(
+          linhas
+            .filter((l) => l.codigoIbge)
+            .map((l) => {
+              const total = l.a + l.b;
+              const forca = total > 0 ? 0.4 + Math.min((Math.abs(l.a - l.b) / total) * 2.5, 0.6) : 0;
+              return [
+                l.codigoIbge!,
+                l.a > l.b
+                  ? tonalidade(AMBAR, forca)
+                  : l.b > l.a
+                    ? tonalidade(AZUL, forca)
+                    : "#e5e7eb",
+              ];
+            })
+        )}
+        legenda={[
+          { cor: AMBAR, rotulo: `${a.nome} (${lideraA} municípios)` },
+          { cor: AZUL, rotulo: `${b.nome} (${lideraB})` },
+        ]}
+      />
 
       <SectionTitle>Disputa por região</SectionTitle>
       {porRegiao.map((r) => {

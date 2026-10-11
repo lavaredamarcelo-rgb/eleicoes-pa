@@ -5,6 +5,7 @@ import {
   vencedoresPorMunicipio,
 } from "@/lib/comparativos";
 import { MapaVotos } from "@/components/MapaVotos";
+import { PdfDownloadLink } from "@/components/PdfDownloadLink";
 
 // MAPA DE VENCEDORES: cada município pintado com a cor de quem foi o
 // mais votado naquele cargo/ano, com o ranking de municípios ganhos.
@@ -87,6 +88,15 @@ export default async function MapaVencedoresPage({
           Ver mapa
         </button>
       </form>
+
+      {ano != null && (
+        <div>
+          <PdfDownloadLink
+            href={`/api/pdf/vencedores?cargo=${encodeURIComponent(cargo)}&ano=${ano}`}
+            label="PDF do mapa de vencedores"
+          />
+        </div>
+      )}
 
       {dados && dados.porMunicipio.length > 0 && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
