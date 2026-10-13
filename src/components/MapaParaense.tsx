@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import mapaData from "@/data/pa-mapa.json";
 
@@ -68,6 +68,26 @@ export function MapaParaense({
   const [hover, setHover] = useState<MunicipioMapa | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ left: number; top: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+
+  // O posicionamento inicial estima o tamanho do card, mas o conteúdo
+  // varia (votos, prefeito, eleitorado…). Depois de renderizar, medimos o
+  // tamanho REAL e puxamos o card de volta para dentro do mapa — era o que
+  // cortava as informações nos municípios da borda (ex.: Oriximiná).
+  useLayoutEffect(() => {
+    if (!hover || !tooltipPos) return;
+    const el = tooltipRef.current;
+    const cont = containerRef.current;
+    if (!el || !cont) return;
+    const margem = 4;
+    const maxLeft = cont.clientWidth - el.offsetWidth - margem;
+    const maxTop = cont.clientHeight - el.offsetHeight - margem;
+    const left = Math.max(margem, Math.min(tooltipPos.left, maxLeft));
+    const top = Math.max(margem, Math.min(tooltipPos.top, maxTop));
+    if (left !== tooltipPos.left || top !== tooltipPos.top) {
+      setTooltipPos({ left, top });
+    }
+  }, [hover, tooltipPos]);
 
   // ---- Zoom e navegação no mapa (viewBox dinâmico) ----
   const base = useMemo(() => {
@@ -376,7 +396,8 @@ export function MapaParaense({
 
         {hover && tooltipPos && (
           <div
-            className={`absolute rounded-lg border border-neutral-700 bg-neutral-900/95 px-3 py-2 text-xs shadow-lg backdrop-blur ${
+            ref={tooltipRef}
+            className={`absolute z-10 max-w-[240px] rounded-lg border border-neutral-700 bg-neutral-900/95 px-3 py-2 text-xs shadow-lg backdrop-blur ${
               temHover ? "pointer-events-none" : ""
             }`}
             style={{ left: tooltipPos.left, top: tooltipPos.top }}
