@@ -195,13 +195,20 @@ export default async function MunicipioDetailPage({
       )}
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-medium text-neutral-400">
-          Locais de votação ({locais.length})
-        </h2>
         {locais.length > 0 ? (
           <details className="group">
-            <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 transition-colors duration-150 hover:border-neutral-700 hover:bg-neutral-800">
-              <span className="text-sm font-medium">Ver votação por local (escola/colégio)</span>
+            {/* O título É o gatilho: clicar em qualquer ponto da faixa abre
+                a lista (antes o h2 acima da caixa era zona morta). */}
+            <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 transition-colors duration-150 hover:border-amber-700 hover:bg-neutral-800">
+              <span className="flex items-center gap-2 text-sm font-medium">
+                <span className="text-neutral-400">Locais de votação ({locais.length})</span>
+                <span className="rounded-full border border-amber-800 px-2 py-0.5 text-[11px] text-amber-300 group-open:hidden">
+                  toque para abrir
+                </span>
+                <span className="hidden rounded-full border border-neutral-700 px-2 py-0.5 text-[11px] text-neutral-400 group-open:inline">
+                  toque para fechar
+                </span>
+              </span>
               <span className="text-xs text-neutral-500">
                 {locais.reduce((s, l) => s + l.votos, 0).toLocaleString("pt-BR")} votos
                 {referencia ? ` para ${referencia.cargo} (${referencia.ano})` : " detalhados"}
@@ -219,12 +226,15 @@ export default async function MunicipioDetailPage({
             </div>
           </details>
         ) : (
-          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-neutral-700 bg-neutral-900/50 px-6 py-8 text-center">
-            <School className="text-neutral-600" size={22} />
-            <p className="text-sm text-neutral-400">
-              Ainda não há votação por local importada para este município.
-            </p>
-          </div>
+          <>
+            <h2 className="text-sm font-medium text-neutral-400">Locais de votação</h2>
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-neutral-700 bg-neutral-900/50 px-6 py-8 text-center">
+              <School className="text-neutral-600" size={22} />
+              <p className="text-sm text-neutral-400">
+                Ainda não há votação por local importada para este município.
+              </p>
+            </div>
+          </>
         )}
       </section>
     </div>
