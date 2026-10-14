@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Upload, ChevronRight, Users, CalendarRange } from "lucide-react";
+import { Upload, ChevronRight, Users, CalendarRange, DatabaseBackup } from "lucide-react";
 import { verifySession } from "@/lib/dal";
 import { logout } from "@/app/actions/auth";
 import { TrocarSenhaForm } from "@/components/TrocarSenhaForm";
@@ -61,6 +61,28 @@ export default async function ConfiguracoesPage() {
           </span>
           <ChevronRight size={18} className="text-neutral-600" />
         </Link>
+      )}
+
+      {session.role === "ADMIN" && (
+        <a
+          href="/api/backup-db"
+          download
+          className="flex items-center justify-between rounded-xl border border-emerald-900 bg-emerald-950/30 px-4 py-3 transition-colors hover:border-emerald-700"
+        >
+          <span className="flex items-center gap-3">
+            <DatabaseBackup size={18} className="text-emerald-400" />
+            <span>
+              <span className="block text-sm font-medium text-emerald-200">
+                Baixar backup do banco (prod.db)
+              </span>
+              <span className="block text-xs text-neutral-500">
+                Retrato completo e comprimido do banco em uso — guarde na pasta backups/ e no
+                iCloud. A geração leva alguns segundos.
+              </span>
+            </span>
+          </span>
+          <ChevronRight size={18} className="text-neutral-600" />
+        </a>
       )}
 
       <TrocarSenhaForm />
