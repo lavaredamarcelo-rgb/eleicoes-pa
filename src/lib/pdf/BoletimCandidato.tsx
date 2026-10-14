@@ -222,6 +222,11 @@ export function BoletimCandidato({
         (() => {
           // COMPLETO (sem corte) e separado por localidade: município →
           // bairro (linha de subtotal) → escolas/colégios do bairro.
+          // Candidatos de estado inteiro (Gov/Senado: >3.000 locais) saem
+          // POR BAIRRO: escola a escola nesse volume derrubava a geração no
+          // servidor de produção (memória/tempo) — e o detalhamento por
+          // escola continua no PDF por município da ficha.
+          const incluiEscolas = locais.length <= 3000;
           const total = locais.reduce((s, l) => s + l.votos, 0);
           const porMun = new Map<string, typeof locais>();
           for (const l of locais) {
@@ -240,8 +245,16 @@ export function BoletimCandidato({
           return (
             <View break>
               <SectionTitle>
-                {`Votos por local de votação — por município e bairro (${locais.length} locais)`}
+                {incluiEscolas
+                  ? `Votos por local de votação — por município e bairro (${locais.length} locais)`
+                  : `Votos por município e bairro (${locais.length} locais agregados)`}
               </SectionTitle>
+              {!incluiEscolas && (
+                <Text style={{ fontSize: 7, color: "#9ca3af", marginBottom: 4 }}>
+                  Candidatura de estado inteiro: o detalhamento é por bairro. O escola a escola
+                  de cada cidade sai no PDF por município, na ficha do candidato.
+                </Text>
+              )}
               {municipios.map((m) => {
                 const porBairro = new Map<string, typeof m.lista>();
                 for (const l of m.lista) {
@@ -271,20 +284,26 @@ export function BoletimCandidato({
                         total > 0 ? ((m.totalMun / total) * 100).toFixed(1) : "0"
                       }% do total)`}
                     </Text>
-                    {bairros.map((b) => (
-                      <View key={b.bairro}>
-                        <CabecalhoBairro
-                          bairro={b.bairro}
-                          votos={b.sub}
-                          pct={
-                            m.totalMun > 0
-                              ? `${((b.sub / m.totalMun) * 100).toFixed(1)}%`
-                              : undefined
-                          }
-                        />
-                        <ListaLocaisDuasColunas itens={b.lista} />
-                      </View>
-                    ))}
+                    {incluiEscolas ? (
+                      bairros.map((b) => (
+                        <View key={b.bairro}>
+                          <CabecalhoBairro
+                            bairro={b.bairro}
+                            votos={b.sub}
+                            pct={
+                              m.totalMun > 0
+                                ? `${((b.sub / m.totalMun) * 100).toFixed(1)}%`
+                                : undefined
+                            }
+                          />
+                          <ListaLocaisDuasColunas itens={b.lista} />
+                        </View>
+                      ))
+                    ) : (
+                      <ListaLocaisDuasColunas
+                        itens={bairros.map((b) => ({ nome: b.bairro, votos: b.sub }))}
+                      />
+                    )}
                   </View>
                 );
               })}
