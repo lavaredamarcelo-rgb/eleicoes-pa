@@ -6,6 +6,7 @@ import { PdfDownloadLink } from "@/components/PdfDownloadLink";
 import { getCandidato, getCandidaturasAnteriores, getFiliacaoAtual, getPartidos, getVotosPorLocal } from "@/lib/data";
 import { turnoDecisivo, votosTurno } from "@/lib/turnos";
 import { verifySession } from "@/lib/dal";
+import { prisma } from "@/lib/prisma";
 
 export default async function CandidatoDetailPage({
   params,
@@ -27,6 +28,16 @@ export default async function CandidatoDetailPage({
     candidato.id,
     ...candidaturasAnteriores.map((c) => c.id),
   ]);
+
+  // Financiamento de campanha e patrimônio (prestação de contas + bens
+  // declarados ao TSE) — carregados quando existem para esta candidatura.
+  const [prestacao, bens] = await Promise.all([
+    prisma.prestacaoContas.findUnique({ where: { candidatoId: candidato.id } }),
+    prisma.candidatoBens.findUnique({ where: { candidatoId: candidato.id } }),
+  ]);
+  const votosTotais2026 = candidato.resultados
+    .filter((r) => r.turno === 1)
+    .reduce((s, r) => s + r.votos, 0);
 
   // Exibimos a votação do turno que decidiu a eleição; quando houve 2º
   // turno, o 1º aparece como informação complementar.
@@ -146,6 +157,53 @@ export default async function CandidatoDetailPage({
             </p>
           </div>
         </CardLink>
+      )}
+
+      {(prestacao || bens) && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-neutral-400">
+            Financiamento de campanha e patrimônio (TSE)
+          </h2>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {prestacao && (
+              <>
+                <CardFin
+                  rotulo="Arrecadou"
+                  valor={dinheiro(prestacao.receitas)}
+                  detalhe={
+                    prestacao.receitas > 0
+                      ? `${Math.round((prestacao.receitasFundoEleitoral / prestacao.receitas) * 100)}% do fundo eleitoral`
+                      : undefined
+                  }
+                />
+                <CardFin rotulo="Gastou (contratado)" valor={dinheiro(prestacao.despesas)} />
+                <CardFin
+                  rotulo="Custo por voto"
+                  valor={
+                    votosTotais2026 > 0
+                      ? `R$ ${(prestacao.despesas / votosTotais2026).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}`
+                      : "—"
+                  }
+                  detalhe={
+                    votosTotais2026 > 0
+                      ? `${votosTotais2026.toLocaleString("pt-BR")} votos`
+                      : "sem votos apurados"
+                  }
+                />
+              </>
+            )}
+            {bens && (
+              <CardFin
+                rotulo="Bens declarados"
+                valor={dinheiro(bens.total)}
+                detalhe={`${bens.quantidade} ${bens.quantidade === 1 ? "bem" : "bens"}`}
+              />
+            )}
+          </div>
+          <p className="text-[11px] text-neutral-600">
+            {prestacao?.fonte ?? "Bens declarados no registro de candidatura (TSE)."}
+          </p>
+        </section>
       )}
 
       <section className="flex flex-col gap-2">
@@ -459,5 +517,21 @@ function VotosPorBairro({
         ))}
       </div>
     </section>
+  );
+}
+
+function dinheiro(v: number) {
+  if (v >= 1e6) return `R$ ${(v / 1e6).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} mi`;
+  if (v >= 1e3) return `R$ ${(v / 1e3).toLocaleString("pt-BR", { maximumFractionDigits: 0 })} mil`;
+  return `R$ ${v.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}`;
+}
+
+function CardFin({ rotulo, valor, detalhe }: { rotulo: string; valor: string; detalhe?: string }) {
+  return (
+    <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-2.5">
+      <p className="text-[10px] uppercase tracking-wide text-neutral-500">{rotulo}</p>
+      <p className="text-base font-bold text-amber-400">{valor}</p>
+      {detalhe && <p className="text-[11px] text-neutral-500">{detalhe}</p>}
+    </div>
   );
 }

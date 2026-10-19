@@ -13,6 +13,12 @@ export default async function MunicipioDetailPage({
 }) {
   const { id } = await params;
   const municipio = await getMunicipioFicha(id);
+  const comparecimento = municipio
+    ? await prisma.comparecimento.findFirst({
+        where: { municipioId: id },
+        orderBy: [{ ano: "desc" }, { turno: "desc" }],
+      })
+    : null;
   if (!municipio) notFound();
   const [eleitos, locaisInfo, direcoesPartidarias] = await Promise.all([
     getEleitosDoMunicipio(id),
@@ -42,6 +48,21 @@ export default async function MunicipioDetailPage({
           {municipio.eleitores.toLocaleString("pt-BR")} eleitores aptos
           {municipio.anoEleitorado ? ` (${municipio.anoEleitorado})` : ""}
         </p>
+        {comparecimento && (
+          <p className="mt-1 text-sm text-neutral-400">
+            Comparecimento {comparecimento.ano}
+            {comparecimento.turno > 1 ? ` (${comparecimento.turno}º turno)` : ""}:{" "}
+            <span className="font-semibold text-neutral-200">
+              {comparecimento.compareceram.toLocaleString("pt-BR")}
+            </span>{" "}
+            de {comparecimento.aptos.toLocaleString("pt-BR")} (
+            {((comparecimento.compareceram / comparecimento.aptos) * 100).toFixed(1)}%) ·{" "}
+            <span className="font-semibold text-red-300">
+              abstenção{" "}
+              {(100 - (comparecimento.compareceram / comparecimento.aptos) * 100).toFixed(1)}%
+            </span>
+          </p>
+        )}
         {municipio.populacao != null && (
           <div className="mt-3 grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-3 text-center">

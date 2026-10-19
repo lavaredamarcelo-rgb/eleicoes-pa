@@ -38,26 +38,26 @@ model Relatorio {
 }
 
 model User {
-  id                String             @id @default(cuid())
-  nome              String
-  email             String             @unique
-  passwordHash      String
-  role              Role               @default(COORDENADOR)
-  regiaoId          String?
-  regiao            Regiao?            @relation(fields: [regiaoId], references: [id])
-  candidatoId       String?
-  candidato         Candidato?         @relation(fields: [candidatoId], references: [id])
-  ativo             Boolean            @default(true)
-  expiresAt         DateTime?
-  criadoPorId       String?
-  criadoPor         User?              @relation("UsuariosCriados", fields: [criadoPorId], references: [id])
-  criados           User[]             @relation("UsuariosCriados")
-  favoritosApuracao ApuracaoFavorito[]
+  id                 String             @id @default(cuid())
+  nome               String
+  email              String             @unique
+  passwordHash       String
+  role               Role               @default(COORDENADOR)
+  regiaoId           String?
+  regiao             Regiao?            @relation(fields: [regiaoId], references: [id])
+  candidatoId        String?
+  candidato          Candidato?         @relation(fields: [candidatoId], references: [id])
+  ativo              Boolean            @default(true)
+  expiresAt          DateTime?
+  criadoPorId        String?
+  criadoPor          User?              @relation("UsuariosCriados", fields: [criadoPorId], references: [id])
+  criados            User[]             @relation("UsuariosCriados")
+  favoritosApuracao  ApuracaoFavorito[]
   favoritosPoliticos PoliticoFavorito[]
-  relatorios        Relatorio[]
-  cenariosMeta      CenarioMeta[]
-  cenariosEleicao   CenarioEleicao[]
-  createdAt         DateTime           @default(now())
+  relatorios         Relatorio[]
+  cenariosMeta       CenarioMeta[]
+  cenariosEleicao    CenarioEleicao[]
+  createdAt          DateTime           @default(now())
 }
 
 // Disputas que o usuário acompanha na aba Apuração: cada favorito vira um
@@ -109,8 +109,8 @@ model Cargo {
 }
 
 model Partido {
-  id                   String         @id @default(cuid())
-  sigla                String         @unique
+  id                   String                    @id @default(cuid())
+  sigla                String                    @unique
   nome                 String
   numero               Int
   // Dados institucionais pesquisados (não vêm do TSE) — usados na aba
@@ -132,8 +132,8 @@ model Partido {
   senadoresNacional    Int?
   deputadosNacional    Int?
   candidatos           Candidato[]
-  trocasComoOrigem     TrocaPartido[] @relation("TrocaPartidoOrigem")
-  trocasComoDestino    TrocaPartido[] @relation("TrocaPartidoDestino")
+  trocasComoOrigem     TrocaPartido[]            @relation("TrocaPartidoOrigem")
+  trocasComoDestino    TrocaPartido[]            @relation("TrocaPartidoDestino")
   votosLegenda         VotoLegenda[]
   direcoesMunicipais   DirecaoMunicipalPartido[]
   convencao            Convencao?
@@ -158,32 +158,55 @@ model PartidoFundo {
 }
 
 model Candidato {
-  id            String         @id @default(cuid())
-  nome          String
+  id                 String             @id @default(cuid())
+  nome               String
   // Identidade civil do TSE (NM_CANDIDATO/NR_CPF_CANDIDATO): o nome de
   // urna se repete entre pessoas diferentes, então o vínculo de um mesmo
   // político entre eleições é feito pelo CPF (ou nome completo).
-  nomeCompleto  String?
-  cpf           String?
-  numero        Int
-  cargoId       String
-  cargo         Cargo          @relation(fields: [cargoId], references: [id])
-  partidoId     String
-  partido       Partido        @relation(fields: [partidoId], references: [id])
+  nomeCompleto       String?
+  cpf                String?
+  numero             Int
+  cargoId            String
+  cargo              Cargo              @relation(fields: [cargoId], references: [id])
+  partidoId          String
+  partido            Partido            @relation(fields: [partidoId], references: [id])
   // Vice (Prefeito/Governador) e suplentes de Senador: concorrem na mesma
   // chapa e são eleitos ou não junto com o titular, sem votação própria —
   // por isso ficam como campos simples aqui, não como um Candidato separado.
-  viceNome      String?
-  viceNumero    Int?
+  viceNome           String?
+  viceNumero         Int?
   // Situação oficial do TSE (DS_SIT_TOT_TURNO indica "eleito"): quem de
   // fato assumiu, incluindo eleitos por média — mais confiável que
   // recalcular o quociente a partir só dos votos nominais.
-  eleito        Boolean        @default(false)
-  resultados    Resultado[]
-  votosLocais   VotoLocal[]
-  users         User[]
-  trocasPartido TrocaPartido[]
+  eleito             Boolean            @default(false)
+  resultados         Resultado[]
+  votosLocais        VotoLocal[]
+  users              User[]
+  trocasPartido      TrocaPartido[]
   favoritosPoliticos PoliticoFavorito[]
+  prestacao          PrestacaoContas?
+  bens               CandidatoBens?
+}
+
+// Prestação de contas de campanha (TSE): receitas (com o recorte do
+// fundo eleitoral), despesas contratadas — base do "custo por voto".
+model PrestacaoContas {
+  id                     String    @id @default(cuid())
+  candidatoId            String    @unique
+  candidato              Candidato @relation(fields: [candidatoId], references: [id])
+  receitas               Float     @default(0)
+  receitasFundoEleitoral Float     @default(0)
+  despesas               Float     @default(0)
+  fonte                  String?
+}
+
+// Bens declarados ao TSE no registro da candidatura.
+model CandidatoBens {
+  id          String    @id @default(cuid())
+  candidatoId String    @unique
+  candidato   Candidato @relation(fields: [candidatoId], references: [id])
+  total       Float     @default(0)
+  quantidade  Int       @default(0)
 }
 
 // Registro histórico real de mudança de partido de um candidato (data
@@ -211,26 +234,27 @@ model Regiao {
 }
 
 model Municipio {
-  id                 String             @id @default(cuid())
-  nome               String
-  codigoIbge         String?            @unique
-  codigoTse          String?            @unique
+  id                  String                    @id @default(cuid())
+  nome                String
+  codigoIbge          String?                   @unique
+  codigoTse           String?                   @unique
   // População residente do Censo 2022 (IBGE, agregado 4709/variável 93).
-  populacao          Int?
+  populacao           Int?
   // Ficha do IBGE: área territorial do Censo 2022 (agregado 4714/6318),
   // gentílico, ano de criação do município e resumo histórico (biblioteca
   // do IBGE Cidades) — preenchidos por scripts/importar-historia.ts.
-  areaKm2            Float?
-  gentilico          String?
-  anoCriacao         Int?
-  historia           String?
-  regiaoId           String
-  regiao             Regiao             @relation(fields: [regiaoId], references: [id])
-  resultados         Resultado[]
-  cargos             Cargo[]
-  colegiosEleitorais ColegioEleitoral[]
-  eleitorado         Eleitorado[]
-  votosLegenda       VotoLegenda[]
+  areaKm2             Float?
+  gentilico           String?
+  anoCriacao          Int?
+  historia            String?
+  regiaoId            String
+  regiao              Regiao                    @relation(fields: [regiaoId], references: [id])
+  resultados          Resultado[]
+  cargos              Cargo[]
+  colegiosEleitorais  ColegioEleitoral[]
+  eleitorado          Eleitorado[]
+  votosLegenda        VotoLegenda[]
+  comparecimentos     Comparecimento[]
   direcoesPartidarias DirecaoMunicipalPartido[]
 
   @@unique([nome, regiaoId])
@@ -371,14 +395,14 @@ model Convencao {
 
 // Político favorito do usuário: para acompanhar evolução de candidatos
 model PoliticoFavorito {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
   candidatoId String
   candidato   Candidato @relation(fields: [candidatoId], references: [id])
   notas       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@unique([userId, candidatoId])
 }
@@ -387,18 +411,18 @@ model PoliticoFavorito {
 // imprensa ou incluído à mão; após a convenção vira APROVADO (ou
 // NAO_APROVADO/desistência), e os aprovados alimentam as simulações.
 model PreCandidato {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   partidoId       String
-  partido         Partido  @relation(fields: [partidoId], references: [id])
+  partido         Partido   @relation(fields: [partidoId], references: [id])
   nome            String
   cargo           String
-  situacao        String   @default("PRE_CANDIDATO")
-  origem          String   @default("manual")
+  situacao        String    @default("PRE_CANDIDATO")
+  origem          String    @default("manual")
   observacoes     String?
   registroTRE     Boolean?
   dataRegistroTRE DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@unique([partidoId, nome, cargo])
 }
@@ -451,4 +475,17 @@ model CenarioEleicao {
   votos     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Comparecimento e abstenção por município (totalização oficial do TSE).
+model Comparecimento {
+  id           String    @id @default(cuid())
+  municipioId  String
+  municipio    Municipio @relation(fields: [municipioId], references: [id])
+  ano          Int
+  turno        Int       @default(1)
+  aptos        Int
+  compareceram Int
+
+  @@unique([municipioId, ano, turno])
 }
