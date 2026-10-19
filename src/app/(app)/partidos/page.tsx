@@ -1,9 +1,20 @@
 import { CardLink } from "@/components/CardLink";
 import { GraficoBarras } from "@/components/GraficoBarras";
 import { getPartidosComEstatisticas } from "@/lib/data";
+import { prisma } from "@/lib/prisma";
 
 export default async function PartidosPage() {
   const partidos = await getPartidosComEstatisticas();
+  const fundos = await prisma.partidoFundo.findMany({
+    where: { tipo: "FEFC" },
+    include: { partido: { select: { sigla: true } } },
+    orderBy: { valor: "desc" },
+  });
+  const anoFundo = fundos.length
+    ? Math.max(...fundos.map((f) => f.ano))
+    : null;
+  const fefc = fundos.filter((f) => f.ano === anoFundo);
+  const totalFefc = fefc.reduce((s, f) => s + f.valor, 0);
   const ultimoAno = partidos[0]?.ultimoAno;
   const top10 = partidos.filter((p) => p.votosUltimaEleicao > 0).slice(0, 10);
 
@@ -21,6 +32,43 @@ export default async function PartidosPage() {
         subtitulo="Votos nominais válidos no Pará na eleição mais recente"
         pontos={top10.map((p) => ({ rotulo: p.sigla, valor: p.votosUltimaEleicao }))}
       />
+
+      {fefc.length > 0 && (
+        <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-4">
+          <h2 className="text-sm font-semibold text-neutral-200">
+            Fundo eleitoral (FEFC) {anoFundo} — distribuição por partido
+          </h2>
+          <p className="mb-3 text-xs text-neutral-500">
+            Total distribuído: R${" "}
+            {(totalFefc / 1e9).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} bilhões ·
+            divisão oficial do TSE (critérios da Lei 13.487/2017)
+          </p>
+          <div className="flex flex-col gap-1">
+            {fefc.map((f) => (
+              <div key={f.id} className="flex flex-col gap-0.5">
+                <div className="flex flex-wrap items-center justify-between gap-x-3 text-xs">
+                  <span className="font-medium text-neutral-200">{f.partido.sigla}</span>
+                  <span className="tabular-nums text-neutral-400">
+                    R$ {(f.valor / 1e6).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mi
+                    <span className="ml-2 text-neutral-600">
+                      {totalFefc > 0 ? `${((f.valor / totalFefc) * 100).toFixed(1)}%` : ""}
+                    </span>
+                  </span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-800">
+                  <div
+                    className="h-1.5 rounded-full bg-emerald-500/80"
+                    style={{ width: `${totalFefc > 0 ? (f.valor / (fefc[0]?.valor || 1)) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          {fefc[0]?.fonte && (
+            <p className="mt-2 text-[11px] text-neutral-600">Fonte: {fefc[0].fonte}</p>
+          )}
+        </section>
+      )}
 
       <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
         {partidos.map((p) => (

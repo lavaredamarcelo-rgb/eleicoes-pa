@@ -138,6 +138,23 @@ model Partido {
   direcoesMunicipais   DirecaoMunicipalPartido[]
   convencao            Convencao?
   preCandidatos        PreCandidato[]
+  fundos               PartidoFundo[]
+}
+
+// Recursos públicos dos partidos: FEFC (fundo eleitoral do ano de
+// eleição) e Fundo Partidário (duodécimos anuais), por partido e ano.
+model PartidoFundo {
+  id        String  @id @default(cuid())
+  partidoId String
+  partido   Partido @relation(fields: [partidoId], references: [id])
+  ano       Int
+  // "FEFC" (fundo eleitoral) ou "FUNDO_PARTIDARIO" (anual)
+  tipo      String
+  // Valor em reais
+  valor     Float
+  fonte     String?
+
+  @@unique([partidoId, ano, tipo])
 }
 
 model Candidato {
