@@ -91,6 +91,12 @@ export default async function ComparativosPage({
           >
             🇧🇷 Mapa do Brasil · Presidente
           </Link>
+          <Link
+            href="/comparativos/turnos"
+            className="rounded-lg border border-neutral-800 px-3 py-2 text-sm text-neutral-200 transition hover:bg-neutral-900"
+          >
+            ⚖️ 1º × 2º turno
+          </Link>
         </div>
       </div>
 
