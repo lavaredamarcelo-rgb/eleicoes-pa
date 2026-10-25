@@ -89,6 +89,7 @@ export function ApuracaoAoVivo({
     atualizadores.current.set(id, fn);
   }, []);
   const [salvandoFavorito, setSalvandoFavorito] = useState(false);
+  const [atualizandoTodos, setAtualizandoTodos] = useState(false);
   const [eleicoes2026, setEleicoes2026] = useState<Eleicao[] | null>(null);
   const [eleicaoCd, setEleicaoCd] = useState("");
   const [cargoCd, setCargoCd] = useState("0003");
@@ -402,10 +403,18 @@ export function ApuracaoAoVivo({
               Acompanhando ({favoritos.length})
             </h2>
             <button
-              onClick={() => atualizadores.current.forEach((fn) => fn())}
-              className="rounded-full border border-neutral-700 px-3 py-1 text-xs text-neutral-300 transition-colors hover:border-neutral-500"
+              onClick={() => {
+                atualizadores.current.forEach((fn) => fn());
+                setAtualizandoTodos(true);
+                setTimeout(() => setAtualizandoTodos(false), 1500);
+              }}
+              className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                atualizandoTodos
+                  ? "border-amber-500 text-amber-300"
+                  : "border-neutral-700 text-neutral-300 hover:border-neutral-500"
+              }`}
             >
-              Atualizar todos
+              {atualizandoTodos ? "Atualizando…" : "Atualizar todos"}
             </button>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
