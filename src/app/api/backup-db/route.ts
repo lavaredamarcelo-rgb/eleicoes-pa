@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { createReadStream } from "node:fs";
-import { unlink, stat } from "node:fs/promises";
-import { createGzip } from "node:zlib";
-import { Readable } from "node:stream";
+import { readFile, unlink } from "node:fs/promises";
+import { gzipSync } from "node:zlib";
 import os from "node:os";
 import path from "node:path";
 import { verifySession } from "@/lib/dal";
@@ -26,24 +24,19 @@ export async function GET() {
 
   // VACUUM INTO cria uma cópia íntegra e compacta mesmo com o banco em uso.
   await prisma.$executeRawUnsafe(`VACUUM INTO '${temp.replace(/'/g, "''")}'`);
-  const info = await stat(temp);
 
-  const origem = createReadStream(temp);
-  const gzip = createGzip({ level: 6 });
-  origem.pipe(gzip);
-  gzip.on("close", () => {
-    unlink(temp).catch(() => {});
-  });
-  origem.on("error", () => {
-    gzip.destroy();
-    unlink(temp).catch(() => {});
-  });
+  // Resposta COMPLETA (sem streaming) com Content-Length: o Safari do
+  // iPhone salvava um arquivo vazio com a resposta em stream.
+  const bruto = await readFile(temp);
+  await unlink(temp).catch(() => {});
+  const comprimido = gzipSync(bruto, { level: 6 });
 
-  return new NextResponse(Readable.toWeb(gzip) as ReadableStream, {
+  return new NextResponse(new Uint8Array(comprimido), {
     headers: {
       "Content-Type": "application/gzip",
       "Content-Disposition": `attachment; filename="eleicoes-pa-prod-${carimbo}.db.gz"`,
-      "X-Tamanho-Original": String(info.size),
+      "Content-Length": String(comprimido.length),
+      "X-Tamanho-Original": String(bruto.length),
     },
   });
 }
