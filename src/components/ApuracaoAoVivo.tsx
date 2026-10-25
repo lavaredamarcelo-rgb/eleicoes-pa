@@ -115,9 +115,16 @@ export function ApuracaoAoVivo({
       .then((d) => {
         const gerais = filtrarGerais2026(d.eleicoes ?? []);
         setEleicoes2026(gerais);
-        // Começa direto na Estadual (cargo inicial é Governador).
-        const inicial = gerais.find((e) => /estadual/i.test(e.nome)) ?? gerais[0];
-        if (inicial) setEleicaoCd(inicial.cd);
+        // Com 2º TURNO publicado, o dia é dele: abre direto em
+        // Presidente · Federal 2º turno. Sem 2º turno, Estadual (1º).
+        const federal2T = gerais.find((e) => /federal/i.test(e.nome) && /2º/i.test(e.nome));
+        if (federal2T) {
+          setEleicaoCd(federal2T.cd);
+          setCargoCd("0001");
+        } else {
+          const inicial = gerais.find((e) => /estadual/i.test(e.nome)) ?? gerais[0];
+          if (inicial) setEleicaoCd(inicial.cd);
+        }
       })
       .catch(() => setEleicoes2026([]));
   }, []);
@@ -132,11 +139,16 @@ export function ApuracaoAoVivo({
   // Ao trocar o cargo, escolhe sozinho a eleição certa.
   useEffect(() => {
     if (!eleicoes2026 || eleicoes2026.length < 2) return;
-    const alvo =
-      cargoCd === "0001"
-        ? eleicoes2026.find((e) => /federal/i.test(e.nome))
-        : eleicoes2026.find((e) => /estadual/i.test(e.nome));
-    if (alvo && alvo.cd !== eleicaoCd) setEleicaoCd(alvo.cd);
+    const tipoAlvo = cargoCd === "0001" ? /federal/i : /estadual/i;
+    const atual = eleicoes2026.find((e) => e.cd === eleicaoCd);
+    // Já está numa eleição do tipo certo (1º OU 2º turno)? Respeita a
+    // escolha manual do usuário e não troca.
+    if (!atual || !tipoAlvo.test(atual.nome)) {
+      // Entre as do tipo alvo, prefere o 2º turno quando existir.
+      const candidatas = eleicoes2026.filter((e) => tipoAlvo.test(e.nome));
+      const alvo = candidatas.find((e) => /2º/i.test(e.nome)) ?? candidatas[0];
+      if (alvo && alvo.cd !== eleicaoCd) setEleicaoCd(alvo.cd);
+    }
     if (cargoCd !== "0001" && abrangencia.startsWith("uf-")) setAbrangencia("estado");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cargoCd, eleicoes2026]);
