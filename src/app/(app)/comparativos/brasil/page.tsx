@@ -1,5 +1,6 @@
 import Link from "next/link";
 import brMapa from "@/data/br-mapa.json";
+import { AutoRefresh } from "@/components/AutoRefresh";
 
 // MAPA DO BRASIL · PRESIDENTE: cada UF pintada com a cor de quem venceu
 // (Lula vermelho × Flávio azul), direto da totalização oficial do TSE.
@@ -95,6 +96,7 @@ export default async function MapaBrasilPage({
 
   return (
     <div className="flex flex-col gap-5">
+      <AutoRefresh segundos={120} />
       <div>
         <p className="text-xs text-neutral-500">
           <Link href="/comparativos" className="hover:text-amber-400">

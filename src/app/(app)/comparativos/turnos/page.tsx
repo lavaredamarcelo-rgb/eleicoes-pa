@@ -1,5 +1,6 @@
 import Link from "next/link";
 import brMapa from "@/data/br-mapa.json";
+import { AutoRefresh } from "@/components/AutoRefresh";
 
 // PANORAMA 1º × 2º TURNO (Presidente): placar nacional dos dois turnos
 // lado a lado, UF a UF (quem mudou de lado, onde cada um cresceu) e o
@@ -96,6 +97,7 @@ export default async function TurnosPage() {
 
   return (
     <div className="flex flex-col gap-5">
+      <AutoRefresh segundos={120} />
       <div>
         <p className="text-xs text-neutral-500">
           <Link href="/comparativos" className="hover:text-amber-400">

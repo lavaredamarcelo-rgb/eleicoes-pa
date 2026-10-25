@@ -121,6 +121,9 @@ export function ApuracaoAoVivo({
         if (federal2T) {
           setEleicaoCd(federal2T.cd);
           setCargoCd("0001");
+          // Na noite do 2º turno a corrida é nacional: abre no Brasil
+          // (o Pará fica a um clique no chip de abrangência).
+          setAbrangencia("uf-br");
         } else {
           const inicial = gerais.find((e) => /estadual/i.test(e.nome)) ?? gerais[0];
           if (inicial) setEleicaoCd(inicial.cd);
