@@ -1,6 +1,8 @@
 import Link from "next/link";
 import brMapa from "@/data/br-mapa.json";
 import { AutoRefresh } from "@/components/AutoRefresh";
+import { MapaVotos } from "@/components/MapaVotos";
+import { prisma } from "@/lib/prisma";
 
 // PANORAMA 1º × 2º TURNO (Presidente): placar nacional dos dois turnos
 // lado a lado, UF a UF (quem mudou de lado, onde cada um cresceu) e o
@@ -192,6 +194,8 @@ export default async function TurnosPage() {
         </p>
       </section>
 
+      <SecaoParaPorMunicipio />
+
       <p className="text-[11px] text-neutral-600">
         Após o 2º turno, o detalhamento do Pará por município e bairro entra no sistema (como no
         1º turno) — aí o comparativo municipal completo fica disponível aqui.
@@ -246,5 +250,112 @@ function LadoPA({ rotulo, d }: { rotulo: string; d: UFDados | null | undefined }
         {d.aptos > 0 ? ` · comparecimento ${((d.compareceram / d.aptos) * 100).toFixed(1)}%` : ""}
       </p>
     </div>
+  );
+}
+
+// Pará por município (banco local): quem venceu o 2º turno em cada
+// cidade, as viradas entre turnos e os maiores avanços de cada lado.
+async function SecaoParaPorMunicipio() {
+  const resultados = await prisma.resultado.findMany({
+    where: {
+      id: { startsWith: "r26p-" },
+      candidato: { numero: { in: [13, 22] } },
+    },
+    include: {
+      candidato: { select: { numero: true } },
+      municipio: { select: { nome: true, codigoIbge: true } },
+    },
+  });
+  if (resultados.length === 0) return null;
+
+  const porMun = new Map<
+    string,
+    { nome: string; codigoIbge: string | null; l1: number; f1: number; l2: number; f2: number }
+  >();
+  for (const r of resultados) {
+    const m = porMun.get(r.municipio.nome) ?? {
+      nome: r.municipio.nome,
+      codigoIbge: r.municipio.codigoIbge,
+      l1: 0, f1: 0, l2: 0, f2: 0,
+    };
+    const chave = (r.candidato.numero === 13 ? "l" : "f") + r.turno;
+    (m as unknown as Record<string, number>)[chave] += r.votos;
+    porMun.set(r.municipio.nome, m);
+  }
+  const linhas = [...porMun.values()].filter((m) => m.l2 + m.f2 > 0);
+  if (linhas.length === 0) return null;
+
+  const lulaGanhou = linhas.filter((m) => m.l2 > m.f2).length;
+  const viradas = linhas
+    .filter((m) => (m.l1 > m.f1) !== (m.l2 > m.f2))
+    .map((m) => ({ ...m, para: m.l2 > m.f2 ? "Lula" : "Flávio" }));
+  const deltas = linhas
+    .map((m) => ({
+      ...m,
+      d: (m.l2 / Math.max(m.l2 + m.f2, 1) - m.l1 / Math.max(m.l1 + m.f1, 1)) * 100,
+    }))
+    .sort((a, b) => b.d - a.d);
+
+  return (
+    <section className="rounded-xl border border-amber-900/50 bg-amber-950/10 p-4">
+      <h2 className="mb-1 text-sm font-semibold text-amber-300">
+        Pará por município — 2º turno
+      </h2>
+      <p className="mb-2 text-xs text-neutral-400">
+        <span className="font-semibold text-red-400">Lula venceu em {lulaGanhou}</span> ·{" "}
+        <span className="font-semibold text-blue-400">
+          Flávio em {linhas.length - lulaGanhou}
+        </span>
+        {viradas.length > 0 &&
+          ` · ${viradas.length} município${viradas.length === 1 ? "" : "s"} viraram entre os turnos`}
+      </p>
+      <MapaVotos
+        cores={Object.fromEntries(
+          linhas
+            .filter((m) => m.codigoIbge)
+            .map((m) => {
+              const tot = m.l2 + m.f2;
+              const marg = tot > 0 ? Math.abs(m.l2 - m.f2) / tot : 0;
+              const op = (0.45 + Math.min(marg * 2.5, 0.55)).toFixed(2);
+              return [
+                m.codigoIbge!,
+                m.l2 > m.f2 ? `rgba(239, 68, 68, ${op})` : `rgba(59, 130, 246, ${op})`,
+              ];
+            })
+        )}
+        titulos={Object.fromEntries(
+          linhas
+            .filter((m) => m.codigoIbge)
+            .map((m) => [
+              m.codigoIbge!,
+              `${m.nome} 2º turno: Lula ${m.l2.toLocaleString("pt-BR")} × ${m.f2.toLocaleString("pt-BR")} Flávio (1º: ${m.l1.toLocaleString("pt-BR")} × ${m.f1.toLocaleString("pt-BR")})`,
+            ])
+        )}
+      />
+      {viradas.length > 0 && (
+        <p className="mt-2 text-xs text-neutral-300">
+          <span className="font-semibold text-amber-300">Viraram:</span>{" "}
+          {viradas.map((v) => `${v.nome} (→ ${v.para})`).join(", ")}
+        </p>
+      )}
+      <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 text-xs">
+        <div>
+          <p className="font-semibold text-red-400">Lula mais cresceu (1º→2º, pp):</p>
+          {deltas.slice(0, 5).map((m) => (
+            <p key={m.nome} className="text-neutral-400">
+              {m.nome}: +{m.d.toFixed(1)}pp
+            </p>
+          ))}
+        </div>
+        <div>
+          <p className="font-semibold text-blue-400">Flávio mais cresceu (1º→2º, pp):</p>
+          {deltas.slice(-5).reverse().map((m) => (
+            <p key={m.nome} className="text-neutral-400">
+              {m.nome}: +{(-m.d).toFixed(1)}pp
+            </p>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }

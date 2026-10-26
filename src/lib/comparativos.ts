@@ -22,6 +22,7 @@ function chavePessoa(c: { cpf: string | null; nomeCompleto: string | null; nome:
 }
 
 export const CARGOS_COMPARAVEIS = [
+  "Presidente",
   "Governador",
   "Senador",
   "Deputado Federal",
