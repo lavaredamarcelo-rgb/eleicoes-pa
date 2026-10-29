@@ -5,6 +5,7 @@ import {
   compararPorMunicipio,
   dueloPorBairro,
   municipiosComLocais,
+  turnosComLocais,
 } from "@/lib/comparativos";
 import { MapaVotos } from "@/components/MapaVotos";
 
@@ -14,7 +15,7 @@ import { MapaVotos } from "@/components/MapaVotos";
 export default async function DueloPage({
   searchParams,
 }: {
-  searchParams: Promise<{ a?: string; b?: string; mun?: string }>;
+  searchParams: Promise<{ a?: string; b?: string; mun?: string; turno?: string }>;
 }) {
   const sp = await searchParams;
   if (!sp.a || !sp.b || sp.a === sp.b) notFound();
@@ -22,9 +23,11 @@ export default async function DueloPage({
   const comp = await compararPorMunicipio(sp.a, sp.b);
   if (!comp) notFound();
 
-  const munsComLocais = await municipiosComLocais(sp.a, sp.b);
+  const turnosLocais = await turnosComLocais(sp.a, sp.b);
+  const turnoSel = sp.turno === "2" && turnosLocais.includes(2) ? 2 : 1;
+  const munsComLocais = await municipiosComLocais(sp.a, sp.b, turnoSel);
   const munSel = sp.mun && munsComLocais.includes(sp.mun) ? sp.mun : null;
-  const bairros = munSel ? await dueloPorBairro(sp.a, sp.b, munSel) : [];
+  const bairros = munSel ? await dueloPorBairro(sp.a, sp.b, munSel, turnoSel) : [];
 
   const regioes = new Map<string, { a: number; b: number }>();
   for (const l of comp.linhas) {
@@ -174,6 +177,16 @@ export default async function DueloPage({
                 <option key={m}>{m}</option>
               ))}
             </select>
+            {turnosLocais.includes(2) && (
+              <select
+                name="turno"
+                defaultValue={String(turnoSel)}
+                className="rounded-lg border border-neutral-700 bg-neutral-950 px-2 py-2 text-sm text-neutral-100"
+              >
+                <option value="1">1º turno</option>
+                <option value="2">2º turno</option>
+              </select>
+            )}
             <button className="rounded-lg bg-amber-400 px-4 py-2 text-sm font-semibold text-neutral-950">
               Ver bairros
             </button>
@@ -183,7 +196,13 @@ export default async function DueloPage({
             <div className="mt-3 flex flex-col gap-1">
               {bairros.length === 0 && (
                 <p className="text-xs text-neutral-500">
-                  Sem votos por local registrados em {munSel} para os dois.
+                  Sem votos por local registrados em {munSel} para os dois
+                  {turnoSel === 2 ? " no 2º turno" : ""}.
+                </p>
+              )}
+              {bairros.length > 0 && turnoSel === 2 && (
+                <p className="mb-1 text-xs font-medium text-neutral-400">
+                  Mostrando o 2º turno em {munSel}.
                 </p>
               )}
               {bairros.map((l) => {
@@ -246,7 +265,8 @@ export default async function DueloPage({
       <p className="text-[11px] text-neutral-600">
         Dica: os dois candidatos podem ser de eleições diferentes (ex.: o desempenho de um em
         2022 contra o de outro em 2026) — os votos comparados são sempre os do 1º turno de cada
-        disputa.
+        disputa. No recorte por bairro, disputas presidenciais permitem escolher também o 2º
+        turno.
       </p>
     </div>
   );

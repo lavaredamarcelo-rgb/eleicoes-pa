@@ -172,10 +172,10 @@ export async function vencedoresPorMunicipio(cargoNome: string, ano: number) {
 // Duelo DENTRO de um município: votos dos dois candidatos somados por
 // BAIRRO (via locais de votação). Também lista os municípios onde pelo
 // menos um dos dois tem votos por local, para o seletor.
-export async function dueloPorBairro(idA: string, idB: string, municipio: string) {
+export async function dueloPorBairro(idA: string, idB: string, municipio: string, turno = 1) {
   const carregar = (id: string) =>
     prisma.votoLocal.findMany({
-      where: { candidatoId: id, turno: 1, colegioEleitoral: { municipio: { nome: municipio } } },
+      where: { candidatoId: id, turno, colegioEleitoral: { municipio: { nome: municipio } } },
       include: { colegioEleitoral: { select: { bairro: true } } },
     });
   const [la, lb] = await Promise.all([carregar(idA), carregar(idB)]);
@@ -195,9 +195,25 @@ export async function dueloPorBairro(idA: string, idB: string, municipio: string
     .sort((x, y) => y.a + y.b - (x.a + x.b));
 }
 
-export async function municipiosComLocais(idA: string, idB: string) {
+// Turnos em que os DOIS candidatos têm votos por local (para o seletor
+// de turno do recorte por bairro — só presidenciais têm 2º turno).
+export async function turnosComLocais(idA: string, idB: string) {
+  const porCandidato = await Promise.all(
+    [idA, idB].map((id) =>
+      prisma.votoLocal.findMany({
+        where: { candidatoId: id },
+        select: { turno: true },
+        distinct: ["turno"],
+      })
+    )
+  );
+  const [ta, tb] = porCandidato.map((rows) => new Set(rows.map((r) => r.turno)));
+  return [...ta].filter((t) => tb.has(t)).sort();
+}
+
+export async function municipiosComLocais(idA: string, idB: string, turno = 1) {
   const rows = await prisma.votoLocal.findMany({
-    where: { candidatoId: { in: [idA, idB] }, turno: 1 },
+    where: { candidatoId: { in: [idA, idB] }, turno },
     select: { colegioEleitoral: { select: { municipio: { select: { nome: true } } } } },
     distinct: ["colegioEleitoralId"],
   });
