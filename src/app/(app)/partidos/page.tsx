@@ -6,15 +6,24 @@ import { prisma } from "@/lib/prisma";
 export default async function PartidosPage() {
   const partidos = await getPartidosComEstatisticas();
   const fundos = await prisma.partidoFundo.findMany({
-    where: { tipo: "FEFC" },
     include: { partido: { select: { sigla: true } } },
     orderBy: { valor: "desc" },
   });
-  const anoFundo = fundos.length
-    ? Math.max(...fundos.map((f) => f.ano))
+  const soFefc = fundos.filter((f) => f.tipo === "FEFC");
+  const anoFundo = soFefc.length
+    ? Math.max(...soFefc.map((f) => f.ano))
     : null;
-  const fefc = fundos.filter((f) => f.ano === anoFundo);
+  const fefc = soFefc.filter((f) => f.ano === anoFundo);
   const totalFefc = fefc.reduce((s, f) => s + f.valor, 0);
+  // Fundo Partidário anual (duodécimos): ano mais recente, com o
+  // anterior ao lado para mostrar a variação.
+  const soAnual = fundos.filter((f) => f.tipo === "FUNDO_PARTIDARIO");
+  const anoAnual = soAnual.length ? Math.max(...soAnual.map((f) => f.ano)) : null;
+  const anual = soAnual.filter((f) => f.ano === anoAnual);
+  const anualAnterior = new Map(
+    soAnual.filter((f) => f.ano === (anoAnual ?? 0) - 1).map((f) => [f.partido.sigla, f.valor])
+  );
+  const totalAnual = anual.reduce((s, f) => s + f.valor, 0);
   const ultimoAno = partidos[0]?.ultimoAno;
   const top10 = partidos.filter((p) => p.votosUltimaEleicao > 0).slice(0, 10);
 
@@ -66,6 +75,53 @@ export default async function PartidosPage() {
           </div>
           {fefc[0]?.fonte && (
             <p className="mt-2 text-[11px] text-neutral-600">Fonte: {fefc[0].fonte}</p>
+          )}
+        </section>
+      )}
+
+      {anual.length > 0 && (
+        <section className="rounded-2xl border border-neutral-800 bg-neutral-900 p-4">
+          <h2 className="text-sm font-semibold text-neutral-200">
+            Fundo Partidário {anoAnual} — duodécimos distribuídos no ano
+          </h2>
+          <p className="mb-3 text-xs text-neutral-500">
+            Total distribuído: R${" "}
+            {(totalAnual / 1e9).toLocaleString("pt-BR", { maximumFractionDigits: 2 })} bilhões ·
+            verba mensal de manutenção dos partidos (Lei 9.096/1995), fora de campanha
+          </p>
+          <div className="flex flex-col gap-1">
+            {anual.map((f) => {
+              const antes = anualAnterior.get(f.partido.sigla);
+              const delta = antes ? ((f.valor - antes) / antes) * 100 : null;
+              return (
+                <div key={f.id} className="flex flex-col gap-0.5">
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 text-xs">
+                    <span className="font-medium text-neutral-200">{f.partido.sigla}</span>
+                    <span className="tabular-nums text-neutral-400">
+                      R$ {(f.valor / 1e6).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mi
+                      {delta !== null && (
+                        <span className={`ml-2 ${delta >= 0 ? "text-emerald-500" : "text-red-400"}`}>
+                          {delta >= 0 ? "+" : ""}
+                          {delta.toFixed(0)}% vs {(anoAnual ?? 0) - 1}
+                        </span>
+                      )}
+                      <span className="ml-2 text-neutral-600">
+                        {totalAnual > 0 ? `${((f.valor / totalAnual) * 100).toFixed(1)}%` : ""}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-800">
+                    <div
+                      className="h-1.5 rounded-full bg-sky-500/80"
+                      style={{ width: `${totalAnual > 0 ? (f.valor / (anual[0]?.valor || 1)) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {anual[0]?.fonte && (
+            <p className="mt-2 text-[11px] text-neutral-600">Fonte: {anual[0].fonte}</p>
           )}
         </section>
       )}
